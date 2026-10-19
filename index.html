@@ -858,11 +858,24 @@ async function openFile(f){
 function dlgUpload(pid, after){
   dialog('แนบไฟล์', `
     <div class="field"><label for="up-k">ประเภทเอกสาร</label><select id="up-k" class="inp">${Object.entries(FILE_KIND).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('')}</select></div>
-    <div class="field"><label for="up-f">ไฟล์ (เลือกได้หลายไฟล์ · ไม่เกิน 50 MB ต่อไฟล์)</label><input id="up-f" class="inp" type="file" multiple required></div>
+    <div class="field"><label for="up-f">ไฟล์ (เลือกได้หลายไฟล์ หรือ .zip ทั้งก้อน · ไม่เกิน 50 MB ต่อไฟล์)</label><input id="up-f" class="inp" type="file" multiple required></div>
     <p class="small faint" style="margin:0">ห้ามแนบเอกสารที่มีเลขบัตรประชาชนหรือเลขบัญชีธนาคารของพนักงาน</p>`, 'อัปโหลด', async d => {
-    const files = [...d.querySelector('#up-f').files], kind = d.querySelector('#up-k').value;
+    let files = [...d.querySelector('#up-f').files]; const kind = d.querySelector('#up-k').value;
     if (!files.length) return false;
     if (files.some(f => /legacy-files.*\.zip$/i.test(f.name))) { toast('ไฟล์นี้ต้องใช้ปุ่ม "นำเข้าไฟล์ระบบเดิม" ระบบจะแตก zip และจัดเข้าโครงการให้เอง', true); return false; }
+    if (files.some(f => /\.zip$/i.test(f.name))) {               // a .zip is unpacked and each file inside is attached
+      if (!window.JSZip) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+      const out = [];
+      for (const f of files) {
+        if (!/\.zip$/i.test(f.name)) { out.push(f); continue; }
+        const z = await JSZip.loadAsync(f);
+        for (const e of Object.values(z.files)) if (!e.dir && !/(^|\/)(__MACOSX|\.)/.test(e.name)) {
+          const nm = e.name.split('/').pop(), ext = (nm.split('.').pop() || '').toLowerCase();
+          out.push(new File([await e.async('blob')], nm, { type: { pdf:'application/pdf', png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg' }[ext] || 'application/octet-stream' }));
+        }
+      }
+      files = out; toast(`แตก zip ได้ ${files.length} ไฟล์ กำลังอัปโหลด…`);
+    }
     const big = files.find(f => f.size > 50 * 1048576); if (big) { toast(`${big.name} ใหญ่เกิน 50 MB`, true); return false; }
     for (const f of files) await putFile({ pid, kind, name:f.name, blob:f, type:f.type });
     toast(`แนบแล้ว ${files.length} ไฟล์`); after();
@@ -1179,7 +1192,7 @@ async function procPR(){
   };
   await threadIndex().catch(() => {});
   $('#proc-t').innerHTML = data.length ? `<table><thead><tr><th>เลขที่</th><th>โครงการ</th><th>รายการ</th><th>รหัสงบ</th><th class="num">ยอดตัดงบ</th><th style="min-width:190px">สถานะ / ดำเนินการ</th></tr></thead><tbody>
-    ${data.map(x => `<tr><td class="mono">${h(x.no)}<div class="small faint">${thDate(x.pr_date)} · ${h(x.requester_name || '')}</div></td>
+    ${data.map(x => `<tr><td class="mono">${h(x.no)}<div class="small faint">${thDate(x.pr_date)} · ${h(x.requester_name || '')}</div>${x.ref_no ? `<div class="small mut">อ้างอิง ${h(x.ref_no)}</div>` : ''}</td>
       <td class="mono">${h(x.projects?.code || '')}</td>
       <td style="min-width:200px;max-width:320px">${h((x.items || []).map(i => i.desc).join(' · ').slice(0, 140))}${x.vendor_hint ? `<div class="small mut">ผู้ขาย: ${h(x.vendor_hint)}</div>` : ''}${x.skip_note ? `<div class="small gold" style="color:var(--gold)">${h(x.skip_note)}</div>` : ''}</td>
       <td class="mono">${h(x.budget_lines?.code || '—')}</td>
@@ -1214,7 +1227,7 @@ async function procPO(){
   };
   await threadIndex().catch(() => {});
   $('#proc-t').innerHTML = data.length ? `<table><thead><tr><th>เลขที่</th><th>โครงการ / PR</th><th>ผู้ขาย</th><th class="num">ยอด</th><th class="num">VAT</th><th style="min-width:190px">สถานะ / ดำเนินการ</th></tr></thead><tbody>
-    ${data.map(x => `<tr><td class="mono">${h(x.no)}<div class="small faint">${thDate(x.po_date)}</div></td><td class="mono">${h(x.projects?.code || '')}<div class="small">${h(x.purchase_requests?.no || '')}</div></td>
+    ${data.map(x => `<tr><td class="mono">${h(x.no)}<div class="small faint">${thDate(x.po_date)}</div>${x.ref_no ? `<div class="small mut" style="white-space:normal;max-width:220px">${h(x.ref_no)}</div>` : ''}</td><td class="mono">${h(x.projects?.code || '')}<div class="small">${h(x.purchase_requests?.no || '')}</div></td>
       <td>${h(x.vendors?.name_th || '—')}<div class="small mut">${h(x.terms || '')}</div></td><td class="num">${money(x.amount)}</td><td class="num">${money(x.vat_amount)}</td><td>${chip(PO_ST, x.status)}<div class="gates" style="margin-top:8px">${acts(x)}</div></td></tr>`).join('')}</tbody></table>`
     : '<div class="empty">ยังไม่มี PO — ออก PO จาก PR ที่อนุมัติแล้วในแท็บใบขอซื้อ</div>';
   document.querySelectorAll('[data-pos]').forEach(b => b.onclick = async () => {
@@ -1242,7 +1255,8 @@ async function dlgNewPR(pid, after){
     <div class="field"><label>รายการ</label><div id="pr-items"></div><button type="button" class="btn sm ghost" id="pr-add">+ เพิ่มรายการ</button></div>
     <div class="row"><div class="field"><label for="pr-need">ต้องใช้วันที่</label><input id="pr-need" class="inp" type="date"></div>
       <div class="field"><label for="pr-dept">หน่วยงาน</label><input id="pr-dept" class="inp"></div></div>
-    <div class="field"><label for="pr-v">ผู้ขายที่แนะนำ</label><input id="pr-v" class="inp"></div>
+    <div class="row"><div class="field"><label for="pr-v">ผู้ขายที่แนะนำ</label><input id="pr-v" class="inp"></div>
+      <div class="field"><label for="pr-ref">เลขที่อ้างอิง (PR กระดาษ / ใบเสนอราคา)</label><input id="pr-ref" class="inp" placeholder="เช่น PR-07/1553"></div></div>
     <div class="field"><label for="pr-r">เหตุผล</label><textarea id="pr-r" class="inp" rows="2"></textarea></div>
     <label class="small" style="display:flex;gap:8px;align-items:center;margin:4px 0"><input type="checkbox" id="pr-vat"> ตัด VAT 7% เข้างบด้วย (ไม่ติ๊ก = VAT เป็นภาษีซื้อขอคืนได้ ไม่ตัดงบ)</label>
     <div class="msg info small" id="pr-sum"></div>
@@ -1255,7 +1269,7 @@ async function dlgNewPR(pid, after){
       const proj = projects.find(p => p.id === $('#pr-p', dd).value);
       let no = await nextNo('purchase_requests', proj.code + '/PR-');
       const row = { company_id:S.cid, project_id:proj.id, no, line_id:$('#pr-l', dd).value || null, need_by:$('#pr-need', dd).value || null, dept:$('#pr-dept', dd).value.trim() || null,
-        reason:$('#pr-r', dd).value.trim() || null, vendor_hint:$('#pr-v', dd).value.trim() || null, items, amount:amt, vat_included:vatInc, vat_amount:vat,
+        reason:$('#pr-r', dd).value.trim() || null, vendor_hint:$('#pr-v', dd).value.trim() || null, ref_no:$('#pr-ref', dd).value.trim() || null, items, amount:amt, vat_included:vatInc, vat_amount:vat,
         status: $('#pr-send', dd).checked ? 'submitted' : 'draft', requested_by:S.user.id, requester_name:S.user.user_metadata?.full_name || S.user.email };
       const { error } = await sb.from('purchase_requests').insert(row);
       if (error) { fail(error); return false; }
@@ -1290,10 +1304,11 @@ async function dlgNewPO(pr){
       <div class="field"><label for="po-vat">VAT</label><input id="po-vat" class="inp mono" type="number" step="0.01"></div></div>
     <div class="field"><label for="po-t">เงื่อนไขการชำระ</label><input id="po-t" class="inp"></div>
     <div class="field"><label for="po-d">กำหนดส่งมอบ</label><input id="po-d" class="inp"></div>
+    <div class="field"><label for="po-ref">เลขที่อ้างอิง (PO ใน TRCloud / ใบเสนอราคา)</label><input id="po-ref" class="inp" placeholder="เช่น PO26070023 · QT OOQ6907000190"></div>
     <label class="small" style="display:flex;gap:8px;align-items:center;margin:4px 0 8px"><input type="checkbox" id="po-send" checked> ส่งขออนุมัติทันที</label>`, 'บันทึก PO', async dd => {
       const no = await nextNo('purchase_orders', pr.projects.code + '/PO-');
       const { error } = await sb.from('purchase_orders').insert({ company_id:S.cid, project_id:pr.project_id, pr_id:pr.id, no, vendor_id:$('#po-v', dd).value, items:pr.items,
-        amount:+$('#po-a', dd).value, vat_amount:+$('#po-vat', dd).value || 0, terms:$('#po-t', dd).value.trim() || null, delivery:$('#po-d', dd).value.trim() || null,
+        amount:+$('#po-a', dd).value, vat_amount:+$('#po-vat', dd).value || 0, terms:$('#po-t', dd).value.trim() || null, delivery:$('#po-d', dd).value.trim() || null, ref_no:$('#po-ref', dd).value.trim() || null,
         status: $('#po-send', dd).checked ? 'submitted' : 'draft', created_by:S.user.id });
       if (error) { fail(error); return false; }
       toast(`บันทึก ${no} แล้ว`); S.procTab = 'po'; pageProc();
