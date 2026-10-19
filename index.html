@@ -506,7 +506,7 @@ function viewLogin(note){
       <input id="un" class="lg-in" aria-label="ชื่อผู้ใช้ (ชื่อ-สกุลพนักงาน)" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="Username : ชื่อสกุล"
         style="left:${A.txt}px;top:${A.user[1] + 4}px;width:${A.user[2] - 14 - A.txt}px;height:${fh - 8}px">
       <i class="lg-ring" style="${R(A.user, 1)}"></i>
-      <input id="pw" class="lg-in" type="password" aria-label="รหัสผ่าน" autocomplete="current-password" placeholder="Password : erp + รหัสพนักงาน"
+      <input id="pw" class="lg-in" type="password" aria-label="รหัสผ่าน" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Password : erp + รหัสพนักงาน"
         style="left:${A.txt}px;top:${A.pw[1] + 4}px;width:${A.eye[0] - 8 - A.txt}px;height:${A.pw[3] - A.pw[1] - 8}px">
       <i class="lg-ring" style="${R(A.pw, 1)}"></i>
       <button type="button" class="lg-eye" id="lg-eye" aria-label="แสดงรหัสผ่าน" style="${R(A.eye)}"></button>
