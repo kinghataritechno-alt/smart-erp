@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Office Platform</title>
+<meta name="description" content="Smart Office Platform — 3E Enterprise Enablement Ecosystem · SmartTerminal">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#ECECE8; --surface:#FFFFFF; --surface2:#F6F6F3; --line:#D9D8D2; --ink:#1C1C1A; --mut:#5F5E59; --faint:#9C9C96;
+  --char:#383836; --char2:#454542; --char-ink:#EDECE8; --char-mut:#A9A8A2;
+  --amber:#E5572B; --amber-soft:#FBE6DE; --budget:#2F5FD0; --budget-soft:#EAF0FC;
+  --good:#14915C; --good-soft:#E3F4EA; --crit:#D63E2C; --crit-soft:#FDEAE6; --gold:#C98608; --gold-soft:#FFF4DA;
+  --r:10px; --sh:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+  --head:'Anuphan',system-ui,sans-serif; --body:'IBM Plex Sans Thai',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#100F0E; --surface:#1A1917; --surface2:#211F1D; --line:#34322F; --ink:#EDECE8; --mut:#B5B3AC; --faint:#7D7B75;
+  --char:#171513; --char2:#22201D; --amber:#F7A43A; --amber-soft:#3A2614; --budget:#7FA6FF; --budget-soft:#1A2338;
+  --good:#4CC28A; --good-soft:#14281E; --crit:#FF7A6B; --crit-soft:#3A1A16; --gold:#F5B04A; --gold-soft:#33270F;
+}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--head);margin:0;line-height:1.3}
+h1{font-size:24px} h2{font-size:19px} h3{font-size:16px}
+button,input,select{font:inherit;color:inherit}
+.mono{font-family:var(--mono);font-size:.92em}
+.mut{color:var(--mut)} .faint{color:var(--faint)} .small{font-size:13px}
+.hidden{display:none!important}
+
+/* ---------- auth screens ---------- */
+.gate{min-height:100%;display:grid;place-items:center;padding:24px 16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);padding:28px;width:100%;max-width:420px}
+.brandmark{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.logo{width:42px;height:42px;border-radius:10px;background:var(--char);display:grid;place-items:center;flex:none}
+.logo svg{width:24px;height:24px}
+.brandtxt b{display:block;font-family:var(--head);font-size:17px;letter-spacing:.04em}
+.brandtxt b span{color:var(--amber)}
+.brandtxt small{color:var(--mut);font-size:12px}
+.field{display:grid;gap:6px;margin:14px 0}
+.field label{font-size:13px;font-weight:600;color:var(--mut)}
+.inp{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 12px;outline:none}
+.inp:focus{border-color:var(--budget);box-shadow:0 0 0 3px var(--budget-soft)}
+.inp.code{font-family:var(--mono);font-size:20px;letter-spacing:.3em;text-align:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn.primary{background:var(--char);border-color:var(--char);color:var(--char-ink)}
+.btn.primary:hover{background:var(--char2)}
+.btn.accent{background:var(--amber);border-color:var(--amber);color:#fff}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.block{width:100%}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.msg{border-radius:8px;padding:10px 12px;font-size:14px;margin:12px 0}
+.msg.info{background:var(--budget-soft);color:var(--budget)}
+.msg.ok{background:var(--good-soft);color:var(--good)}
+.msg.err{background:var(--crit-soft);color:var(--crit)}
+.msg.warn{background:var(--gold-soft);color:var(--gold)}
+.qr{display:grid;place-items:center;background:#fff;border-radius:10px;padding:12px;margin:12px 0}
+.qr img{width:190px;height:190px}
+.secret{word-break:break-all;background:var(--surface2);border-radius:8px;padding:8px 10px}
+
+/* ---------- app shell ---------- */
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100%}
+.side{background:var(--char);color:var(--char-ink);padding:18px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.side .brandmark{padding:0 6px;margin-bottom:18px}
+.side .brandtxt small{color:var(--char-mut)}
+.side .logo{background:var(--char2)}
+.nav{display:flex;align-items:center;gap:10px;border:0;background:none;color:var(--char-mut);padding:9px 12px;border-radius:8px;text-align:left;cursor:pointer;width:100%;font-weight:500}
+.nav:hover{background:var(--char2);color:var(--char-ink)}
+.nav[aria-current="page"]{background:var(--char2);color:#fff;box-shadow:inset 3px 0 0 var(--amber)}
+.nav svg{width:18px;height:18px;flex:none}
+.side .foot{margin-top:auto;font-size:12px;color:var(--char-mut);padding:10px 8px;border-top:1px solid var(--char2)}
+.main{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:12px;padding:14px 28px;border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;z-index:5}
+.top .co{font-family:var(--head);font-weight:600}
+.top .who{margin-left:auto;display:flex;align-items:center;gap:10px;min-width:0}
+.top .who span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px}
+.menu-btn{display:none}
+.page{padding:26px 28px 60px;max-width:1180px;width:100%}
+.ph{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.ph .act{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:18px}
+.panel>.hd{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.panel>.bd{padding:16px 18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.stat small{display:block;color:var(--mut);font-size:12px}
+.stat b{font-family:var(--head);font-size:24px;font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-weight:600;color:var(--mut);font-size:12px;text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface2)}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600;background:var(--surface2);border:1px solid var(--line);white-space:nowrap}
+.chip.amber{background:var(--amber-soft);border-color:transparent;color:var(--amber)}
+.chip.blue{background:var(--budget-soft);border-color:transparent;color:var(--budget)}
+.chip.good{background:var(--good-soft);border-color:transparent;color:var(--good)}
+.chip.crit{background:var(--crit-soft);border-color:transparent;color:var(--crit)}
+.chip.gold{background:var(--gold-soft);border-color:transparent;color:var(--gold)}
+.chip button{border:0;background:none;padding:0 0 0 2px;cursor:pointer;color:inherit;font-size:14px;line-height:1}
+.pm{display:inline-block;min-width:22px;text-align:center;border-radius:5px;padding:0 4px;font-family:var(--mono);font-size:12px;font-weight:600}
+.pm.v{background:var(--surface2);color:var(--mut)} .pm.c{background:var(--budget-soft);color:var(--budget)}
+.pm.r{background:var(--gold-soft);color:var(--gold)} .pm.a{background:var(--amber-soft);color:var(--amber)}
+.pm.n{color:var(--faint)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row .field{margin:0;flex:1;min-width:160px}
+.gates{display:flex;gap:6px;flex-wrap:wrap}
+.empty{padding:28px;text-align:center;color:var(--mut)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--char);color:var(--char-ink);padding:10px 16px;border-radius:10px;box-shadow:var(--sh);z-index:50;max-width:min(560px,calc(100% - 32px));font-size:14px}
+.toast.err{background:var(--crit);color:#fff}
+dialog{border:1px solid var(--line);border-radius:14px;padding:0;background:var(--surface);color:var(--ink);width:min(520px,calc(100% - 32px));box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(16,15,14,.45)}
+dialog .hd{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+dialog .bd{padding:6px 20px 8px}
+dialog .ft{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;background:var(--surface);padding:6px 12px;cursor:pointer;font-size:13px;font-weight:600;color:var(--mut)}
+.seg button[aria-pressed="true"]{background:var(--char);color:var(--char-ink)}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;inset:0 auto 0 0;width:260px;z-index:20;transform:translateX(-100%);transition:transform .2s}
+  .app.open .side{transform:none}
+  .app.open::after{content:"";position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:15}
+  .menu-btn{display:inline-flex}
+  .top{padding:10px 16px}
+  .top .who span{display:none}
+  .page{padding:18px 16px 50px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+/* =====================================================================
+   Smart Office Platform · เว็บระยะที่ 1 (ต่อ Supabase)
+   - ล็อกอินด้วยลิงก์ทางอีเมล (เฉพาะคนที่ได้รับเชิญ) + ยืนยันตัวตน 2 ชั้น (TOTP)
+   - สิทธิ์ทั้งหมดบังคับที่ฐานข้อมูล (RLS ตาม Permission Matrix V3) หน้าเว็บแค่ซ่อนเมนูที่ไม่มีสิทธิ์
+   - คีย์ด้านล่างเป็น publishable key ใส่ในหน้าเว็บได้ ห้ามใส่ service_role key
+   ===================================================================== */
+const SUPABASE_URL = 'https://vioyoyjqpohijzkhcvsl.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_fErBjJe-wOAAOdob-XtyRw_7SMZlA5d';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+
+const MODS = [
+  ['project','Project Master'],['contract','สัญญา / ประมูล'],['budget','งบ / ต้นทุน'],['procurement','จัดซื้อ PR/PO'],
+  ['warehouse','คลังสินค้า'],['hr','HR / Payroll'],['finance','บัญชี / การเงิน'],['oc_setup','OC ตั้งค่าโครงการ'],
+  ['cmms','ติดตามงาน / CMMS'],['quality','ISO / คุณภาพ'],['kpi','KPI'],['bu_ops','BU ปฏิบัติงาน'],
+  ['exec_dash','Dashboard ผู้บริหาร'],['sysadmin','ดูแลระบบ']];
+const GATES = { G1:'ตัดสินใจยื่น', G2:'ต้นทุน', G3:'ยื่นซอง', G4:'ล็อกงบ', G5:'ลงนามสัญญา', G6:'ส่งมอบ', G7:'ปิดโครงการ' };
+const RESULT = { wait:['รอผล','gold'], win:['ชนะ','good'], lose:['แพ้','crit'], cancel:['ยกเลิก',''], nogo:['ไม่ยื่น',''] };
+const GATE_ST = { pending:['',''], submitted:['รอพิจารณา','gold'], approved:['ผ่าน','good'], rejected:['ไม่ผ่าน','crit'], returned:['ตีกลับ','amber'] };
+
+const S = { session:null, user:null, companies:[], cid:null, company:null, perms:{}, positions:[], isOwner:false,
+            page: (()=>{ try{ return localStorage.getItem('sop.page') || 'home' }catch(e){ return 'home' } })(),
+            catalog:null, permRows:null, posGrp:'all', members:null, projects:null, bus:null };
+
+const $ = (s, el=document) => el.querySelector(s);
+const h = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => n == null ? '—' : Number(n).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const thDate = d => { if (!d) return '—'; const x = new Date(d.length === 10 ? d + 'T00:00:00' : d); return x.toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' }); };
+function toast(t, err=false){ const el = document.createElement('div'); el.className = 'toast' + (err ? ' err' : ''); el.textContent = t; document.body.appendChild(el); setTimeout(()=>el.remove(), err ? 6500 : 3200); }
+function errText(e){ return (e && (e.message || e.error_description || e.msg)) || String(e); }
+function fail(e){ console.error(e); toast(errText(e), true); }
+
+const ICON = {
+  logo:'<svg viewBox="0 0 24 24" fill="none" stroke="#E5572B" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3" stroke="#EDECE8"/></svg>',
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
+  proj:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 010 7M18 14.8c1.8.8 3 2.6 3.5 5.2"/></svg>',
+  key:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M15 8l2 2"/></svg>',
+  menu:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>'
+};
+const brand = (sub='3E — Enterprise Enablement Ecosystem') => `<div class="brandmark"><div class="logo">${ICON.logo}</div><div class="brandtxt"><b>SMART OFFICE <span>PLATFORM</span></b><small>${h(sub)}</small></div></div>`;
+const root = () => document.getElementById('root');
+
+/* =====================================================================
+   1. auth flow: session → MFA → company → app
+   ===================================================================== */
+async function route(){
+  const { data:{ session } } = await sb.auth.getSession();
+  S.session = session; S.user = session?.user || null;
+  if (!session) return viewLogin();
+  const { data: aal, error } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (error) return fail(error);
+  if (aal.currentLevel === 'aal1' && aal.nextLevel === 'aal2') return viewMfaChallenge();
+  if (aal.nextLevel !== 'aal2') return viewMfaEnroll();          // ยังไม่ได้ตั้ง MFA → บังคับตั้ง
+  return loadCompanies();
+}
+
+function viewLogin(note){
+  root().innerHTML = `<div class="gate"><div class="card">${brand('SmartTerminal · เข้าสู่ระบบ')}
+    <h2>เข้าสู่ระบบ</h2>
+    <p class="mut small">ใช้อีเมลที่ได้รับเชิญ ระบบจะส่งลิงก์เข้าสู่ระบบไปที่อีเมล ไม่มีรหัสผ่าน</p>
+    ${note ? `<div class="msg ${note[0]}">${h(note[1])}</div>` : ''}
+    <form id="f-login">
+      <div class="field"><label for="em">อีเมล</label><input id="em" class="inp" type="email" autocomplete="email" required placeholder="name@company.com"></div>
+      <button class="btn primary block" id="b-login">ส่งลิงก์เข้าสู่ระบบ</button>
+    </form>
+    <details style="margin-top:16px"><summary class="small mut" style="cursor:pointer">มีรหัส 6 หลักจากอีเมล</summary>
+      <form id="f-otp"><div class="field"><label for="otp">รหัสจากอีเมล</label><input id="otp" class="inp code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div>
+      <button class="btn block">ยืนยันรหัส</button></form>
+    </details>
+  </div></div>`;
+  $('#f-login').onsubmit = async ev => {
+    ev.preventDefault(); const b = $('#b-login'); b.disabled = true;
+    const email = $('#em').value.trim();
+    try { localStorage.setItem('sop.email', email) } catch(e){}
+    const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname } });
+    b.disabled = false;
+    if (error) return viewLogin(['err', /signups not allowed|not found|Signups/i.test(error.message) ? 'อีเมลนี้ยังไม่ได้รับเชิญ — ติดต่อผู้ดูแลระบบ' : error.message]);
+    viewLogin(['ok', `ส่งลิงก์ไปที่ ${email} แล้ว เปิดอีเมลบนเครื่องนี้แล้วกดลิงก์`]);
+  };
+  $('#f-otp').onsubmit = async ev => {
+    ev.preventDefault();
+    let email = ''; try { email = localStorage.getItem('sop.email') || '' } catch(e){}
+    email = email || $('#em').value.trim();
+    if (!email) return toast('กรอกอีเมลด้านบนก่อน', true);
+    const { error } = await sb.auth.verifyOtp({ email, token: $('#otp').value.trim(), type: 'email' });
+    if (error) return toast(error.message, true);
+    route();
+  };
+}
+
+async function viewMfaEnroll(){
+  root().innerHTML = `<div class="gate"><div class="card">${brand('ยืนยันตัวตน 2 ชั้น')}<h2>ตั้งค่าแอปยืนยันตัวตน</h2><p class="mut small">กำลังเตรียม…</p></div></div>`;
+  // ล้าง factor ที่ค้างไม่ได้ยืนยัน
+  const { data: lf } = await sb.auth.mfa.listFactors();
+  for (const f of (lf?.all || []).filter(f => f.status !== 'verified')) await sb.auth.mfa.unenroll({ factorId: f.id });
+  const { data, error } = await sb.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Smart Office ' + new Date().toISOString().slice(0,10) });
+  if (error) {
+    root().innerHTML = `<div class="gate"><div class="card">${brand('ยืนยันตัวตน 2 ชั้น')}<h2>ตั้ง MFA ไม่ได้</h2>
+      <div class="msg err">${h(error.message)}</div><p class="small mut">ผู้ดูแลต้องเปิด Authentication → Multi-Factor (TOTP) ในโปรเจกต์ Supabase ก่อน</p>
+      <button class="btn block" id="b-out">ออกจากระบบ</button></div></div>`;
+    $('#b-out').onclick = signOut; return;
+  }
+  const qr = data.totp.qr_code.startsWith('data:') ? data.totp.qr_code : 'data:image/svg+xml;utf8,' + encodeURIComponent(data.totp.qr_code);
+  root().innerHTML = `<div class="gate"><div class="card">${brand('ยืนยันตัวตน 2 ชั้น')}
+    <h2>ตั้งค่าแอปยืนยันตัวตน</h2>
+    <p class="small mut">ทุกบัญชีต้องใช้ 2 ชั้น สแกนด้วย Google Authenticator, Microsoft Authenticator หรือแอปที่รองรับ TOTP แล้วกรอกรหัส 6 หลัก</p>
+    <div class="qr"><img alt="QR สำหรับแอปยืนยันตัวตน" src="${qr}"></div>
+    <details class="small"><summary class="mut" style="cursor:pointer">สแกนไม่ได้ — กรอกรหัสลับเอง</summary><div class="secret mono">${h(data.totp.secret)}</div></details>
+    <form id="f-mfa"><div class="field"><label for="mc">รหัส 6 หลักจากแอป</label><input id="mc" class="inp code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required></div>
+    <button class="btn primary block">ยืนยันและเข้าสู่ระบบ</button></form>
+    <button class="btn ghost block small" id="b-out" style="margin-top:8px">ออกจากระบบ</button></div></div>`;
+  $('#b-out').onclick = signOut;
+  $('#f-mfa').onsubmit = async ev => {
+    ev.preventDefault();
+    const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: data.id, code: $('#mc').value.trim() });
+    if (error) return toast('รหัสไม่ถูกต้อง: ' + error.message, true);
+    toast('ตั้งค่า 2 ชั้นเรียบร้อย'); route();
+  };
+}
+
+async function viewMfaChallenge(){
+  const { data, error } = await sb.auth.mfa.listFactors();
+  if (error) return fail(error);
+  const f = (data.totp || []).find(x => x.status === 'verified');
+  if (!f) return viewMfaEnroll();
+  root().innerHTML = `<div class="gate"><div class="card">${brand('ยืนยันตัวตน 2 ชั้น')}
+    <h2>กรอกรหัสจากแอป</h2><p class="small mut">${h(S.user.email)}</p>
+    <form id="f-ch"><div class="field"><label for="cc">รหัส 6 หลัก</label><input id="cc" class="inp code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required autofocus></div>
+    <button class="btn primary block">ยืนยัน</button></form>
+    <button class="btn ghost block small" id="b-out" style="margin-top:8px">ใช้บัญชีอื่น</button></div></div>`;
+  $('#b-out').onclick = signOut;
+  $('#f-ch').onsubmit = async ev => {
+    ev.preventDefault();
+    const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: f.id, code: $('#cc').value.trim() });
+    if (error) return toast('รหัสไม่ถูกต้อง', true);
+    route();
+  };
+}
+
+async function signOut(){ await sb.auth.signOut(); S.cid = null; S.members = S.projects = null; viewLogin(); }
+
+async function loadCompanies(){
+  const { data, error } = await sb.rpc('my_companies');
+  if (error) return fail(error);
+  const mine = data.filter(r => r.company_id);
+  if (!mine.length) {
+    const any = data[0]?.any_company;
+    return any ? viewNoAccess() : viewBootstrap();
+  }
+  const invited = mine.find(r => r.status === 'invited');
+  const active = mine.filter(r => r.status === 'active');
+  if (!active.length && invited) return viewAccept(invited);
+  let pick = null; try { pick = localStorage.getItem('sop.cid') } catch(e){}
+  const c = active.find(r => r.company_id === pick) || active[0];
+  S.companies = active; S.cid = c.company_id; S.company = c; S.isOwner = c.role === 'owner';
+  await loadContext(); renderApp();
+}
+
+function viewNoAccess(){
+  root().innerHTML = `<div class="gate"><div class="card">${brand()}<h2>ยังไม่ได้เพิ่มเข้าบริษัท</h2>
+    <p class="mut">บัญชี ${h(S.user.email)} เข้าสู่ระบบได้แล้ว แต่ผู้ดูแลยังไม่ได้เพิ่มเข้าบริษัท แจ้งผู้ดูแลระบบให้กด "เพิ่มผู้ใช้" ด้วยอีเมลนี้</p>
+    <button class="btn block" id="b-re">ตรวจอีกครั้ง</button><button class="btn ghost block small" id="b-out" style="margin-top:8px">ออกจากระบบ</button></div></div>`;
+  $('#b-re').onclick = loadCompanies; $('#b-out').onclick = signOut;
+}
+
+function viewAccept(inv){
+  root().innerHTML = `<div class="gate"><div class="card">${brand()}<h2>คำเชิญเข้าร่วม</h2>
+    <p>${h(inv.name_th)} เชิญ ${h(S.user.email)} เข้าใช้ Smart Office Platform</p>
+    <button class="btn primary block" id="b-acc">รับคำเชิญ</button><button class="btn ghost block small" id="b-out" style="margin-top:8px">ออกจากระบบ</button></div></div>`;
+  $('#b-out').onclick = signOut;
+  $('#b-acc').onclick = async () => { const { error } = await sb.rpc('accept_invite', { p_company: inv.company_id }); if (error) return fail(error); loadCompanies(); };
+}
+
+function viewBootstrap(){
+  root().innerHTML = `<div class="gate"><div class="card">${brand('ตั้งค่าครั้งแรก')}
+    <h2>ตั้งบริษัทแรก</h2>
+    <div class="msg warn small">ทำได้ครั้งเดียว บัญชีที่กดปุ่มนี้ (${h(S.user.email)}) จะเป็น <b>เจ้าของบริษัท</b> ที่มีสิทธิ์ทุกโมดูลและเป็นคนยืนยัน DOA ของผู้อื่น</div>
+    <form id="f-bs">
+      <div class="field"><label for="bn">ชื่อบริษัท (ไทย)</label><input id="bn" class="inp" required value="บริษัท สมาร์ท เทอร์มินอล คอร์ปอเรชั่น จำกัด"></div>
+      <div class="field"><label for="be">ชื่อบริษัท (อังกฤษ)</label><input id="be" class="inp" value="Smart Terminal Corporation Co., Ltd."></div>
+      <div class="field"><label for="bt">เลขประจำตัวผู้เสียภาษี</label><input id="bt" class="inp mono" inputmode="numeric" pattern="[0-9]{13}" value="0105550002042"></div>
+      <button class="btn accent block">ตั้งบริษัทและเป็นเจ้าของ</button>
+    </form><button class="btn ghost block small" id="b-out" style="margin-top:8px">ออกจากระบบ</button></div></div>`;
+  $('#b-out').onclick = signOut;
+  $('#f-bs').onsubmit = async ev => {
+    ev.preventDefault();
+    const { error } = await sb.rpc('bootstrap_company', { p_name_th: $('#bn').value.trim(), p_tax_id: $('#bt').value.trim() || null, p_name_en: $('#be').value.trim() || null });
+    if (error) return fail(error);
+    toast('ตั้งบริษัทแล้ว — คุณเป็นเจ้าของ'); loadCompanies();
+  };
+}
+
+/* =====================================================================
+   2. context: permissions + catalog
+   ===================================================================== */
+async function loadContext(){
+  const [p, cat, perm, bus] = await Promise.all([
+    sb.rpc('my_permissions', { p_company: S.cid }),
+    S.catalog ? { data: S.catalog } : sb.from('positions').select('*').order('code'),
+    S.permRows ? { data: S.permRows } : sb.from('position_permissions').select('*'),
+    sb.from('business_units').select('id,code,name').eq('company_id', S.cid).eq('active', true).order('code')
+  ]);
+  if (p.error) return fail(p.error);
+  S.perms = {}; S.positions = [];
+  for (const r of p.data) { S.perms[r.module] = r; for (const c of (r.positions || [])) if (!S.positions.includes(c)) S.positions.push(c); }
+  S.catalog = cat.data || []; S.permRows = perm.data || []; S.bus = bus.data || [];
+}
+const can = (mod, l='v') => !!(S.perms[mod] && S.perms[mod][l]);
+const canAdmin = () => S.isOwner || can('sysadmin','c') || can('sysadmin','e');
+const canSeeUsers = () => canAdmin() || S.positions.includes('SY02');
+
+/* =====================================================================
+   3. app shell
+   ===================================================================== */
+const PAGES = [
+  { id:'home',  label:'หน้าแรก',             icon:'home',  show: () => true },
+  { id:'proj',  label:'โครงการ',              icon:'proj',  show: () => can('project') },
+  { id:'users', label:'ผู้ใช้และสิทธิ์',        icon:'users', show: canSeeUsers },
+  { id:'v3',    label:'ตำแหน่ง (Permission V3)', icon:'key', show: () => true }
+];
+
+function renderApp(){
+  const pages = PAGES.filter(p => p.show());
+  if (!pages.find(p => p.id === S.page)) S.page = 'home';
+  root().innerHTML = `<div class="app" id="app">
+    <aside class="side" aria-label="เมนูหลัก">${brand()}
+      ${pages.map(p => `<button class="nav" data-page="${p.id}" ${S.page === p.id ? 'aria-current="page"' : ''}>${ICON[p.icon]}<span>${h(p.label)}</span></button>`).join('')}
+      <div class="foot">ระยะที่ 1 · ข้อมูลจริงอยู่บน Supabase (สิงคโปร์)<br>สิทธิ์บังคับที่ฐานข้อมูลตาม Permission Matrix V3</div>
+    </aside>
+    <div class="main">
+      <header class="top">
+        <button class="btn sm ghost menu-btn" id="b-menu" aria-label="เปิดเมนู">${ICON.menu}</button>
+        <span class="co">${h(S.company.name_th)}</span>
+        ${S.companies.length > 1 ? `<select class="inp" id="s-co" style="width:auto">${S.companies.map(c => `<option value="${c.company_id}" ${c.company_id === S.cid ? 'selected' : ''}>${h(c.name_th)}</option>`).join('')}</select>` : ''}
+        <div class="who"><span class="small mut">${h(S.user.email)}</span>
+          ${S.isOwner ? '<span class="chip amber">เจ้าของ</span>' : S.positions.slice(0,3).map(c => `<span class="chip">${h(c)}</span>`).join('')}
+          <button class="btn sm" id="b-out">ออก</button></div>
+      </header>
+      <main class="page" id="page"></main>
+    </div></div>`;
+  document.querySelectorAll('.nav').forEach(b => b.onclick = () => { S.page = b.dataset.page; try{ localStorage.setItem('sop.page', S.page) }catch(e){}; $('#app').classList.remove('open'); renderApp(); });
+  $('#b-out').onclick = signOut;
+  $('#b-menu').onclick = () => $('#app').classList.toggle('open');
+  $('#app').addEventListener('click', e => { if (e.target.id === 'app') $('#app').classList.remove('open'); });
+  const sc = $('#s-co'); if (sc) sc.onchange = async () => { S.cid = sc.value; try{ localStorage.setItem('sop.cid', S.cid) }catch(e){}; S.company = S.companies.find(c => c.company_id === S.cid); S.isOwner = S.company.role === 'owner'; S.members = S.projects = null; await loadContext(); renderApp(); };
+  ({ home: pageHome, proj: pageProjects, users: pageUsers, v3: pageV3 })[S.page]();
+}
+
+function letters(r){
+  if (!r) return '<span class="pm n">—</span>';
+  const out = [];
+  if (r.v) out.push('<span class="pm v">V</span>');
+  if (r.c) out.push('<span class="pm c">C</span>'); if (r.e) out.push('<span class="pm c">E</span>'); if (r.x) out.push('<span class="pm c">X</span>');
+  if (r.r) out.push('<span class="pm r">R</span>'); if (r.a) out.push('<span class="pm a">A*</span>');
+  return out.join(' ') || '<span class="pm n">—</span>';
+}
+
+/* ---------- home ---------- */
+async function pageHome(){
+  const el = $('#page');
+  el.innerHTML = `<div class="ph"><div><h1>สวัสดีครับ</h1><p class="mut" style="margin:4px 0 0">${h(S.company.name_th)} · ${S.isOwner ? 'เจ้าของบริษัท (สิทธิ์ทุกโมดูล)' : (S.positions.join(', ') || 'ยังไม่ได้รับตำแหน่ง')}</p></div></div>
+    <div class="stats" id="stats"><div class="stat"><small>โครงการที่เห็นได้</small><b>…</b></div></div>
+    <div class="panel"><div class="hd"><h3>สิทธิ์ของฉัน</h3><span class="small mut" style="margin-left:auto">V ดู · C สร้าง · E แก้ · X ปฏิบัติ · R ตรวจ · A* อนุมัติตาม DOA</span></div>
+      <div class="tw"><table><thead><tr><th>โมดูล</th><th>สิทธิ์</th></tr></thead><tbody>
+      ${MODS.map(([k,l]) => `<tr><td>${h(l)}</td><td>${letters(S.perms[k])}</td></tr>`).join('')}</tbody></table></div></div>
+    ${!S.isOwner && !S.positions.length ? '<div class="msg warn">บัญชีนี้ยังไม่ได้รับตำแหน่งตาม Permission Matrix V3 จึงยังไม่เห็นข้อมูล — แจ้งผู้ดูแลระบบ</div>' : ''}`;
+  const tasks = [sb.from('projects').select('id,result', { count:'exact' }).eq('company_id', S.cid)];
+  if (canSeeUsers()) tasks.push(sb.rpc('company_members', { p_company: S.cid }));
+  const [pr, mem] = await Promise.all(tasks);
+  const win = (pr.data || []).filter(p => p.result === 'win').length, wait = (pr.data || []).filter(p => p.result === 'wait').length;
+  $('#stats').innerHTML = `<div class="stat"><small>โครงการที่เห็นได้</small><b>${pr.count ?? 0}</b></div>
+    <div class="stat"><small>ชนะ / รอผล</small><b>${win} / ${wait}</b></div>
+    ${mem ? `<div class="stat"><small>ผู้ใช้ในบริษัท</small><b>${(mem.data || []).length}</b></div>
+            <div class="stat"><small>ยังไม่รับคำเชิญ</small><b>${(mem.data || []).filter(m => m.status === 'invited').length}</b></div>` : ''}`;
+}
+
+/* ---------- projects ---------- */
+function fiscalBE(d){ return d.getFullYear() + 543 + (d.getMonth() >= 9 ? 1 : 0); }
+async function pageProjects(){
+  const el = $('#page');
+  el.innerHTML = `<div class="ph"><div><h1>โครงการ</h1><p class="mut small" style="margin:4px 0 0">รหัส BU-ปีงบ-ลำดับ · ปีงบ = ปีของวันยื่นซองหรือวันเปิดโครงการ แล้วแต่วันใดมาก่อน · ออกรหัสแล้วไม่ใช้ซ้ำ</p></div>
+    <div class="act">${can('contract','c') ? '<button class="btn accent" id="b-new">+ เปิดโครงการ</button>' : ''}</div></div>
+    <div class="panel"><div class="tw" id="pt"><div class="empty">กำลังโหลด…</div></div></div>`;
+  const nb = $('#b-new'); if (nb) nb.onclick = dlgNewProject;
+  const { data, error } = await sb.from('projects')
+    .select('id,code,name,result,submit_date,win_price,ref_price,renamed_from,business_units(code),clients(name),project_gates(gate,status)')
+    .eq('company_id', S.cid).order('code');
+  if (error) return fail(error);
+  S.projects = data;
+  $('#pt').innerHTML = data.length ? `<table><thead><tr><th>รหัส</th><th>ชื่อโครงการ</th><th>ผล</th><th>ยื่นซอง</th><th class="num">ราคากลาง</th><th class="num">ราคาที่ได้</th><th>Gate</th></tr></thead><tbody>
+    ${data.map(p => { const r = RESULT[p.result] || [p.result,'']; const g = (p.project_gates || []).sort((a,b) => a.gate.localeCompare(b.gate));
+      return `<tr><td class="mono">${h(p.code)}${p.renamed_from ? `<div class="small faint">เดิม ${h(p.renamed_from)}</div>` : ''}</td>
+        <td>${h(p.name)}${p.clients ? `<div class="small mut">${h(p.clients.name)}</div>` : ''}</td>
+        <td><span class="chip ${r[1]}">${h(r[0])}</span></td><td>${thDate(p.submit_date)}</td>
+        <td class="num">${money(p.ref_price)}</td><td class="num">${money(p.win_price)}</td>
+        <td><div class="gates">${g.map(x => { const s = GATE_ST[x.status] || ['','']; return `<span class="chip ${s[1]}" title="${h(GATES[x.gate])}${s[0] ? ' · ' + s[0] : ''}">${x.gate}</span>`; }).join('')}</div></td></tr>`; }).join('')}
+    </tbody></table>` : `<div class="empty">ยังไม่มีโครงการ${can('contract','c') ? ' — กด "เปิดโครงการ" หรือรอการย้ายข้อมูลจากต้นแบบ' : ''}</div>`;
+}
+
+function dialog(title, body, okLabel, onOk){
+  const d = document.createElement('dialog');
+  d.innerHTML = `<form method="dialog"><div class="hd"><h3>${h(title)}</h3></div><div class="bd">${body}</div>
+    <div class="ft"><button class="btn" value="cancel" formnovalidate>ยกเลิก</button><button class="btn primary" value="ok">${h(okLabel)}</button></div></form>`;
+  document.body.appendChild(d); d.showModal();
+  d.querySelector('form').addEventListener('submit', async ev => {
+    if (ev.submitter?.value !== 'ok') return;
+    ev.preventDefault();
+    const btn = ev.submitter; btn.disabled = true;
+    try { const done = await onOk(d); if (done !== false) d.close(); } catch(e){ fail(e); }
+    btn.disabled = false;
+  });
+  d.addEventListener('close', () => d.remove());
+  return d;
+}
+
+function dlgNewProject(){
+  const d = dialog('เปิดโครงการใหม่', `
+    <div class="field"><label for="np-bu">BU</label><select id="np-bu" class="inp" required>${S.bus.map(b => `<option value="${h(b.code)}">${h(b.code)} — ${h(b.name)}</option>`).join('')}</select></div>
+    <div class="field"><label for="np-name">ชื่อโครงการ</label><input id="np-name" class="inp" required></div>
+    <div class="field"><label for="np-date">วันยื่นซอง (ถ้ามี)</label><input id="np-date" class="inp" type="date"></div>
+    <div class="msg info small" id="np-prev"></div>`, 'เปิดโครงการ', async dd => {
+      const { data, error } = await sb.rpc('create_project', { p_company: S.cid, p_bu: $('#np-bu', dd).value, p_name: $('#np-name', dd).value.trim(), p_submit_date: $('#np-date', dd).value || null });
+      if (error) { fail(error); return false; }
+      toast('เปิดโครงการ ' + data.code + ' แล้ว'); pageProjects();
+    });
+  const prev = () => { const v = $('#np-date', d).value; const now = new Date(); const dt = v && new Date(v + 'T00:00:00') < now ? new Date(v + 'T00:00:00') : now;
+    $('#np-prev', d).textContent = `รหัสจะขึ้นต้นด้วย ${$('#np-bu', d).value}-${String(fiscalBE(dt) % 100).padStart(2,'0')}- (ลำดับถัดไประบบออกให้)`; };
+  $('#np-bu', d).onchange = prev; $('#np-date', d).oninput = prev; prev();
+}
+
+/* ---------- users & positions ---------- */
+async function pageUsers(){
+  const el = $('#page');
+  el.innerHTML = `<div class="ph"><div><h1>ผู้ใช้และสิทธิ์</h1><p class="mut small" style="margin:4px 0 0">ผู้เสนอ ผู้ตรวจ ผู้อนุมัติต้องเป็นคนละคน · A* ใช้ได้เมื่อเจ้าของยืนยัน DOA แล้วเท่านั้น · บัญชี AI ได้เฉพาะ AI01–AI03 และอนุมัติไม่ได้</p></div>
+    <div class="act">${canAdmin() ? '<button class="btn accent" id="b-add">+ เพิ่มผู้ใช้</button>' : ''}</div></div>
+    <div class="msg info small">ขั้นตอนเพิ่มคน: ① Supabase → Authentication → Users → <b>Invite user</b> ด้วยอีเมลของเขา ② กด "เพิ่มผู้ใช้" ที่นี่ด้วยอีเมลเดียวกัน ③ ให้ตำแหน่ง ④ เขากดลิงก์ในอีเมล ตั้ง MFA แล้วกด "รับคำเชิญ"</div>
+    <div class="panel"><div class="tw" id="ut"><div class="empty">กำลังโหลด…</div></div></div>`;
+  const ab = $('#b-add'); if (ab) ab.onclick = dlgAddMember;
+  const { data, error } = await sb.rpc('company_members', { p_company: S.cid });
+  if (error) return fail(error);
+  S.members = data;
+  const posTitle = c => (S.catalog.find(p => p.code === c) || {}).title || '';
+  $('#ut').innerHTML = `<table><thead><tr><th>ผู้ใช้</th><th>สถานะ</th><th>ตำแหน่ง (V3)</th><th>ล็อกอินล่าสุด</th>${canAdmin() ? '<th></th>' : ''}</tr></thead><tbody>
+    ${data.map(m => `<tr>
+      <td><b>${h(m.full_name || '—')}</b><div class="small mut">${h(m.email)}</div></td>
+      <td>${m.role === 'owner' ? '<span class="chip amber">เจ้าของ</span>' : m.status === 'active' ? '<span class="chip good">ใช้งาน</span>' : m.status === 'invited' ? '<span class="chip gold">รอรับคำเชิญ</span>' : '<span class="chip crit">ระงับ</span>'}</td>
+      <td><div class="gates">${(m.positions || []).map(p => `<span class="chip ${p.active ? (p.doa ? 'amber' : 'blue') : ''}" title="${h(posTitle(p.code))}${p.doa ? ' · DOA ' + (p.limit ? money(p.limit) : 'ไม่จำกัดวงเงิน') : ''}">${h(p.code)}${p.doa ? ' A*' : ''}${S.isOwner ? ` <button aria-label="เอา ${h(p.code)} ออก" data-unassign="${p.id}">×</button>` : ''}</span>`).join('') || '<span class="small faint">—</span>'}</div></td>
+      <td class="small">${m.last_sign_in ? new Date(m.last_sign_in).toLocaleString('th-TH', { dateStyle:'medium', timeStyle:'short' }) : '—'}</td>
+      ${canAdmin() ? `<td style="white-space:nowrap">${m.role !== 'owner' ? `<button class="btn sm" data-assign="${m.user_id}">+ ตำแหน่ง</button>
+        ${m.user_id !== S.user.id ? `<button class="btn sm ghost" data-susp="${m.user_id}" data-st="${m.status}">${m.status === 'suspended' ? 'คืนสิทธิ์' : 'ระงับ'}</button>` : ''}` : ''}</td>` : ''}
+    </tr>`).join('')}</tbody></table>`;
+  document.querySelectorAll('[data-assign]').forEach(b => b.onclick = () => dlgAssign(data.find(m => m.user_id === b.dataset.assign)));
+  document.querySelectorAll('[data-unassign]').forEach(b => b.onclick = async () => {
+    if (!confirm('เอาตำแหน่งนี้ออก?')) return;
+    const { error } = await sb.from('position_assignments').delete().eq('id', b.dataset.unassign);
+    if (error) return fail(error); toast('เอาตำแหน่งออกแล้ว'); pageUsers();
+  });
+  document.querySelectorAll('[data-susp]').forEach(b => b.onclick = async () => {
+    const to = b.dataset.st === 'suspended' ? 'active' : 'suspended';
+    if (to === 'suspended' && !confirm('ระงับบัญชีนี้? ผู้ใช้จะเห็นข้อมูลบริษัทไม่ได้จนกว่าจะคืนสิทธิ์')) return;
+    const { error } = await sb.from('memberships').update({ status: to }).eq('company_id', S.cid).eq('user_id', b.dataset.susp);
+    if (error) return fail(error); pageUsers();
+  });
+}
+
+function dlgAddMember(){
+  dialog('เพิ่มผู้ใช้', `
+    <div class="field"><label for="am-em">อีเมล (ที่ส่งคำเชิญจาก Supabase แล้ว)</label><input id="am-em" class="inp" type="email" required></div>
+    <div class="field"><label for="am-nm">ชื่อ-นามสกุล</label><input id="am-nm" class="inp"></div>`, 'เพิ่ม', async d => {
+      const { error } = await sb.rpc('add_member', { p_company: S.cid, p_email: $('#am-em', d).value.trim(), p_full_name: $('#am-nm', d).value.trim() || null });
+      if (error) { fail(error); return false; }
+      toast('เพิ่มแล้ว — ให้ตำแหน่งต่อได้เลย'); pageUsers();
+    });
+}
+
+function dlgAssign(m){
+  const have = new Set((m.positions || []).map(p => p.code));
+  const groups = {};
+  for (const p of S.catalog) { if (have.has(p.code)) continue; (groups[p.grp] = groups[p.grp] || []).push(p); }
+  const d = dialog(`ให้ตำแหน่ง · ${m.full_name || m.email}`, `
+    <div class="field"><label for="as-pos">ตำแหน่งตาม Permission Matrix V3</label>
+      <select id="as-pos" class="inp" required>${Object.entries(groups).map(([g, ps]) => `<optgroup label="${h(g)}">${ps.map(p => `<option value="${p.code}">${p.code} — ${h(p.title)}</option>`).join('')}</optgroup>`).join('')}</select></div>
+    <div id="as-perm" class="small" style="margin:6px 0 10px"></div>
+    <div class="field"><label for="as-bu">จำกัดเฉพาะ BU (เว้นว่าง = ทุก BU)</label><select id="as-bu" class="inp" multiple size="3">${S.bus.map(b => `<option value="${h(b.code)}">${h(b.code)} — ${h(b.name)}</option>`).join('')}</select></div>
+    <div id="as-doa" class="hidden">
+      ${S.isOwner ? `<label class="small" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="as-doak"> ยืนยันอำนาจอนุมัติ (DOA) สำหรับสิทธิ์ A*</label>
+      <div class="field"><label for="as-lim">วงเงินอนุมัติสูงสุด (บาท · เว้นว่าง = ไม่จำกัด)</label><input id="as-lim" class="inp mono" inputmode="decimal"></div>`
+      : '<div class="msg warn small">ตำแหน่งนี้มีสิทธิ์ A* — ต้องให้เจ้าของบริษัทยืนยัน DOA ก่อนจึงอนุมัติได้</div>'}
+    </div>`, 'ให้ตำแหน่ง', async dd => {
+      const code = $('#as-pos', dd).value;
+      const bu = [...$('#as-bu', dd).selectedOptions].map(o => o.value);
+      const doa = S.isOwner && $('#as-doak', dd)?.checked;
+      const lim = S.isOwner ? parseFloat(($('#as-lim', dd)?.value || '').replace(/,/g, '')) : NaN;
+      const { error } = await sb.from('position_assignments').insert({ company_id: S.cid, user_id: m.user_id, position_code: code,
+        bu_codes: bu.length ? bu : null, doa_confirmed: !!doa, doa_limit: doa && !isNaN(lim) ? lim : null, assigned_by: S.user.id });
+      if (error) { fail(error); return false; }
+      toast(`ให้ ${code} แล้ว`); pageUsers();
+    });
+  const show = () => {
+    const code = $('#as-pos', d).value;
+    const rows = S.permRows.filter(r => r.position_code === code && r.raw !== '—');
+    $('#as-perm', d).innerHTML = rows.map(r => `<span class="chip" style="margin:2px">${h((MODS.find(m => m[0] === r.module) || [,''])[1])}: ${h(r.raw)}</span>`).join('') || '<span class="faint">ไม่มีสิทธิ์ในโมดูลใด</span>';
+    $('#as-doa', d).classList.toggle('hidden', !rows.some(r => r.a));
+  };
+  $('#as-pos', d).onchange = show; show();
+}
+
+/* ---------- V3 catalog ---------- */
+function pageV3(){
+  const g = S.posGrp;
+  const grps = [['all','ทั้งหมด'],['EX','ผู้บริหาร'],['BN','Budget Node'],['OC','OC Node'],['BU','Business Unit'],['SY','ระบบ'],['AI','AI Agent']];
+  const rows = S.catalog.filter(p => g === 'all' || p.code.startsWith(g));
+  const cell = raw => { if (!raw || raw === '—') return '<span class="pm n">—</span>';
+    const cls = raw.includes('A*') ? 'a' : /Recommendation/.test(raw) ? 'v' : /[CEX]/.test(raw.replace(/\(.*?\)/g,'')) ? 'c' : raw.includes('R') ? 'r' : 'v';
+    return `<span class="pm ${cls}" title="${h(raw)}">${h(raw.replace('Recommendation only','AI').replace(/ \(.*\)/,'*'))}</span>`; };
+  $('#page').innerHTML = `<div class="ph"><div><h1>ตำแหน่งและสิทธิ์ (Permission Matrix V3)</h1><p class="mut small" style="margin:4px 0 0">${S.catalog.length} ตำแหน่ง × 14 โมดูล · * = มีขอบเขต (ชี้เพื่อดู) · AI = แนะนำเท่านั้น</p></div>
+    <div class="act"><div class="seg" role="group" aria-label="กลุ่มตำแหน่ง">${grps.map(([k,l]) => `<button data-g="${k}" aria-pressed="${g === k}">${l}</button>`).join('')}</div></div></div>
+    <div class="panel"><div class="tw"><table><thead><tr><th>รหัส</th><th>ตำแหน่ง</th>${MODS.map(m => `<th title="${h(m[1])}">${h(m[1].split(' ')[0])}</th>`).join('')}</tr></thead><tbody>
+    ${rows.map(p => `<tr><td class="mono">${h(p.code)}</td><td><b>${h(p.title)}</b><div class="small mut">${h(p.purpose || '')}</div></td>
+      ${MODS.map(([k]) => `<td>${cell((S.permRows.find(r => r.position_code === p.code && r.module === k) || {}).raw)}</td>`).join('')}</tr>`).join('')}
+    </tbody></table></div></div>`;
+  document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { S.posGrp = b.dataset.g; pageV3(); });
+}
+
+/* =====================================================================
+   start
+   ===================================================================== */
+sb.auth.onAuthStateChange((ev, session) => {
+  // เรียก route เฉพาะตอนสถานะล็อกอินเปลี่ยนจริง (กลับจากลิงก์อีเมล / ออกจากระบบ) ไม่ทำซ้ำตอนต่ออายุโทเคน
+  if (ev === 'SIGNED_OUT' && S.user) { S.user = null; setTimeout(viewLogin, 0); }
+  if (ev === 'SIGNED_IN' && session && (!S.user || S.user.id !== session.user.id)) setTimeout(route, 0);
+});
+route().catch(fail);
+</script>
+</body>
+</html>
