@@ -214,7 +214,6 @@ table.cards td .gates{justify-content:flex-end}
 .tw:has(table.cards){overflow:visible}
 .btn-out{display:inline-flex;align-items:center;gap:6px;color:var(--crit);border-color:color-mix(in srgb,var(--crit) 45%,var(--line))}
 .btn-out svg{width:16px;height:16px;flex:none}
-[data-voice] svg{width:18px;height:18px} [data-voice][aria-pressed="false"]{color:var(--faint)}
 .btn-out:hover{background:var(--crit);color:#fff;border-color:var(--crit)}
 .bu-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:18px}
 .bu-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;text-align:left;cursor:pointer;font:inherit;color:inherit;display:grid;gap:4px}
@@ -402,8 +401,6 @@ function errText(e){ return (e && (e.message || e.error_description || e.msg)) |
 function fail(e){ console.error(e); toast(errText(e), true); }
 
 const ICON = {
-  vol:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
-  mute:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>',
   dash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
   logout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>',
   logo:'<svg viewBox="0 0 1040 1083" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M961 649 L937 637 L922 632 L897 628 L876 628 L849 633 L830 640 L810 652 L796 666 L790 681 L790 694 L794 704 L804 714 L818 719 L834 718 L869 696 L881 693 L897 693 L911 697 L922 703 L936 716 L940 722 L947 741 L947 758 L944 769 L936 784 L921 799 L906 807 L891 811 L871 811 L849 805 L826 791 L661 635 L642 625 L623 620 L600 620 L579 626 L560 638 L541 659 L532 679 L529 699 L530 945 L533 961 L542 986 L559 1012 L576 1029 L588 1038 L619 1054 L636 1059 L656 1062 L672 1062 L697 1058 L719 1050 L737 1040 L764 1016 L775 1001 L784 984 L793 953 L793 923 L789 904 L775 871 L759 848 L735 824 L708 805 L677 792 L661 789 L650 789 L633 794 L621 805 L617 816 L619 833 L622 839 L633 849 L665 858 L690 872 L707 889 L718 908 L722 920 L722 946 L716 963 L704 979 L689 990 L671 996 L655 996 L639 991 L623 981 L610 966 L601 947 L598 929 L598 695 L604 686 L614 683 L630 693 L778 835 L799 851 L817 861 L847 872 L870 876 L900 876 L917 873 L935 867 L953 858 L973 844 L990 827 L999 815 L1010 794 L1018 767 L1019 744 L1017 728 L1010 706 L1003 692 L992 676 L977 661Z M73 653 L46 679 L37 692 L27 713 L22 731 L20 747 L21 766 L25 784 L29 795 L42 818 L53 832 L68 846 L99 865 L115 871 L138 876 L170 876 L196 871 L213 865 L241 850 L266 830 L413 690 L427 683 L435 685 L440 690 L443 698 L443 919 L440 945 L431 965 L418 980 L399 992 L384 996 L367 996 L352 991 L337 981 L326 968 L317 946 L316 929 L321 908 L332 889 L348 873 L360 865 L377 857 L402 851 L408 848 L417 839 L421 832 L422 813 L419 806 L408 795 L391 789 L363 792 L348 797 L328 807 L302 826 L284 844 L265 870 L255 890 L249 908 L246 924 L247 959 L257 989 L273 1014 L290 1031 L305 1042 L327 1053 L346 1059 L368 1062 L383 1062 L403 1059 L423 1053 L452 1038 L465 1028 L481 1012 L495 992 L503 975 L508 958 L511 935 L511 693 L507 675 L499 658 L481 638 L470 630 L455 623 L432 619 L412 621 L387 630 L370 642 L214 790 L190 805 L169 811 L148 811 L133 807 L118 799 L102 783 L96 772 L92 758 L92 741 L99 722 L117 703 L128 697 L142 693 L159 693 L170 696 L206 718 L228 718 L237 713 L245 705 L249 697 L250 679 L245 667 L232 653 L207 638 L186 631 L166 628 L142 628 L115 633 L96 640Z M24 482 L23 499 L27 525 L31 537 L44 561 L66 585 L77 593 L99 605 L121 612 L145 615 L166 614 L207 604 L226 595 L244 582 L254 570 L260 557 L260 541 L256 531 L244 519 L228 514 L208 518 L179 543 L165 549 L154 551 L139 550 L125 545 L108 531 L98 514 L95 503 L95 487 L100 471 L112 453 L125 442 L141 434 L154 431 L172 431 L191 436 L214 449 L342 573 L370 590 L391 596 L417 596 L435 591 L458 577 L474 560 L487 534 L490 519 L490 500 L487 486 L476 461 L464 443 L444 422 L376 358 L361 336 L356 324 L351 301 L352 222 L360 192 L375 163 L393 140 L413 122 L431 110 L461 97 L497 90 L531 89 L560 92 L587 99 L614 112 L638 130 L656 149 L672 173 L684 202 L689 228 L689 304 L686 319 L678 339 L665 358 L578 442 L565 461 L554 486 L551 501 L551 521 L554 535 L565 557 L581 575 L604 590 L625 596 L643 597 L660 594 L671 590 L700 571 L819 455 L829 447 L847 437 L869 431 L888 431 L900 434 L916 442 L930 454 L938 465 L945 483 L946 500 L942 516 L934 529 L919 543 L905 549 L894 551 L879 550 L860 542 L838 521 L828 516 L812 514 L797 519 L786 529 L782 536 L780 555 L788 573 L801 586 L813 594 L845 608 L875 614 L906 614 L939 606 L967 591 L990 570 L1008 542 L1017 511 L1017 482 L1010 455 L994 424 L973 400 L954 385 L926 371 L900 364 L863 362 L827 368 L811 374 L791 385 L768 403 L645 524 L638 528 L632 528 L624 521 L622 517 L622 506 L632 487 L721 401 L738 378 L750 354 L759 317 L759 218 L757 202 L746 162 L729 127 L706 96 L681 72 L649 50 L617 35 L582 25 L542 20 L502 20 L462 25 L429 34 L384 56 L357 76 L324 111 L307 137 L294 164 L287 185 L281 216 L281 318 L289 352 L300 375 L317 399 L386 464 L410 489 L419 507 L418 519 L412 526 L408 528 L401 528 L396 525 L271 402 L255 389 L226 372 L194 363 L170 362 L138 366 L107 376 L83 389 L56 413 L44 429 L32 452Z"/></svg>',
@@ -469,7 +466,7 @@ function viewLogin(note){
     const user = $('#un').value.trim(), password = $('#pw').value;
     if (!user) { msg('err', 'กรอกชื่อผู้ใช้'); return $('#un').focus(); }
     if (!password) { msg('err', 'กรอกรหัสผ่าน'); return $('#pw').focus(); }
-    const b = $('#b-login'); b.disabled = true; b.classList.add('busy'); msg('', ''); primeVoice();
+    const b = $('#b-login'); b.disabled = true; b.classList.add('busy'); msg('', '');
     const done = (t) => { b.disabled = false; b.classList.remove('busy'); msg('err', t); $('#pw').select(); };
     const { data: email, error: e1 } = await sb.rpc('login_email', { p_username: user });
     if (e1) return done('เชื่อมต่อระบบไม่ได้ ลองใหม่อีกครั้ง');
@@ -478,7 +475,6 @@ function viewLogin(note){
     const { error } = await sb.auth.signInWithPassword({ email, password });
     if (error) return done('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
     try { localStorage.setItem('sop.user', user) } catch(e){}
-    S.greetPending = true;
     route();
   };
 }
@@ -589,34 +585,6 @@ async function viewMfaChallenge(){
   };
 }
 
-/* voice greeting after a successful login (Web Speech API, no server, nothing recorded) */
-const voiceOn = () => { try { return localStorage.getItem('sop.voice') !== 'off'; } catch(e){ return true; } };
-function primeVoice(){ try { if (!voiceOn() || !window.speechSynthesis) return; speechSynthesis.getVoices(); const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } catch(e){} }
-function greetVoice(){
-  if (!voiceOn() || !window.speechSynthesis) return;
-  const hr = +new Intl.DateTimeFormat('en-GB', { timeZone:'Asia/Bangkok', hour:'numeric', hourCycle:'h23' }).format(new Date());
-  const part = hr < 5 ? 'สวัสดี' : hr < 12 ? 'สวัสดีตอนเช้า' : hr < 13 ? 'สวัสดีตอนกลางวัน' : hr < 17 ? 'สวัสดีตอนบ่าย' : hr < 19 ? 'สวัสดีตอนเย็น' : 'สวัสดีตอนค่ำ';
-  const full = (S.user?.user_metadata?.full_name || '').replace(/^(นางสาว|นาง|นาย|น\.ส\.|ดร\.|Mr\.?|Mrs\.?|Ms\.?)\s*/i, '').trim();
-  const first = /@/.test(full) ? '' : full.split(/\s+/)[0];
-  const day = new Date().toLocaleDateString('th-TH', { timeZone:'Asia/Bangkok', weekday:'long', day:'numeric', month:'long' });
-  const text = `${part} ${first ? 'คุณ' + first : ''} ยินดีต้อนรับเข้าสู่ Smart Office Platform วันนี้${day}`;
-  S.greetText = text;
-  const say = () => {
-    const vs = speechSynthesis.getVoices(), v = vs.find(x => /^th/i.test(x.lang) && /google|premium|enhanced/i.test(x.name)) || vs.find(x => /^th/i.test(x.lang));
-    const u = new SpeechSynthesisUtterance(text); u.lang = 'th-TH'; if (v) u.voice = v; u.rate = 1; u.pitch = 1;
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
-  };
-  if (speechSynthesis.getVoices().length) return say();
-  let done = false; const once = () => { if (done) return; done = true; speechSynthesis.onvoiceschanged = null; say(); };
-  speechSynthesis.onvoiceschanged = once; setTimeout(once, 700);
-}
-function toggleVoice(){
-  const on = !voiceOn(); try { localStorage.setItem('sop.voice', on ? 'on' : 'off'); } catch(e){}
-  document.querySelectorAll('[data-voice]').forEach(b => { b.setAttribute('aria-pressed', on); b.title = on ? 'เสียงทักทาย: เปิด (กดเพื่อปิด)' : 'เสียงทักทาย: ปิด (กดเพื่อเปิด)'; b.innerHTML = on ? ICON.vol : ICON.mute; });
-  toast(on ? 'เปิดเสียงทักทายแล้ว' : 'ปิดเสียงทักทายแล้ว'); if (on) greetVoice(); else window.speechSynthesis?.cancel();
-}
-const voiceBtn = () => `<button class="btn sm ghost" data-voice aria-pressed="${voiceOn()}" title="${voiceOn() ? 'เสียงทักทาย: เปิด (กดเพื่อปิด)' : 'เสียงทักทาย: ปิด (กดเพื่อเปิด)'}" aria-label="เสียงทักทาย">${voiceOn() ? ICON.vol : ICON.mute}</button>`;
-
 async function signOut(){ if (S.rt) { sb.removeChannel(S.rt); S.rt = S.rtCid = null; } await sb.auth.signOut(); S.cid = null; S.members = S.projects = S.people = S.thrIdx = null; viewLogin(); }
 
 async function loadCompanies(){
@@ -635,7 +603,6 @@ async function loadCompanies(){
   S.companies = active; S.cid = c.company_id; S.company = c; S.isOwner = c.role === 'owner';
   if (!(await securityGate())) return;
   await loadContext(); renderApp();
-  if (S.greetPending) { S.greetPending = false; greetVoice(); }
 }
 
 function viewNoAccess(){
@@ -718,14 +685,14 @@ function moreSheet(pages){
   d.innerHTML = `<div class="hd"><h3 style="margin:0">เมนู</h3><button class="btn sm ghost" style="margin-left:auto" data-x>ปิด</button></div>
     <div class="bd"><div class="sheet-grid">${pages.map(p => `<button class="sheet-it" data-page="${p.id}" ${S.page === p.id ? 'aria-current="page"' : ''}>${ICON[p.icon]}<span>${h(p.label)}</span></button>`).join('')}</div>
     <div class="sheet-acc"><div><b>${h(S.user.user_metadata?.full_name || S.user.email)}</b><div class="small mut">${S.isOwner ? 'เจ้าของ' : h(S.positions.join(', ') || '—')} · ${h(S.company.name_th)}</div></div>
-      ${voiceBtn()}<button class="btn sm" data-pw>เปลี่ยนรหัส</button><button class="btn sm btn-out" data-out>${ICON.logout}<span>ออกจากระบบ</span></button></div></div>`;
+      <button class="btn sm" data-pw>เปลี่ยนรหัส</button><button class="btn sm btn-out" data-out>${ICON.logout}<span>ออกจากระบบ</span></button></div></div>`;
   document.body.appendChild(d); d.showModal();
   d.addEventListener('close', () => d.remove());
   $('[data-x]', d).onclick = () => d.close();
   d.addEventListener('click', e => { if (e.target === d) d.close(); });
   d.querySelectorAll('[data-page]').forEach(b => b.onclick = () => { d.close(); goto(b.dataset.page); });
   $('[data-pw]', d).onclick = () => { d.close(); viewChangePw(false); };
-  $('[data-out]', d).onclick = () => { d.close(); signOut(); }; d.querySelectorAll('[data-voice]').forEach(b => b.onclick = toggleVoice);
+  $('[data-out]', d).onclick = () => { d.close(); signOut(); };
 }
 /* PC: "/" focuses the page's search box */
 document.addEventListener('keydown', e => {
@@ -767,7 +734,7 @@ function renderApp(){
         ${S.companies.length > 1 ? `<select class="inp" id="s-co" style="width:auto">${S.companies.map(c => `<option value="${c.company_id}" ${c.company_id === S.cid ? 'selected' : ''}>${h(c.name_th)}</option>`).join('')}</select>` : ''}
         <div class="who"><span class="small mut">${h(S.user.user_metadata?.full_name || S.user.email)}</span>
           ${S.isOwner ? '<span class="chip amber">เจ้าของ</span>' : S.positions.slice(0,3).map(c => `<span class="chip">${h(c)}</span>`).join('')}
-          ${voiceBtn()}<button class="btn sm ghost" id="b-pw">เปลี่ยนรหัส</button><button class="btn sm btn-out" id="b-out">${ICON.logout}<span>ออกจากระบบ</span></button></div>
+          <button class="btn sm ghost" id="b-pw">เปลี่ยนรหัส</button><button class="btn sm btn-out" id="b-out">${ICON.logout}<span>ออกจากระบบ</span></button></div>
       </header>
       <main class="page" id="page"></main>
     </div>
@@ -776,7 +743,7 @@ function renderApp(){
   </div>`;
   document.querySelectorAll('.nav,.tab[data-page]').forEach(b => b.onclick = () => { S.page = b.dataset.page; try{ localStorage.setItem('sop.page', S.page) }catch(e){}; $('#app').classList.remove('open'); renderApp(); });
   $('#b-more').onclick = () => moreSheet(more);
-  $('#b-out').onclick = signOut; document.querySelectorAll('.top [data-voice]').forEach(b => b.onclick = toggleVoice);
+  $('#b-out').onclick = signOut;
   $('#b-pw').onclick = () => viewChangePw(false);
   $('#b-menu').onclick = () => $('#app').classList.toggle('open');
   $('#app').addEventListener('click', e => { if (e.target.id === 'app') $('#app').classList.remove('open'); });
@@ -986,7 +953,7 @@ const GUAR_KIND = { bid:'หลักประกันซอง', contract:'ห
 const CAT_N = { '100':'วัสดุ / อุปกรณ์', '200':'ผู้รับเหมาช่วง', '300':'ค่าแรง', '400':'บุคลากร', '500':'การเงิน', '600':'ค่าใช้จ่ายอื่น', '700':'กำไร' };
 const PR_ST = { draft:['ร่าง',''], submitted:['รอตรวจ/อนุมัติ','gold'], reviewed:['ตรวจแล้ว รออนุมัติ','blue'], approved:['อนุมัติแล้ว','good'], rejected:['ไม่อนุมัติ','crit'], returned:['ตีกลับ','amber'], cancelled:['ยกเลิก',''], ordered:['ออก PO แล้ว','good'] };
 const PO_ST = { draft:['ร่าง',''], submitted:['รอตรวจ/อนุมัติ','gold'], reviewed:['ตรวจแล้ว รออนุมัติ','blue'], approved:['อนุมัติแล้ว','good'], rejected:['ไม่อนุมัติ','crit'], returned:['ตีกลับ','amber'], issued:['ส่งผู้ขายแล้ว','good'], received:['รับของแล้ว','good'], closed:['ปิด',''], cancelled:['ยกเลิก',''] };
-const DET_L = { contractNotice:'หนังสือแจ้งทำสัญญา', term:'ระยะสัญญา', evaluation:'เกณฑ์พิจารณา', keyQual:'คุณสมบัติสำคัญ', staffing:'กำลังคนตาม TOR', penalty:'ค่าปรับ', financing:'แหล่งเงินทุน', costNote:'หมายเหตุต้นทุน', subcontractor:'ผู้รับจ้างช่วง', consortium:'กิจการค้าร่วม', contract_quote:'ใบเสนอราคา / ต่อรอง', boq:'ใบแจ้งปริมาณงาน', kpi:'KPI', scopeNote:'งานปรับปรุงตามงวด', stations:'สถานี / พื้นที่', instNote:'หมายเหตุงวดงาน', vehicles:'รถ', egp:'เลข e-GP', docNo:'เลขที่เอกสาร', quoteNo:'เลขที่ใบเสนอราคา', bidValidityDays:'ยืนราคา (วัน)', deliveryDays:'ส่งมอบ (วัน)' };
+const DET_L = { invitation:'หนังสือเชิญชวน', submitNote:'การยื่น / เปิดซอง', localMaterials:'พัสดุผลิตในประเทศ', contact:'ผู้ประสานงานฝ่ายผู้ว่าจ้าง', openItems:'ข้อมูลที่ยังขาด', contractNotice:'หนังสือแจ้งทำสัญญา', term:'ระยะสัญญา', evaluation:'เกณฑ์พิจารณา', keyQual:'คุณสมบัติสำคัญ', staffing:'กำลังคนตาม TOR', penalty:'ค่าปรับ', financing:'แหล่งเงินทุน', costNote:'หมายเหตุต้นทุน', subcontractor:'ผู้รับจ้างช่วง', consortium:'กิจการค้าร่วม', contract_quote:'ใบเสนอราคา / ต่อรอง', boq:'ใบแจ้งปริมาณงาน', kpi:'KPI', scopeNote:'งานปรับปรุงตามงวด', stations:'สถานี / พื้นที่', instNote:'หมายเหตุงวดงาน', vehicles:'รถ', egp:'เลข e-GP', docNo:'เลขที่เอกสาร', quoteNo:'เลขที่ใบเสนอราคา', bidValidityDays:'ยืนราคา (วัน)', deliveryDays:'ส่งมอบ (วัน)' };
 const chip = (map, k) => { const s = map[k] || [k, '']; return `<span class="chip ${s[1]}">${h(s[0])}</span>`; };
 const daysTo = d => d ? Math.ceil((new Date(d + 'T23:59:59') - new Date()) / 86400000) : null;
 const dueChip = d => { const n = daysTo(d); if (n == null) return ''; return n < 0 ? `<span class="chip crit">เลยกำหนด ${-n} วัน</span>` : n <= 3 ? `<span class="chip crit">อีก ${n} วัน</span>` : n <= 14 ? `<span class="chip gold">อีก ${n} วัน</span>` : ''; };
