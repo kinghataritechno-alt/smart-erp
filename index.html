@@ -15,12 +15,13 @@
   --char:#383836; --char2:#454542; --char-ink:#EDECE8; --char-mut:#A9A8A2;
   --amber:#E5572B; --amber-soft:#FBE6DE; --budget:#2F5FD0; --budget-soft:#EAF0FC;
   --good:#14915C; --good-soft:#E3F4EA; --crit:#D63E2C; --crit-soft:#FDEAE6; --gold:#C98608; --gold-soft:#FFF4DA;
+  --pri:#383836; --pri-h:#454542; --pri-ink:#EDECE8; --accent-ink:#FFFFFF; --logo-bg:#383836;
   --r:10px; --sh:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
   --head:'Anuphan',system-ui,sans-serif; --body:'IBM Plex Sans Thai',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#100F0E; --surface:#1A1917; --surface2:#211F1D; --line:#34322F; --ink:#EDECE8; --mut:#B5B3AC; --faint:#7D7B75;
-  --char:#171513; --char2:#22201D; --amber:#F7A43A; --amber-soft:#3A2614; --budget:#7FA6FF; --budget-soft:#1A2338;
+  --char:#171513; --char2:#22201D; --pri:#EDECE8; --pri-h:#FFFFFF; --pri-ink:#1C1C1A; --accent-ink:#1C1C1A; --logo-bg:#2A2825; --amber:#F7A43A; --amber-soft:#3A2614; --budget:#7FA6FF; --budget-soft:#1A2338;
   --good:#4CC28A; --good-soft:#14281E; --crit:#FF7A6B; --crit-soft:#3A1A16; --gold:#F5B04A; --gold-soft:#33270F;
 }}
 *{box-sizing:border-box}
@@ -37,7 +38,7 @@ button,input,select{font:inherit;color:inherit}
 .gate{min-height:100%;display:grid;place-items:center;padding:24px 16px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);padding:28px;width:100%;max-width:420px}
 .brandmark{display:flex;align-items:center;gap:12px;margin-bottom:22px}
-.logo{width:42px;height:42px;border-radius:10px;background:var(--char);display:grid;place-items:center;flex:none}
+.logo{width:42px;height:42px;border-radius:10px;background:var(--logo-bg);border:1px solid var(--line);display:grid;place-items:center;flex:none}
 .logo svg{width:24px;height:24px}
 .brandtxt b{display:block;font-family:var(--head);font-size:17px;letter-spacing:.04em}
 .brandtxt b span{color:var(--amber)}
@@ -49,9 +50,9 @@ button,input,select{font:inherit;color:inherit}
 .inp.code{font-family:var(--mono);font-size:20px;letter-spacing:.3em;text-align:center}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:600;white-space:nowrap}
 .btn:hover{background:var(--surface2)}
-.btn.primary{background:var(--char);border-color:var(--char);color:var(--char-ink)}
-.btn.primary:hover{background:var(--char2)}
-.btn.accent{background:var(--amber);border-color:var(--amber);color:#fff}
+.btn.primary{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+.btn.primary:hover{background:var(--pri-h);border-color:var(--pri-h)}
+.btn.accent{background:var(--amber);border-color:var(--amber);color:var(--accent-ink)}
 .btn.sm{padding:5px 10px;font-size:13px}
 .btn.ghost{border-color:transparent;background:transparent}
 .btn.block{width:100%}
@@ -70,7 +71,7 @@ button,input,select{font:inherit;color:inherit}
 .side{background:var(--char);color:var(--char-ink);padding:18px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
 .side .brandmark{padding:0 6px;margin-bottom:18px}
 .side .brandtxt small{color:var(--char-mut)}
-.side .logo{background:var(--char2)}
+.side .logo{background:var(--char2);border-color:transparent}
 .nav{display:flex;align-items:center;gap:10px;border:0;background:none;color:var(--char-mut);padding:9px 12px;border-radius:8px;text-align:left;cursor:pointer;width:100%;font-weight:500}
 .nav:hover{background:var(--char2);color:var(--char-ink)}
 .nav[aria-current="page"]{background:var(--char2);color:#fff;box-shadow:inset 3px 0 0 var(--amber)}
@@ -97,6 +98,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}
 th{font-weight:600;color:var(--mut);font-size:12px;text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface2)}
 td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
 tr:last-child td{border-bottom:0}
+td.mono{white-space:nowrap}
 td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600;background:var(--surface2);border:1px solid var(--line);white-space:nowrap}
 .chip.amber{background:var(--amber-soft);border-color:transparent;color:var(--amber)}
@@ -182,50 +184,76 @@ const brand = (sub='3E — Enterprise Enablement Ecosystem') => `<div class="bra
 const root = () => document.getElementById('root');
 
 /* =====================================================================
-   1. auth flow: session → MFA → company → app
+   1. auth flow: ชื่อ-สกุล + รหัสผ่าน → บริษัท → (บัญชีเห็นเงิน/อนุมัติ: เปลี่ยนรหัสเริ่มต้น + MFA) → app
    ===================================================================== */
 async function route(){
   const { data:{ session } } = await sb.auth.getSession();
   S.session = session; S.user = session?.user || null;
   if (!session) return viewLogin();
-  const { data: aal, error } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (error) return fail(error);
-  if (aal.currentLevel === 'aal1' && aal.nextLevel === 'aal2') return viewMfaChallenge();
-  if (aal.nextLevel !== 'aal2') return viewMfaEnroll();          // ยังไม่ได้ตั้ง MFA → บังคับตั้ง
   return loadCompanies();
 }
 
 function viewLogin(note){
+  let last = ''; try { last = localStorage.getItem('sop.user') || '' } catch(e){}
   root().innerHTML = `<div class="gate"><div class="card">${brand('SmartTerminal · เข้าสู่ระบบ')}
     <h2>เข้าสู่ระบบ</h2>
-    <p class="mut small">ใช้อีเมลที่ได้รับเชิญ ระบบจะส่งลิงก์เข้าสู่ระบบไปที่อีเมล ไม่มีรหัสผ่าน</p>
+    <p class="mut small">ชื่อผู้ใช้ = ชื่อ-สกุลพนักงาน (ไม่ต้องใส่คำนำหน้า) · รหัสผ่านเริ่มต้น = erp ตามด้วยรหัสพนักงาน</p>
     ${note ? `<div class="msg ${note[0]}">${h(note[1])}</div>` : ''}
-    <form id="f-login">
-      <div class="field"><label for="em">อีเมล</label><input id="em" class="inp" type="email" autocomplete="email" required placeholder="name@company.com"></div>
-      <button class="btn primary block" id="b-login">ส่งลิงก์เข้าสู่ระบบ</button>
+    <form id="f-login" autocomplete="on">
+      <div class="field"><label for="un">ชื่อผู้ใช้</label><input id="un" class="inp" autocomplete="username" required placeholder="เช่น สมชาย ใจดี" value="${h(last)}"></div>
+      <div class="field"><label for="pw">รหัสผ่าน</label><input id="pw" class="inp" type="password" autocomplete="current-password" required placeholder="erp + รหัสพนักงาน"></div>
+      <button class="btn primary block" id="b-login">เข้าสู่ระบบ</button>
     </form>
-    <details style="margin-top:16px"><summary class="small mut" style="cursor:pointer">มีรหัส 6 หลักจากอีเมล</summary>
-      <form id="f-otp"><div class="field"><label for="otp">รหัสจากอีเมล</label><input id="otp" class="inp code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div>
-      <button class="btn block">ยืนยันรหัส</button></form>
-    </details>
+    <p class="small faint" style="margin:14px 0 0">ชื่อซ้ำกับคนอื่น ให้ใช้รหัสพนักงานเป็นชื่อผู้ใช้ · ลืมรหัสผ่าน แจ้งผู้ดูแลระบบให้รีเซ็ต</p>
   </div></div>`;
+  if (last) $('#pw').focus();
   $('#f-login').onsubmit = async ev => {
-    ev.preventDefault(); const b = $('#b-login'); b.disabled = true;
-    const email = $('#em').value.trim();
-    try { localStorage.setItem('sop.email', email) } catch(e){}
-    const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname } });
-    b.disabled = false;
-    if (error) return viewLogin(['err', /signups not allowed|not found|Signups/i.test(error.message) ? 'อีเมลนี้ยังไม่ได้รับเชิญ — ติดต่อผู้ดูแลระบบ' : error.message]);
-    viewLogin(['ok', `ส่งลิงก์ไปที่ ${email} แล้ว เปิดอีเมลบนเครื่องนี้แล้วกดลิงก์`]);
-  };
-  $('#f-otp').onsubmit = async ev => {
-    ev.preventDefault();
-    let email = ''; try { email = localStorage.getItem('sop.email') || '' } catch(e){}
-    email = email || $('#em').value.trim();
-    if (!email) return toast('กรอกอีเมลด้านบนก่อน', true);
-    const { error } = await sb.auth.verifyOtp({ email, token: $('#otp').value.trim(), type: 'email' });
-    if (error) return toast(error.message, true);
+    ev.preventDefault(); const b = $('#b-login'); b.disabled = true; b.textContent = 'กำลังเข้าสู่ระบบ…';
+    const user = $('#un').value.trim(), password = $('#pw').value;
+    const { data: email, error: e1 } = await sb.rpc('login_email', { p_username: user });
+    if (e1) { b.disabled = false; return viewLogin(['err', 'เชื่อมต่อระบบไม่ได้: ' + e1.message]); }
+    if (email === 'AMBIGUOUS') return viewLogin(['err', 'มีพนักงานชื่อนี้มากกว่า 1 คน — ใช้รหัสพนักงานเป็นชื่อผู้ใช้แทน']);
+    if (!email) return viewLogin(['err', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง']);
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) return viewLogin(['err', 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง']);
+    try { localStorage.setItem('sop.user', user) } catch(e){}
     route();
+  };
+}
+
+/* บัญชีที่เห็นเงิน/อนุมัติ: ต้องผ่านขั้นนี้ก่อน ฐานข้อมูลจึงยอมให้เห็นข้อมูล */
+async function securityGate(){
+  const { data: sec, error } = await sb.rpc('my_security', { p_company: S.cid });
+  if (error) { fail(error); return false; }
+  if (sec.ok) return true;
+  if (sec.default_password) { viewChangePw(true); return false; }
+  const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') viewMfaChallenge(); else viewMfaEnroll();
+  return false;
+}
+
+function viewChangePw(forced){
+  const html = `${brand(forced ? 'ความปลอดภัยของบัญชี' : 'เปลี่ยนรหัสผ่าน')}
+    <h2>${forced ? 'ตั้งรหัสผ่านใหม่ก่อนใช้งาน' : 'เปลี่ยนรหัสผ่าน'}</h2>
+    ${forced ? '<div class="msg warn small">ตำแหน่งของคุณเห็นข้อมูลเงินหรืออนุมัติได้ จึงใช้รหัสเริ่มต้น (admin หรือ erp + รหัสพนักงาน) ไม่ได้ ตั้งรหัสใหม่แล้วตั้งแอปยืนยันตัวตนต่อ</div>' : ''}
+    <form id="f-pw">
+      <div class="field"><label for="p1">รหัสผ่านใหม่</label><input id="p1" class="inp" type="password" autocomplete="new-password" required minlength="10"></div>
+      <div class="field"><label for="p2">พิมพ์ซ้ำ</label><input id="p2" class="inp" type="password" autocomplete="new-password" required></div>
+      <p class="small mut" style="margin:0 0 12px">อย่างน้อย 10 ตัว มีทั้งตัวอักษรและตัวเลข และต้องไม่ใช่ erp + รหัสพนักงาน</p>
+      <button class="btn primary block">บันทึกรหัสผ่าน</button>
+    </form>
+    <button class="btn ghost block small" id="b-x" style="margin-top:8px">${forced ? 'ออกจากระบบ' : 'ยกเลิก'}</button>`;
+  root().innerHTML = `<div class="gate"><div class="card">${html}</div></div>`;
+  $('#b-x').onclick = forced ? signOut : () => renderApp();
+  $('#f-pw').onsubmit = async ev => {
+    ev.preventDefault();
+    const p1 = $('#p1').value, p2 = $('#p2').value;
+    if (p1 !== p2) return toast('รหัสผ่านสองช่องไม่ตรงกัน', true);
+    if (p1.length < 10 || !/[A-Za-z]/.test(p1) || !/[0-9]/.test(p1)) return toast('รหัสผ่านต้องยาว 10 ตัวขึ้นไป มีทั้งตัวอักษรและตัวเลข', true);
+    if (/^erp/i.test(p1) && p1.length <= 14) return toast('ห้ามใช้รูปแบบ erp + รหัสพนักงาน', true);
+    const { error } = await sb.auth.updateUser({ password: p1 });
+    if (error) return toast(error.message, true);
+    toast('เปลี่ยนรหัสผ่านแล้ว'); route();
   };
 }
 
@@ -244,7 +272,7 @@ async function viewMfaEnroll(){
   const qr = data.totp.qr_code.startsWith('data:') ? data.totp.qr_code : 'data:image/svg+xml;utf8,' + encodeURIComponent(data.totp.qr_code);
   root().innerHTML = `<div class="gate"><div class="card">${brand('ยืนยันตัวตน 2 ชั้น')}
     <h2>ตั้งค่าแอปยืนยันตัวตน</h2>
-    <p class="small mut">ทุกบัญชีต้องใช้ 2 ชั้น สแกนด้วย Google Authenticator, Microsoft Authenticator หรือแอปที่รองรับ TOTP แล้วกรอกรหัส 6 หลัก</p>
+    <p class="small mut">บัญชีที่เห็นเงินหรืออนุมัติได้ต้องใช้ 2 ชั้น สแกนด้วย Google Authenticator, Microsoft Authenticator หรือแอปที่รองรับ TOTP แล้วกรอกรหัส 6 หลัก</p>
     <div class="qr"><img alt="QR สำหรับแอปยืนยันตัวตน" src="${qr}"></div>
     <details class="small"><summary class="mut" style="cursor:pointer">สแกนไม่ได้ — กรอกรหัสลับเอง</summary><div class="secret mono">${h(data.totp.secret)}</div></details>
     <form id="f-mfa"><div class="field"><label for="mc">รหัส 6 หลักจากแอป</label><input id="mc" class="inp code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required></div>
@@ -294,12 +322,13 @@ async function loadCompanies(){
   let pick = null; try { pick = localStorage.getItem('sop.cid') } catch(e){}
   const c = active.find(r => r.company_id === pick) || active[0];
   S.companies = active; S.cid = c.company_id; S.company = c; S.isOwner = c.role === 'owner';
+  if (!(await securityGate())) return;
   await loadContext(); renderApp();
 }
 
 function viewNoAccess(){
   root().innerHTML = `<div class="gate"><div class="card">${brand()}<h2>ยังไม่ได้เพิ่มเข้าบริษัท</h2>
-    <p class="mut">บัญชี ${h(S.user.email)} เข้าสู่ระบบได้แล้ว แต่ผู้ดูแลยังไม่ได้เพิ่มเข้าบริษัท แจ้งผู้ดูแลระบบให้กด "เพิ่มผู้ใช้" ด้วยอีเมลนี้</p>
+    <p class="mut">เข้าสู่ระบบได้แล้ว แต่บัญชีนี้ยังไม่ได้อยู่ในบริษัทหรือถูกระงับ แจ้งผู้ดูแลระบบ</p>
     <button class="btn block" id="b-re">ตรวจอีกครั้ง</button><button class="btn ghost block small" id="b-out" style="margin-top:8px">ออกจากระบบ</button></div></div>`;
   $('#b-re').onclick = loadCompanies; $('#b-out').onclick = signOut;
 }
@@ -315,7 +344,7 @@ function viewAccept(inv){
 function viewBootstrap(){
   root().innerHTML = `<div class="gate"><div class="card">${brand('ตั้งค่าครั้งแรก')}
     <h2>ตั้งบริษัทแรก</h2>
-    <div class="msg warn small">ทำได้ครั้งเดียว บัญชีที่กดปุ่มนี้ (${h(S.user.email)}) จะเป็น <b>เจ้าของบริษัท</b> ที่มีสิทธิ์ทุกโมดูลและเป็นคนยืนยัน DOA ของผู้อื่น</div>
+    <div class="msg warn small">ทำได้ครั้งเดียว บัญชีที่กดปุ่มนี้จะเป็น <b>เจ้าของบริษัท</b> ที่มีสิทธิ์ทุกโมดูลและเป็นคนยืนยัน DOA ของผู้อื่น · ขั้นต่อไปต้องตั้งแอปยืนยันตัวตน 2 ชั้น</div>
     <form id="f-bs">
       <div class="field"><label for="bn">ชื่อบริษัท (ไทย)</label><input id="bn" class="inp" required value="บริษัท สมาร์ท เทอร์มินอล คอร์ปอเรชั่น จำกัด"></div>
       <div class="field"><label for="be">ชื่อบริษัท (อังกฤษ)</label><input id="be" class="inp" value="Smart Terminal Corporation Co., Ltd."></div>
@@ -373,14 +402,15 @@ function renderApp(){
         <button class="btn sm ghost menu-btn" id="b-menu" aria-label="เปิดเมนู">${ICON.menu}</button>
         <span class="co">${h(S.company.name_th)}</span>
         ${S.companies.length > 1 ? `<select class="inp" id="s-co" style="width:auto">${S.companies.map(c => `<option value="${c.company_id}" ${c.company_id === S.cid ? 'selected' : ''}>${h(c.name_th)}</option>`).join('')}</select>` : ''}
-        <div class="who"><span class="small mut">${h(S.user.email)}</span>
+        <div class="who"><span class="small mut">${h(S.user.user_metadata?.full_name || S.user.email)}</span>
           ${S.isOwner ? '<span class="chip amber">เจ้าของ</span>' : S.positions.slice(0,3).map(c => `<span class="chip">${h(c)}</span>`).join('')}
-          <button class="btn sm" id="b-out">ออก</button></div>
+          <button class="btn sm ghost" id="b-pw">เปลี่ยนรหัส</button><button class="btn sm" id="b-out">ออก</button></div>
       </header>
       <main class="page" id="page"></main>
     </div></div>`;
   document.querySelectorAll('.nav').forEach(b => b.onclick = () => { S.page = b.dataset.page; try{ localStorage.setItem('sop.page', S.page) }catch(e){}; $('#app').classList.remove('open'); renderApp(); });
   $('#b-out').onclick = signOut;
+  $('#b-pw').onclick = () => viewChangePw(false);
   $('#b-menu').onclick = () => $('#app').classList.toggle('open');
   $('#app').addEventListener('click', e => { if (e.target.id === 'app') $('#app').classList.remove('open'); });
   const sc = $('#s-co'); if (sc) sc.onchange = async () => { S.cid = sc.value; try{ localStorage.setItem('sop.cid', S.cid) }catch(e){}; S.company = S.companies.find(c => c.company_id === S.cid); S.isOwner = S.company.role === 'owner'; S.members = S.projects = null; await loadContext(); renderApp(); };
@@ -406,7 +436,7 @@ async function pageHome(){
       ${MODS.map(([k,l]) => `<tr><td>${h(l)}</td><td>${letters(S.perms[k])}</td></tr>`).join('')}</tbody></table></div></div>
     ${!S.isOwner && !S.positions.length ? '<div class="msg warn">บัญชีนี้ยังไม่ได้รับตำแหน่งตาม Permission Matrix V3 จึงยังไม่เห็นข้อมูล — แจ้งผู้ดูแลระบบ</div>' : ''}`;
   const tasks = [sb.from('projects').select('id,result', { count:'exact' }).eq('company_id', S.cid)];
-  if (canSeeUsers()) tasks.push(sb.rpc('company_members', { p_company: S.cid }));
+  if (canSeeUsers()) tasks.push(sb.rpc('company_members2', { p_company: S.cid }));
   const [pr, mem] = await Promise.all(tasks);
   const win = (pr.data || []).filter(p => p.result === 'win').length, wait = (pr.data || []).filter(p => p.result === 'wait').length;
   $('#stats').innerHTML = `<div class="stat"><small>โครงการที่เห็นได้</small><b>${pr.count ?? 0}</b></div>
@@ -473,24 +503,44 @@ function dlgNewProject(){
 async function pageUsers(){
   const el = $('#page');
   el.innerHTML = `<div class="ph"><div><h1>ผู้ใช้และสิทธิ์</h1><p class="mut small" style="margin:4px 0 0">ผู้เสนอ ผู้ตรวจ ผู้อนุมัติต้องเป็นคนละคน · A* ใช้ได้เมื่อเจ้าของยืนยัน DOA แล้วเท่านั้น · บัญชี AI ได้เฉพาะ AI01–AI03 และอนุมัติไม่ได้</p></div>
-    <div class="act">${canAdmin() ? '<button class="btn accent" id="b-add">+ เพิ่มผู้ใช้</button>' : ''}</div></div>
-    <div class="msg info small">ขั้นตอนเพิ่มคน: ① Supabase → Authentication → Users → <b>Invite user</b> ด้วยอีเมลของเขา ② กด "เพิ่มผู้ใช้" ที่นี่ด้วยอีเมลเดียวกัน ③ ให้ตำแหน่ง ④ เขากดลิงก์ในอีเมล ตั้ง MFA แล้วกด "รับคำเชิญ"</div>
+    <div class="act" id="u-act">${canAdmin() ? '<button class="btn accent hidden" id="b-prov"></button><button class="btn" id="b-add">+ บัญชีอีเมล</button>' : ''}</div></div>
+    <div class="msg info small">ชื่อผู้ใช้ = ชื่อ-สกุลจากทะเบียนพนักงาน · รหัสผ่านเริ่มต้น = erp + รหัสพนักงาน · ตำแหน่งที่เห็นเงินหรืออนุมัติได้ (A*, HR/Payroll, การเงิน, SY01, เจ้าของ) ต้องเปลี่ยนรหัสและตั้งแอปยืนยันตัวตนก่อน ฐานข้อมูลจึงยอมให้เห็นข้อมูล</div>
     <div class="panel"><div class="tw" id="ut"><div class="empty">กำลังโหลด…</div></div></div>`;
   const ab = $('#b-add'); if (ab) ab.onclick = dlgAddMember;
-  const { data, error } = await sb.rpc('company_members', { p_company: S.cid });
+  if (canAdmin()) sb.rpc('staff_without_login', { p_company: S.cid }).then(({ data: n }) => {
+    const pb = $('#b-prov'); if (!pb || !n) return;
+    pb.textContent = `สร้างบัญชีจากทะเบียนพนักงาน (${n} คน)`; pb.classList.remove('hidden');
+    pb.onclick = async () => {
+      if (!confirm(`สร้างบัญชีให้พนักงาน ${n} คน? ชื่อผู้ใช้ = ชื่อ-สกุล รหัสผ่าน = erp + รหัสพนักงาน`)) return;
+      pb.disabled = true;
+      const { data: c, error } = await sb.rpc('provision_logins', { p_company: S.cid });
+      if (error) { pb.disabled = false; return fail(error); }
+      toast(`สร้างบัญชีแล้ว ${c} คน`); pageUsers();
+    };
+  });
+  const { data, error } = await sb.rpc('company_members2', { p_company: S.cid });
   if (error) return fail(error);
   S.members = data;
   const posTitle = c => (S.catalog.find(p => p.code === c) || {}).title || '';
-  $('#ut').innerHTML = `<table><thead><tr><th>ผู้ใช้</th><th>สถานะ</th><th>ตำแหน่ง (V3)</th><th>ล็อกอินล่าสุด</th>${canAdmin() ? '<th></th>' : ''}</tr></thead><tbody>
+  $('#ut').innerHTML = `<table><thead><tr><th>ชื่อผู้ใช้</th><th>รหัสพนักงาน</th><th>สถานะ</th><th>รหัสผ่าน</th><th>ตำแหน่ง (V3)</th><th>ล็อกอินล่าสุด</th>${canAdmin() ? '<th></th>' : ''}</tr></thead><tbody>
     ${data.map(m => `<tr>
-      <td><b>${h(m.full_name || '—')}</b><div class="small mut">${h(m.email)}</div></td>
+      <td><b>${h(m.full_name || '—')}</b>${m.email ? `<div class="small mut">${h(m.email)}</div>` : ''}</td>
+      <td class="mono">${h(m.employee_code || '—')}</td>
       <td>${m.role === 'owner' ? '<span class="chip amber">เจ้าของ</span>' : m.status === 'active' ? '<span class="chip good">ใช้งาน</span>' : m.status === 'invited' ? '<span class="chip gold">รอรับคำเชิญ</span>' : '<span class="chip crit">ระงับ</span>'}</td>
+      <td>${m.employee_code ? (m.default_password ? '<span class="chip">เริ่มต้น</span>' : '<span class="chip good">เปลี่ยนแล้ว</span>') : '<span class="small faint">—</span>'}</td>
       <td><div class="gates">${(m.positions || []).map(p => `<span class="chip ${p.active ? (p.doa ? 'amber' : 'blue') : ''}" title="${h(posTitle(p.code))}${p.doa ? ' · DOA ' + (p.limit ? money(p.limit) : 'ไม่จำกัดวงเงิน') : ''}">${h(p.code)}${p.doa ? ' A*' : ''}${S.isOwner ? ` <button aria-label="เอา ${h(p.code)} ออก" data-unassign="${p.id}">×</button>` : ''}</span>`).join('') || '<span class="small faint">—</span>'}</div></td>
       <td class="small">${m.last_sign_in ? new Date(m.last_sign_in).toLocaleString('th-TH', { dateStyle:'medium', timeStyle:'short' }) : '—'}</td>
       ${canAdmin() ? `<td style="white-space:nowrap">${m.role !== 'owner' ? `<button class="btn sm" data-assign="${m.user_id}">+ ตำแหน่ง</button>
+        ${m.employee_code && m.user_id !== S.user.id ? `<button class="btn sm ghost" data-reset="${m.user_id}">รีเซ็ตรหัส</button>` : ''}
         ${m.user_id !== S.user.id ? `<button class="btn sm ghost" data-susp="${m.user_id}" data-st="${m.status}">${m.status === 'suspended' ? 'คืนสิทธิ์' : 'ระงับ'}</button>` : ''}` : ''}</td>` : ''}
     </tr>`).join('')}</tbody></table>`;
   document.querySelectorAll('[data-assign]').forEach(b => b.onclick = () => dlgAssign(data.find(m => m.user_id === b.dataset.assign)));
+  document.querySelectorAll('[data-reset]').forEach(b => b.onclick = async () => {
+    const m = data.find(x => x.user_id === b.dataset.reset);
+    if (!confirm(`รีเซ็ตรหัสผ่านของ ${m.full_name} กลับเป็น erp + รหัสพนักงาน?`)) return;
+    const { error } = await sb.rpc('reset_login_password', { p_company: S.cid, p_user: m.user_id });
+    if (error) return fail(error); toast('รีเซ็ตแล้ว'); pageUsers();
+  });
   document.querySelectorAll('[data-unassign]').forEach(b => b.onclick = async () => {
     if (!confirm('เอาตำแหน่งนี้ออก?')) return;
     const { error } = await sb.from('position_assignments').delete().eq('id', b.dataset.unassign);
@@ -505,8 +555,8 @@ async function pageUsers(){
 }
 
 function dlgAddMember(){
-  dialog('เพิ่มผู้ใช้', `
-    <div class="field"><label for="am-em">อีเมล (ที่ส่งคำเชิญจาก Supabase แล้ว)</label><input id="am-em" class="inp" type="email" required></div>
+  dialog('เพิ่มบัญชีอีเมล (ผู้ที่ไม่อยู่ในทะเบียนพนักงาน)', `
+    <div class="field"><label for="am-em">อีเมล (สร้างบัญชีใน Supabase → Authentication → Users ก่อน)</label><input id="am-em" class="inp" type="email" required></div>
     <div class="field"><label for="am-nm">ชื่อ-นามสกุล</label><input id="am-nm" class="inp"></div>`, 'เพิ่ม', async d => {
       const { error } = await sb.rpc('add_member', { p_company: S.cid, p_email: $('#am-em', d).value.trim(), p_full_name: $('#am-nm', d).value.trim() || null });
       if (error) { fail(error); return false; }
