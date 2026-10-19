@@ -228,6 +228,34 @@ table.cards td .gates{justify-content:flex-end}
 .bu-kv i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:1px}
 .bu-v{font-size:12px;font-weight:600}
 @media (max-width:760px){ .bu-cards{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-left:12px;margin:0 -12px 14px;padding:0 12px 4px} .bu-card{flex:0 0 66%;scroll-snap-align:start} }
+.fy-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.fy-t{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface2)}
+.fy-t.tot{background:var(--surface);border-style:dashed}
+.fy-t small{display:block;color:var(--mut);font-size:12px}
+.fy-t b{font-family:var(--head);font-size:28px;font-variant-numeric:tabular-nums;line-height:1.25}
+.fy-t .u{font-size:13px;color:var(--mut);margin-left:4px}
+.fy-s{font-size:12px;color:var(--mut);margin-top:3px}
+.fy-s i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.cal-p{grid-column:1/-1}
+.cal-nav{margin-left:auto;display:flex;align-items:center;gap:6px}
+.cal-nav b{font-size:14px;min-width:78px;text-align:center}
+.cal-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.cal-k{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;background:var(--surface);padding:8px 12px;text-align:left;font:inherit;color:inherit;cursor:pointer;display:grid}
+.cal-k:disabled{opacity:.5;cursor:default}
+.cal-k small{font-size:11.5px;color:var(--mut)} .cal-k b{font-size:17px} .cal-k span{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+.cal{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px}
+.cal-m{border:1px solid var(--line);border-top:4px solid var(--c,var(--line));border-radius:9px;background:var(--surface);padding:7px 4px 6px;font:inherit;color:inherit;cursor:pointer;display:grid;gap:2px;justify-items:center;min-width:0}
+.cal-m.none{background:var(--surface2);color:var(--faint)}
+.cal-m.now{box-shadow:0 0 0 2px var(--ink) inset}
+.cal-m[aria-pressed="true"]{background:var(--amber-soft);border-color:var(--amber)}
+.cal-m .mn{font-size:11.5px;color:var(--mut);white-space:nowrap}
+.cal-m b{font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cal-m .dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;min-height:7px}
+.cal-m .dots i{width:6px;height:6px;border-radius:50%}
+.cal-row{display:grid;grid-template-columns:10px 110px 56px 110px minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:13px}
+.cal-row i{width:8px;height:8px;border-radius:50%}
+@media (min-width:761px) and (max-width:1199px){ .cal{grid-template-columns:repeat(6,minmax(0,1fr))} }
+@media (max-width:760px){ .cal{grid-template-columns:repeat(4,minmax(0,1fr))} .cal-sum{grid-template-columns:1fr} .cal-k{grid-template-columns:1fr auto auto;gap:8px;align-items:baseline} .cal-row{grid-template-columns:10px minmax(0,1fr) auto auto} .cal-row span:nth-child(4),.cal-row span:nth-child(5){display:none} .fy-t b{font-size:24px} }
 /* dashboards */
 .seg button svg{width:15px;height:15px;vertical-align:-2px;margin-right:4px}
 .seg.sm button{padding:3px 9px;font-size:12px}
@@ -1354,6 +1382,47 @@ const asOf = () => `<p class="small faint" style="text-align:right;margin:4px 0 
 
 /* ---------- projects dashboard ---------- */
 const STAGE = { lead:'หาโอกาส', bid:'ยื่นซอง', contract:'ทำสัญญา', execution:'ดำเนินงาน', closed:'ปิดโครงการ' };
+const mb = v => (Number(v || 0) / 1e6).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/* installment calendar: 12 months of a fiscal year (Oct–Sep), one cell per month */
+const fyOf = d => d.getMonth() >= 9 ? d.getFullYear() + 544 : d.getFullYear() + 543;
+function instCalendar(box, inst, code){
+  if (!box) return;
+  const today = new Date().toISOString().slice(0, 10), curYM = today.slice(0, 7), N = v => Number(v || 0);
+  const st = x => x.status === 'paid' ? 'paid' : x.status === 'billed' ? 'billed' : (x.due_date && x.due_date < today) ? 'over' : x.status === 'accepted' ? 'acc' : 'plan';
+  const RANK = { over:5, billed:4, acc:3, plan:2, paid:1 }, LBL = { over:'เลยกำหนด ยังไม่วางบิล', billed:'วางบิลแล้ว รอรับเงิน', acc:'ตรวจรับแล้ว', plan:'ตามแผน', paid:'รับเงินแล้ว' };
+  const COL = { over:'var(--crit)', billed:'var(--gold)', acc:'#8E6CB8', plan:'var(--budget)', paid:'var(--good)' };
+  const fys = [...new Set(inst.filter(x => x.due_date).map(x => fyOf(new Date(x.due_date + 'T00:00:00'))))].sort();
+  S.calFY ||= fyOf(new Date());
+  const fy = S.calFY, ce = fy - 543;
+  const months = Array.from({ length: 12 }, (_, i) => { const d = new Date(ce - 1, 9 + i, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; });
+  const inM = ym => inst.filter(x => (x.due_date || '').startsWith(ym)).sort((a, b) => a.due_date < b.due_date ? -1 : 1);
+  if (!S.calSel || !months.includes(S.calSel)) S.calSel = months.includes(curYM) ? curYM : months.find(m => inM(m).length) || months[0];
+  const over = inst.filter(x => st(x) === 'over'), billed = inst.filter(x => st(x) === 'billed');
+  const soon = new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10), next = inst.filter(x => ['plan','acc'].includes(st(x)) && x.due_date >= today && x.due_date <= soon);
+  const sumA = a => a.reduce((s, x) => s + N(x.amount), 0);
+  const sel = inM(S.calSel);
+  box.innerHTML = `<div class="hd"><h3>ปฏิทินงวดเงิน</h3><span class="small mut">หน่วย: ล้านบาท · คลิกเดือนเพื่อดูรายการ</span>
+      <div class="cal-nav"><button class="btn sm ghost" data-cf="-1" aria-label="ปีงบก่อนหน้า" ${fy <= (fys[0] || fy) ? 'disabled' : ''}>‹</button><b>ปีงบ ${fy}</b><button class="btn sm ghost" data-cf="1" aria-label="ปีงบถัดไป" ${fy >= (fys[fys.length - 1] || fy) ? 'disabled' : ''}>›</button></div></div>
+    <div class="bd">
+      <div class="cal-sum">
+        <button class="cal-k" data-jump="over" ${over.length ? '' : 'disabled'} style="--c:var(--crit)"><small>เลยกำหนด ยังไม่วางบิล</small><b>${over.length} งวด</b><span>${mb(sumA(over))} ลบ.</span></button>
+        <button class="cal-k" data-jump="billed" ${billed.length ? '' : 'disabled'} style="--c:var(--gold)"><small>วางบิลแล้ว รอรับเงิน</small><b>${billed.length} งวด</b><span>${mb(sumA(billed))} ลบ.</span></button>
+        <button class="cal-k" data-jump="next" ${next.length ? '' : 'disabled'} style="--c:var(--budget)"><small>ถึงกำหนดใน 60 วัน</small><b>${next.length} งวด</b><span>${mb(sumA(next))} ลบ.</span></button>
+      </div>
+      <div class="cal">${months.map(ym => { const a = inM(ym), worst = a.map(st).sort((x, y) => RANK[y] - RANK[x])[0];
+        return `<button class="cal-m${ym === curYM ? ' now' : ''}${a.length ? '' : ' none'}" data-ym="${ym}" aria-pressed="${ym === S.calSel}" style="${worst ? `--c:${COL[worst]}` : ''}" title="${a.map(x => `${code(x.project_id)} งวด ${x.no}: ${LBL[st(x)]}`).join('\n')}">
+          <span class="mn">${monLabel(ym)}</span><b>${a.length ? mb(sumA(a)) : '–'}</b>
+          <span class="dots">${a.map(x => `<i style="background:${COL[st(x)]}"></i>`).join('')}</span></button>`; }).join('')}</div>
+      <div class="lgd">${Object.keys(COL).map(k => `<span style="--c:${COL[k]}">${LBL[k]}</span>`).join('')}</div>
+      <div class="cal-list">${sel.length ? `<div class="small mut" style="margin:12px 0 6px"><b>${monLabel(S.calSel)}</b> · ${sel.length} งวด · ${money(sumA(sel))} บาท</div>
+        ${sel.map(x => `<div class="cal-row"><i style="background:${COL[st(x)]}"></i><span class="mono">${h(code(x.project_id))}</span><span>งวด ${x.no}</span><span class="mut">${thDate(x.due_date)}</span><span class="small" style="color:${COL[st(x)]}">${LBL[st(x)]}</span><b class="num">${money(x.amount)}</b></div>`).join('')}`
+        : `<div class="small faint" style="margin-top:12px">${monLabel(S.calSel)} ไม่มีงวดเงิน</div>`}</div>
+    </div>`;
+  box.querySelectorAll('[data-ym]').forEach(b => b.onclick = () => { S.calSel = b.dataset.ym; instCalendar(box, inst, code); });
+  box.querySelectorAll('[data-cf]').forEach(b => b.onclick = () => { S.calFY = fy + Number(b.dataset.cf); S.calSel = null; instCalendar(box, inst, code); });
+  box.querySelectorAll('[data-jump]').forEach(b => b.onclick = () => { const a = { over, billed, next }[b.dataset.jump].sort((x, y) => x.due_date < y.due_date ? -1 : 1); if (!a.length) return;
+    const d = new Date(a[0].due_date + 'T00:00:00'); S.calFY = fyOf(d); S.calSel = a[0].due_date.slice(0, 7); instCalendar(box, inst, code); });
+}
 async function dashProj(){
   const el = $('#page');
   el.innerHTML = dashHead('โครงการ', 'ภาพรวมโครงการ ผลการประมูล มูลค่า งบ และงวดเงิน', 'proj', 'รายการโครงการ', can('contract','c') ? '<button class="btn accent" id="b-new">+ เปิดโครงการ</button>' : '') + '<div id="dsh"><div class="empty">กำลังโหลด…</div></div>';
@@ -1382,6 +1451,12 @@ async function dashProj(){
   const byBUc = Object.fromEntries(countBy(ps, p => p.business_units?.code || '—'));
   const bySector = countBy(ps, p => p.clients?.sector || 'ไม่ระบุ');
   const byFY = sumBy(ps, p => String(p.fiscal_year || '—'), p => N(p.win_price || p.bid_price || p.ref_price)).sort((a, b) => a[0] < b[0] ? -1 : 1);
+  const fyTiles = byFY.map(([fy, v]) => { const a = ps.filter(p => String(p.fiscal_year || '—') === fy), w = a.filter(p => p.result === 'win'), wt = a.filter(p => p.result === 'wait');
+      return `<div class="fy-t"><small>ปีงบ ${h(fy)}</small><b>${mb(v)}</b><span class="u">ลบ.</span>
+        <div class="fy-s">${a.length} โครงการ</div>
+        <div class="fy-s"><i style="background:var(--good)"></i>ได้งาน ${w.length} · ${mb(w.reduce((s, p) => s + N(p.win_price), 0))} ลบ.</div>
+        ${wt.length ? `<div class="fy-s"><i style="background:var(--gold)"></i>รอผล ${wt.length} · ${mb(wt.reduce((s, p) => s + N(p.bid_price || p.ref_price), 0))} ลบ.</div>` : ''}</div>`; }).join('')
+    + (byFY.length > 1 ? `<div class="fy-t tot"><small>รวมทุกปีงบ</small><b>${mb(byFY.reduce((a, x) => a + x[1], 0))}</b><span class="u">ลบ.</span><div class="fy-s">${ps.length} โครงการ</div></div>` : '');
   $('#dsh').innerHTML = `
     <div class="stats">
       ${stat('โครงการทั้งหมด', cnt(ps.length), `ชนะ ${win.length} · รอผล ${wait.length} · แพ้ ${lose.length}`)}
@@ -1400,8 +1475,8 @@ async function dashProj(){
       ${pnl('ตามขั้นตอน', donut(countBy(ps, p => STAGE[p.stage] || p.stage || 'ไม่ระบุ'), { sub:'โครงการ', colors:[...PAL].reverse() }))}
       ${pnl('ตามประเภทลูกค้า', donut(bySector, { sub:'โครงการ', colors:PAL.slice(1) }))}
       ${pnl('มูลค่าตาม BU', hbars(byBU.map(([k, v]) => ({ label:k, v, sub:`${byBUc[k]} โครงการ` })), { click:true }), { note:'คลิกเพื่อดูรายการ' })}
-      ${pnl('มูลค่าตามปีงบ', colChart(byFY.map(([k, v]) => ({ label:k, segs:[v] }))))}
-      ${pnl('งวดเงินถึงกำหนด (60 วัน)', due.length ? `<div class="tw"><table><thead><tr><th>โครงการ</th><th>งวด</th><th>กำหนด</th><th class="num">ยอด</th></tr></thead><tbody>${due.map(x => `<tr><td class="mono">${h(code(x.project_id))}</td><td>${x.no}</td><td style="${x.due_date < today ? 'color:var(--crit)' : ''}">${thDate(x.due_date)}</td><td class="num">${money(x.amount)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">ไม่มีงวดถึงกำหนด</div>')}
+      ${pnl('มูลค่าตามปีงบ', `<div class="fy-tiles">${fyTiles}</div>`, { cls:'w2', note:'หน่วย: ล้านบาท (ลบ.)' })}
+      <div class="panel cal-p" id="cal"></div>
     </div>
     ${pnl('สรุปรายโครงการ', `<div class="tw"><table><thead><tr><th>โครงการ</th><th>ผล / ขั้นตอน</th><th class="num">ราคากลาง</th><th class="num">ราคาที่ได้</th><th class="num">งบต้นทุน</th><th class="num">กำไรตามแผน</th><th>ใช้งบ</th><th>รับเงินงวด</th><th>Gate</th></tr></thead><tbody>
       ${per.map(x => { const r = RESULT[x.p.result] || [x.p.result || '—', '']; return `<tr class="clk" data-pid="${x.p.id}"><td><b class="mono">${h(x.p.code)}</b><div class="small mut" style="max-width:260px;white-space:normal">${h(x.p.name)}</div></td>
@@ -1412,6 +1487,7 @@ async function dashProj(){
         <td>${x.it ? `<div class="ps-mini"><i style="width:${x.ip / x.it * 100}%;background:var(--good)"></i></div><div class="small faint">${pctOf(x.ip, x.it)}</div>` : '<span class="faint">—</span>'}</td>
         <td>${gateStrip(x.gs)}</td></tr>`; }).join('')}</tbody></table></div>`, { cls:'mt' })}
     ${asOf()}`;
+  instCalendar($('#cal'), inst, code);
   document.querySelectorAll('#dsh [data-hb]').forEach(r => r.onclick = () => { S.pjBU = r.dataset.hb === '—' ? '' : r.dataset.hb; S.dv.proj = 'list'; pageProjects(); });
   document.querySelectorAll('#dsh [data-pid]').forEach(t => t.onclick = () => { S.dv.projFrom = 'dash'; goto('projd', { pid: t.dataset.pid }); });
 }
