@@ -293,6 +293,14 @@ table.cards td .gates{justify-content:flex-end}
 .ai-hint{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--budget-soft);border:1px solid color-mix(in srgb,var(--budget) 35%,var(--line));border-radius:var(--r);padding:10px 14px;margin:-4px 0 16px;font-size:13.5px}
 .ai-hint svg{width:20px;height:20px;flex:none;color:var(--budget)} .ai-hint.hi{background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 35%,var(--line))} .ai-hint.hi svg{color:var(--crit)}
 .ai-hint span{flex:1;min-width:0} .ai-hint .go{flex:none;font-weight:700;color:var(--budget)} .ai-hint.hi .go{color:var(--crit)}
+.hr-pipe{grid-template-columns:repeat(5,minmax(0,1fr))} @media (max-width:760px){.hr-pipe{grid-template-columns:1fr 1fr}}
+.hr-cards{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))} .bu-card:disabled{cursor:default}
+.pb-cat{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:10px 0}
+.pb-h{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:4px}
+.pb-t{width:100%} .pb-t td{padding:5px 4px;border-bottom:1px solid var(--line)} .pb-t tr:last-child td{border:0}
+.pb-r{display:inline-flex;align-items:center;margin-left:4px;cursor:pointer} .pb-r input{position:absolute;opacity:0;pointer-events:none}
+.pb-r span{min-width:30px;padding:3px 8px;border:1px solid var(--line);border-radius:7px;text-align:center;font-size:12.5px;font-weight:600}
+.pb-r input:checked+span{background:var(--pri);color:var(--pri-ink);border-color:var(--pri)} .pb-r input:focus-visible+span{outline:2px solid var(--budget)}
 /* dashboards */
 .seg button svg{width:15px;height:15px;vertical-align:-2px;margin-right:4px}
 .seg.sm button{padding:3px 9px;font-size:12px}
@@ -466,6 +474,7 @@ function errText(e){ return (e && (e.message || e.error_description || e.msg)) |
 function fail(e){ console.error(e); toast(errText(e), true); }
 
 const ICON = {
+  form:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>',
   sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
   moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
   tauto:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>',
@@ -795,6 +804,7 @@ const PAGES = [
   { id:'asset', label:'ทรัพย์สินองค์กร', short:'ทรัพย์สิน',      icon:'box',   show: () => S.isOwner || can('warehouse') },
   { id:'fin',   label:'บัญชีการเงิน', short:'การเงิน',         icon:'coin',  show: () => S.isOwner || can('finance') },
   { id:'staff', label:'ทะเบียนพนักงาน', short:'พนักงาน',         icon:'id',    show: () => S.isOwner || can('hr') },
+  { id:'hrf',   label:'งานบุคคล (HR)', short:'งานบุคคล',        icon:'form',  show: () => S.isOwner || can('hr') },
   { id:'pay',   label:'เงินเดือน (Payroll)', short:'เงินเดือน',     icon:'pay',   show: canPay },
   { id:'thr',   label:'กระทู้', short:'กระทู้', tab:1,                 icon:'chat',  show: () => true },
   { id:'users', label:'ผู้ใช้และสิทธิ์', short:'ผู้ใช้',        icon:'users', show: canSeeUsers },
@@ -839,7 +849,7 @@ function renderApp(){
   $('#app').addEventListener('click', e => { if (e.target.id === 'app') $('#app').classList.remove('open'); });
   const sc = $('#s-co'); if (sc) sc.onchange = async () => { S.cid = sc.value; try{ localStorage.setItem('sop.cid', S.cid) }catch(e){}; S.company = S.companies.find(c => c.company_id === S.cid); S.isOwner = S.company.role === 'owner'; S.members = S.projects = S.people = S.thrIdx = null; await loadContext(); renderApp(); };
   ensureRealtime(); refreshThreadBadge();
-  Promise.resolve(({ home: pageHome, proj: pageProjects, projd: pageProjectDetail, proc: pageProc, ven: pageVendors, asset: pageAssets, fin: pageFin, ai: pageAI, staff: pageStaff, pay: pagePayroll, thr: pageThreads, users: pageUsers, v3: pageV3 })[S.page]()).then(() => aiHint(S.page)).catch(() => {});
+  Promise.resolve(({ home: pageHome, proj: pageProjects, projd: pageProjectDetail, proc: pageProc, ven: pageVendors, asset: pageAssets, fin: pageFin, ai: pageAI, hrf: pageHRF, staff: pageStaff, pay: pagePayroll, thr: pageThreads, users: pageUsers, v3: pageV3 })[S.page]()).then(() => aiHint(S.page)).catch(() => {});
   refreshAIBadge();
 }
 
@@ -1044,7 +1054,7 @@ const GUAR_KIND = { bid:'หลักประกันซอง', contract:'ห
 const CAT_N = { '100':'วัสดุ / อุปกรณ์', '200':'ผู้รับเหมาช่วง', '300':'ค่าแรง', '400':'บุคลากร', '500':'การเงิน', '600':'ค่าใช้จ่ายอื่น', '700':'กำไร' };
 const PR_ST = { draft:['ร่าง',''], submitted:['รอตรวจ/อนุมัติ','gold'], reviewed:['ตรวจแล้ว รออนุมัติ','blue'], approved:['อนุมัติแล้ว','good'], rejected:['ไม่อนุมัติ','crit'], returned:['ตีกลับ','amber'], cancelled:['ยกเลิก',''], ordered:['ออก PO แล้ว','good'] };
 const PO_ST = { draft:['ร่าง',''], submitted:['รอตรวจ/อนุมัติ','gold'], reviewed:['ตรวจแล้ว รออนุมัติ','blue'], approved:['อนุมัติแล้ว','good'], rejected:['ไม่อนุมัติ','crit'], returned:['ตีกลับ','amber'], issued:['ส่งผู้ขายแล้ว','good'], received:['รับของแล้ว','good'], closed:['ปิด',''], cancelled:['ยกเลิก',''] };
-const DET_L = { invitation:'หนังสือเชิญชวน', submitNote:'การยื่น / เปิดซอง', localMaterials:'พัสดุผลิตในประเทศ', contact:'ผู้ประสานงานฝ่ายผู้ว่าจ้าง', openItems:'ข้อมูลที่ยังขาด', contractNotice:'หนังสือแจ้งทำสัญญา', term:'ระยะสัญญา', evaluation:'เกณฑ์พิจารณา', keyQual:'คุณสมบัติสำคัญ', staffing:'กำลังคนตาม TOR', penalty:'ค่าปรับ', financing:'แหล่งเงินทุน', costNote:'หมายเหตุต้นทุน', subcontractor:'ผู้รับจ้างช่วง', consortium:'กิจการค้าร่วม', contract_quote:'ใบเสนอราคา / ต่อรอง', boq:'ใบแจ้งปริมาณงาน', kpi:'KPI', scopeNote:'งานปรับปรุงตามงวด', stations:'สถานี / พื้นที่', instNote:'หมายเหตุงวดงาน', vehicles:'รถ', egp:'เลข e-GP', docNo:'เลขที่เอกสาร', quoteNo:'เลขที่ใบเสนอราคา', bidValidityDays:'ยืนราคา (วัน)', deliveryDays:'ส่งมอบ (วัน)' };
+const DET_L = { source:'ที่มาข้อมูล', invitation:'หนังสือเชิญชวน', submitNote:'การยื่น / เปิดซอง', localMaterials:'พัสดุผลิตในประเทศ', contact:'ผู้ประสานงานฝ่ายผู้ว่าจ้าง', openItems:'ข้อมูลที่ยังขาด', contractNotice:'หนังสือแจ้งทำสัญญา', term:'ระยะสัญญา', evaluation:'เกณฑ์พิจารณา', keyQual:'คุณสมบัติสำคัญ', staffing:'กำลังคนตาม TOR', penalty:'ค่าปรับ', financing:'แหล่งเงินทุน', costNote:'หมายเหตุต้นทุน', subcontractor:'ผู้รับจ้างช่วง', consortium:'กิจการค้าร่วม', contract_quote:'ใบเสนอราคา / ต่อรอง', boq:'ใบแจ้งปริมาณงาน', kpi:'KPI', scopeNote:'งานปรับปรุงตามงวด', stations:'สถานี / พื้นที่', instNote:'หมายเหตุงวดงาน', vehicles:'รถ', egp:'เลข e-GP', docNo:'เลขที่เอกสาร', quoteNo:'เลขที่ใบเสนอราคา', bidValidityDays:'ยืนราคา (วัน)', deliveryDays:'ส่งมอบ (วัน)' };
 const chip = (map, k) => { const s = map[k] || [k, '']; return `<span class="chip ${s[1]}">${h(s[0])}</span>`; };
 const daysTo = d => d ? Math.ceil((new Date(d + 'T23:59:59') - new Date()) / 86400000) : null;
 const dueChip = d => { const n = daysTo(d); if (n == null) return ''; return n < 0 ? `<span class="chip crit">เลยกำหนด ${-n} วัน</span>` : n <= 3 ? `<span class="chip crit">อีก ${n} วัน</span>` : n <= 14 ? `<span class="chip gold">อีก ${n} วัน</span>` : ''; };
@@ -2592,7 +2602,7 @@ async function dlgPayment(pre = {}, after){
 /* ---------- AI checks: rules live in DB view public.data_issues (RLS-filtered per user) ---------- */
 const AI_MOD = { procurement:'จัดซื้อ', budget:'งบประมาณ', contract:'สัญญา / งวดเงิน', gate:'Gate', vendor:'ผู้ขาย', hr:'บุคคล / เงินเดือน', asset:'ทรัพย์สิน', finance:'การเงิน' };
 const AI_SEV = { high:['สำคัญ','crit'], med:['ควรแก้','gold'], low:['แจ้งให้ทราบ',''] };
-const PAGE_MODS = { proj:['budget','contract','gate'], proc:['procurement'], ven:['vendor'], asset:['asset'], fin:['finance','contract'], staff:['hr'], pay:['hr'] };
+const PAGE_MODS = { hrf:['hr'], proj:['budget','contract','gate'], proc:['procurement'], ven:['vendor'], asset:['asset'], fin:['finance','contract'], staff:['hr'], pay:['hr'] };
 async function loadIssues(force){
   if (!force && S.issues && Date.now() - S.issuesAt < 60e3 && S.issuesCid === S.cid) return S.issues;
   const { data, error } = await sb.from('data_issues').select('*').eq('company_id', S.cid);
@@ -2650,6 +2660,720 @@ async function pageAI(){
   document.querySelectorAll('#ai-cards [data-am]').forEach(b => b.onclick = () => { S.aiMod = b.dataset.am; pageAI(); });
   $('#ai-sev').onchange = e => { S.aiSev = e.target.value; pageAI(); };
   document.querySelectorAll('#ai-b [data-ix]').forEach(r => r.onclick = () => openIssue(list[+r.dataset.ix]));
+}
+
+/* ---------- งานบุคคล: HR forms FM-HR-01-01…09 as workflows (V3 module "hr") ---------- */
+const HRF = {
+  'FM-HR-01-01': { short:'ขออัตรากำลัง', name:'แบบใบขออัตรากำลัง', ready:true },
+  'FM-HR-01-02': { short:'ใบสมัครงาน', name:'แบบฟอร์มการสมัครงาน', ready:true },
+  'FM-HR-01-03': { short:'ประเมินสัมภาษณ์', name:'แบบประเมินการสัมภาษณ์ผู้สมัครงาน', ready:true },
+  'FM-HR-01-04': { short:'สัญญาจ้าง', name:'หนังสือสัญญาจ้างพนักงาน', ready:true, pay:true },
+  'FM-HR-01-05': { short:'ประเมินทดลองงาน', name:'แบบประเมินการทดลองงาน', ready:true },
+  'FM-HR-01-06': { short:'ประเมินต่อสัญญา', name:'แบบประเมินการต่อสัญญาจ้าง' },
+  'FM-HR-01-07': { short:'ขอปรับรายได้', name:'แบบคำขอปรับรายได้พนักงาน' },
+  'FM-HR-01-08': { short:'โอนย้าย', name:'แบบใบโอนย้าย' },
+  'FM-HR-01-09': { short:'ใบลาออก', name:'แบบฟอร์มใบลาออก', ready:true }
+};
+const HR_ST = { draft:['ร่าง',''], submitted:['รอพิจารณา','gold'], reviewed:['ตรวจแล้ว รออนุมัติ','blue'], approved:['อนุมัติแล้ว','good'], rejected:['ไม่อนุมัติ','crit'], returned:['ตีกลับ','amber'], done:['เสร็จสิ้น',''], cancelled:['ยกเลิก',''] };
+/* probation criteria — copied from FM-HR-01-05 (rev 00, 15/07/2568) */
+const PB = {
+  probation45: { days:45, title:'แบบประเมินการทดลองงาน 45 วัน', pages:4, branchLabel:'ความรู้ด้านวิศวกรรมศาสตร์ สาขา', branches:['เครื่องกล','ไฟฟ้า','อิเล็กทรอนิกส์','โยธา','สิ่งแวดล้อม','อุตสาหการ','อื่น ๆ'],
+    test:{ title:'ความเข้าใจในระบบวิศวกรรม (ทำข้อสอบ) · ไม่นับรวมคะแนน', items:['ระบบวิศวกรรมไฟฟ้าและระบบสื่อสาร','ระบบปรับอากาศและระบบระบายอากาศ','ระบบประปาและระบบสุขาภิบาล','ระบบรักษาความปลอดภัย ภายในและภายนอกอาคาร','ระบบวิศวกรรมดับเพลิง ภายในและภายนอกอาคาร'] },
+    cats:[
+      { t:'1. ด้านความประพฤติ (เจ้าหน้าที่งานบุคคลลงคะแนน)', max:15, scale:5, items:['การแต่งกาย ถูกต้องตามกฎระเบียบของบริษัท','การตรงต่อเวลา วินัยในการทำงาน มาสาย','การตรงต่อเวลา วินัยในการทำงาน การขาด ลา'] },
+      { t:'2. การวางแผนงานเพื่อให้เป็นไปตามเป้าหมาย', max:24, scale:3, labels:['ตามแผน','ทำจริง','ยังไม่ทำ'], items:['การจัดทำแผนการบำรุงรักษาเชิงป้องกัน (PM)','การจัดทำแผนการซ่อมแซมเมื่อเกิดความเสียหาย (CM)','การวางแผนงบประมาณเกี่ยวกับอุปกรณ์ใช้สอย หรือ อะไหล่ล่วงหน้า','การวางแผนรับมือเกี่ยวกับปัญหาและอุปสรรคที่อาจเกิดขึ้น','การจัดตารางให้แก่พนักงานในความดูแลเพื่อไม่ให้เกิดปัญหาด้านกำลังพล','การวางแผนเพื่อจัดทำรายงานและติดตามผล','การวางแผนเพื่อรับมือกรณีฉุกเฉิน','การวางแผนเกี่ยวกับพลังงาน'] },
+      { t:'3. การปฏิบัติงานตามแผน', max:27, scale:3, items:['สามารถปฏิบัติงานตามแผนการบำรุงรักษาเชิงป้องกัน (PM)','การติดตามงานซ่อม (CM)','ความสม่ำเสมอในการตรวจสอบระบบภายในอาคาร','เครื่องมือ และ อะไหล่เพียงพอต่อการปฏิบัติงาน','ความสามารถในการจัดการตามลำดับความสำคัญ','การสื่อสาร ประสานงานกับผู้รับเหมา ผู้ว่าจ้าง และ เพื่อนร่วมงาน','เมื่อเกิดเหตุฉุกเฉินสามารถรับมือตามแผนที่กำหนด','สามารถกำกับ ดูแล และให้การบริการแก่ผู้รับเหมาภายนอก','สามารถจัดทำ รายงานปัญหา และ อุปสรรค พร้อมวิธีแก้ไข'] },
+      { t:'4. ด้านความรับผิดชอบ', max:21, scale:3, items:['ความใส่ใจในการดูแลระบบประจำวัน','ความรับผิดชอบต่อระบบที่ได้รับมอบหมาย','การรายงานปัญหาและติดตามแก้ไข','การตอบสนองเมื่อเกิดเหตุฉุกเฉิน','การทำงานร่วมกับผู้อื่นในการรับผิดชอบระบบร่วมกัน','การรวบรวมข้อมูลเพื่อจัดทำรายงานและสรุปผลเพื่อใช้ในการนำเสนอผู้ว่าจ้าง','การรักษามาตรฐานและความปลอดภัยของระบบ'] },
+      { t:'5. ด้านภาวะผู้นำ', max:18, scale:3, items:['การสั่งการและวางแผนงาน','การควบคุมคุณภาพงานทีมช่าง','การรับฟังและแก้ปัญหาในทีม','การจัดการความขัดแย้ง เป็นธรรม รับฟังความทั้งสองข้าง','มีภาวะผู้นำในการพิจารณาความผิดของพนักงานอย่างเป็นกลาง และดำเนินการตามกระบวนการอย่างเหมาะสม','สามารถแก้ไขปัญหาเฉพาะหน้าภายใต้แรงกดดัน กล้าตัดสินใจ และเป็นที่พึ่งให้แก่ผู้ใต้บังคับบัญชา'] }],
+    grade: t => t >= 65 ? ['pass','ผ่านการทดลองงาน'] : t >= 46 ? ['retry','รอการประเมินอีกครั้ง'] : ['fail','ไม่ผ่านการทดลองงาน'],
+    rule:'ต่ำกว่า 46 ไม่ผ่าน · 46–64 รอประเมินอีกครั้ง · 65–105 ผ่าน' },
+  probation80: { days:80, title:'แบบประเมินการทดลองงาน 80 วัน', pages:3, branchLabel:'สาขาองค์ความรู้ด้านงานช่าง', branches:['ไฟฟ้า','เครื่องกล','โสตทัศนูปกรณ์','ก่อสร้าง / โยธา','สุขาภิบาล','ช่างเทคนิคทั่วไป'],
+    cats:[
+      { t:'1. ด้านความประพฤติ (เจ้าหน้าที่งานบุคคลลงคะแนน)', max:15, scale:5, items:['การแต่งกาย ถูกต้องตามกฎระเบียบของบริษัท','การตรงต่อเวลา วินัยในการทำงาน เรื่อง มาสาย','การตรงต่อเวลา วินัยในการทำงาน เรื่อง การลางาน ขาดงาน'] },
+      { t:'2. ด้านความสามารถในงาน', max:27, scale:3, items:['ความถูกต้องและผิดพลาดในการปฏิบัติงาน','ระยะเวลาในการส่งงาน (3 = ก่อนกำหนด · 2 = ทันเวลา · 1 = ล่าช้า)','การประยุกต์ใช้ความรู้และความสามารถในการทำงาน มีความคิดริเริ่มในการปรับปรุงงาน','ความสามารถในการวิเคราะห์และแก้ไขปัญหา ตัดสินใจอย่างมีเหตุผลและถูกต้อง','ความสามารถในการเรียนรู้งานที่ได้รับมอบหมาย','มนุษย์สัมพันธ์กับเพื่อนร่วมงาน การให้ความร่วมมือ','ความสามารถในการทำงานเป็นทีม','ความปลอดภัยในการทำงาน (ไม่เกิดความเสียหายแก่ทรัพย์สินและอุบัติเหตุ)','การทำงานภายใต้แรงกดดัน หรือสถานการณ์ที่ไม่คาดคิด'] },
+      { t:'3. องค์ความรู้ในการทำงาน', max:12, scale:3, items:['ความรู้เกี่ยวกับเครื่องมือและอุปกรณ์ที่ใช้ในงาน','ความเข้าใจในการอ่านแผนผัง / อ่านแผนงาน','ความรู้เกี่ยวกับความปลอดภัยในการทำงาน','การประยุกต์ใช้ความรู้และทักษะการแก้ปัญหา'] },
+      { t:'4. ความรู้และความเข้าใจเกี่ยวกับกระบวนการในการทำงาน', max:18, scale:3, items:['การวางแผนงานก่อนเริ่มทำงาน','การเลือกใช้เครื่องมือและวัสดุให้เหมาะสม','ขั้นตอนการทำงานที่ถูกต้องตามมาตรฐาน','ความปลอดภัยในการทำงาน','การตรวจสอบและแก้ไขงานหลังทำเสร็จ','การบำรุงรักษาเครื่องมือและสถานที่ทำงาน'] },
+      { t:'5. ด้านความรับผิดชอบ', max:18, scale:3, items:['ความตั้งใจและความรับผิดชอบในงาน','สามารถหาทางแก้ไขปัญหาที่เกิดขึ้นได้','ความสามารถในการวางแผนการทำงาน (3 = ก่อนกำหนด · 2 = ทันเวลา · 1 = ล่าช้า)','ความพยายามอุตสาหะในการทำงาน','การดูแลรักษาเครื่องมือ/อุปกรณ์','ความน่าเชื่อถือและน่าไว้วางใจ วาจา การสื่อสาร ความซื่อสัตย์'] }],
+    grade: t => t >= 61 ? ['pass','ผ่านการทดลองงาน'] : ['fail','ไม่ผ่านการทดลองงาน'],
+    rule:'ต่ำกว่า 61 ไม่ผ่าน · 61–90 ผ่าน' }
+};
+const pbVariantFor = s => /วิศวกร|หัวหน้า|ผู้จัดการ|ผู้ควบคุม|supervisor|engineer|manager/i.test(s?.position || '') ? 'probation45' : 'probation80';
+const addD = (d, n) => { const x = new Date(d + 'T00:00:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+async function hrStaff(){
+  if (S.hrStaff && S.hrStaffCid === S.cid) return S.hrStaff;
+  const { data } = await sb.from('staff').select('id,employee_code,prefix,full_name,nickname,position,site,dept,project_id,start_date,end_date,status,user_id').eq('company_id', S.cid).order('employee_code');
+  S.hrStaff = data || []; S.hrStaffCid = S.cid; return S.hrStaff;
+}
+const staffLabel = s => s ? `${s.employee_code} ${s.full_name}` : '';
+/* ---------- HR-REC-02: Position Master · JD/JS · Question Bank · Recruitment Case · Offer · LINE · Onboarding ---------- */
+const RC_ST = { screen:['คัดกรอง','gold'], interview:['สัมภาษณ์','blue'], offer:['ข้อเสนอจ้าง','amber'], contract:['สัญญาจ้าง','amber'], onboarding:['Onboarding','blue'], closed:['ปิดเคส','good'], cancelled:['ยกเลิก',''] };
+const OF_ST = { draft:['ร่าง',''], submitted:['รออนุมัติ','gold'], reviewed:['ตรวจแล้ว','blue'], approved:['อนุมัติแล้ว รอส่ง','good'], returned:['ตีกลับ','amber'], rejected:['ไม่อนุมัติ','crit'], sent:['ส่งแล้ว รอตอบ','blue'], accepted:['ผู้สมัครตอบรับ','good'], declined:['ผู้สมัครไม่ตกลง','crit'], withdrawn:['ถอนข้อเสนอ',''], expired:['หมดอายุ',''] };
+const POS_ST = { DRAFT:['ร่าง','gold'], SIMULATED:['จำลอง',''], VERIFIED_ACTUAL:['ตรวจยืนยันแล้ว','blue'], APPROVED_ACTUAL:['อนุมัติแล้ว','good'], RETIRED:['ยกเลิก',''] };
+const POS_GRP = { MGT:'ผู้บริหารสายงาน', PMO:'บริหาร/ประสานงานโครงการ', ENG:'วิศวกร', TEC:'ช่างเทคนิค', FAC:'บริการอาคาร', QHS:'คุณภาพ/ความปลอดภัย', SUP:'สนับสนุนสำนักงาน', INT:'ฝึกงาน' };
+const ONB_ST = { open:['ค้าง','gold'], done:['เสร็จ','good'], na:['ไม่เกี่ยว',''] };
+async function hrPositions(force){
+  if (!force && S.hrPos && S.hrPosCid === S.cid) return S.hrPos;
+  const { data } = await sb.from('hr_positions').select('*').eq('company_id', S.cid).order('code');
+  S.hrPos = data || []; S.hrPosCid = S.cid; return S.hrPos;
+}
+const posOf = title => { const t = (title || '').trim(); return (S.hrPos || []).find(p => p.title === t || p.staff_title === t) || null; };
+async function hrContent(){
+  if (S.hrContent !== undefined) return S.hrContent;
+  try { const r = await fetch('hr-content.json', { cache:'no-cache' }); if (!r.ok) throw new Error(r.status); S.hrContent = await r.json(); }
+  catch(e){ S.hrContent = null; }
+  return S.hrContent;
+}
+const noContent = () => '<div class="msg warn">ยังไม่พบไฟล์ <b>hr-content.json</b> บนเว็บ (JD/JS · Question Bank · แม่แบบ LINE) — อัปไฟล์นี้ขึ้น repo ไว้ข้าง index.html</div>';
+/* tiny markdown renderer for JD/JS (headings, tables, lists, bold, quotes) */
+function mdLite(md){
+  const inl = t => h(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>');
+  const L = (md || '').split('\n'), out = []; let i = 0;
+  while (i < L.length) {
+    const l = L[i];
+    if (/^\|/.test(l)) { const rows = []; while (i < L.length && /^\|/.test(L[i])) { if (!/^\|\s*-/.test(L[i])) rows.push(L[i].replace(/^\||\|$/g, '').split('|').map(c => c.trim())); i++; }
+      out.push(`<div class="tw"><table>${rows.map((r, k) => `<tr>${r.map(c => k ? `<td class="small">${inl(c)}</td>` : `<th>${inl(c)}</th>`).join('')}</tr>`).join('')}</table></div>`); continue; }
+    if (/^#{2} /.test(l)) out.push(`<h3 style="margin:6px 0 8px">${inl(l.slice(3))}</h3>`);
+    else if (/^#{3,4} /.test(l)) out.push(`<h4 style="margin:14px 0 6px;font-family:var(--head)">${inl(l.replace(/^#+ /, ''))}</h4>`);
+    else if (/^\s*[-*] /.test(l)) { const it = []; while (i < L.length && /^\s*[-*] /.test(L[i])) it.push(L[i++].replace(/^\s*[-*] /, '')); out.push(`<ul style="margin:4px 0 8px;padding-left:20px">${it.map(x => `<li>${inl(x)}</li>`).join('')}</ul>`); continue; }
+    else if (/^\s*\d+\. /.test(l)) { const it = []; while (i < L.length && /^\s*\d+\. /.test(L[i])) it.push(L[i++].replace(/^\s*\d+\. /, '')); out.push(`<ol style="margin:4px 0 8px;padding-left:22px">${it.map(x => `<li>${inl(x)}</li>`).join('')}</ol>`); continue; }
+    else if (/^> /.test(l)) out.push(`<div class="msg warn small" style="margin:6px 0">${inl(l.slice(2))}</div>`);
+    else if (/^-{3,}$/.test(l.trim())) out.push('<hr style="border:0;border-top:1px solid var(--line)">');
+    else if (l.trim()) out.push(`<p style="margin:4px 0">${inl(l)}</p>`);
+    i++;
+  }
+  return out.join('');
+}
+const hrTabs = () => `<div class="seg" role="group" aria-label="ส่วนงานบุคคล">${[['docs','เอกสาร HR'],['cases','เคสสรรหา'],['pos','ตำแหน่ง & JD/JS']].map(([k, l]) => `<button data-hrtab="${k}" aria-pressed="${(S.hrTab || 'docs') === k}">${l}</button>`).join('')}</div>`;
+const bindHrTabs = () => document.querySelectorAll('[data-hrtab]').forEach(b => b.onclick = () => { S.hrTab = b.dataset.hrtab; pageHRF(); });
+
+/* ===== Question Bank card (interviewer scores 0–5 — the Agent never decides) ===== */
+function qbSummary(items, sc){
+  const H = items.filter(q => q.c[0] === 'H' && sc[q.c] != null), Sx = items.filter(q => q.c[0] === 'S' && sc[q.c] != null);
+  const avg = a => a.length ? a.reduce((t, q) => t + Number(sc[q.c]), 0) / a.length : null;
+  const aH = avg(H), aS = avg(Sx), tot = aH == null && aS == null ? null : (aH ?? aS) * 0.6 + (aS ?? aH) * 0.4;
+  const red = items.filter(q => q.s && sc[q.c] != null && Number(sc[q.c]) <= 1).map(q => q.c);
+  const conv = tot == null ? null : tot >= 4 ? 5 : tot >= 2.5 ? 3 : 1;
+  return { asked:H.length + Sx.length, hard:H.length, soft:Sx.length, avgH:aH, avgS:aS, total:tot, conv, red };
+}
+async function dlgQB(doc, prev, onSave, readonly){
+  const C = await hrContent(); if (!C) return toast('ยังไม่มีไฟล์ hr-content.json บนเว็บ', true);
+  const items = C.qb[doc] || []; const sc = { ...(prev?.scores || {}) }, notes = { ...(prev?.notes || {}) };
+  const row = q => `<details class="pb-cat" style="margin:6px 0"><summary style="display:flex;gap:8px;align-items:center;cursor:pointer"><b class="mono" style="min-width:34px">${q.c}</b><span style="flex:1">${h(q.t)}${q.s ? ' <span class="chip crit">ความปลอดภัย</span>' : ''}</span>
+      <select class="inp" data-qs="${q.c}" style="width:auto;min-height:32px;padding:2px 8px" ${readonly ? 'disabled' : ''} onclick="event.stopPropagation()"><option value="">ไม่ถาม</option>${[0,1,2,3,4,5].map(n => `<option ${sc[q.c] == n && sc[q.c] !== '' && sc[q.c] != null ? 'selected' : ''}>${n}</option>`).join('')}</select></summary>
+    <div class="small" style="margin-top:6px"><p style="margin:2px 0"><b>คำถาม:</b> ${h(q.q)}</p><p style="margin:2px 0" class="mut"><b>วัด:</b> ${h(q.m)}</p>
+      <b>แนวคำตอบที่ดี</b><ul style="margin:2px 0 4px;padding-left:18px">${q.g.map(x => `<li>${h(x)}</li>`).join('')}</ul>
+      <div class="msg ok small" style="margin:4px 0"><b>5:</b> ${h(q.r5)}</div><div class="msg warn small" style="margin:4px 0"><b>3:</b> ${h(q.r3)}</div><div class="msg err small" style="margin:4px 0"><b>0–1:</b> ${h(q.r1)}</div>
+      ${q.w ? `<p class="small" style="color:var(--crit);margin:2px 0"><b>สัญญาณเตือน:</b> ${h(q.w)}</p>` : ''}
+      <input class="inp" data-qn="${q.c}" placeholder="บันทึกสั้นของผู้สัมภาษณ์" value="${h(notes[q.c] || '')}" ${readonly ? 'disabled' : ''}></div></details>`;
+  const d = dialog(`การ์ดสัมภาษณ์ · ${doc}`, `<p class="small mut" style="margin:0 0 6px">เลือกถาม Hard 8–10 ข้อ + Soft 6–8 ข้อ · ข้อ "ความปลอดภัย" ถามทุกครั้ง · <b>ผู้สัมภาษณ์เป็นผู้ให้คะแนนและตัดสิน — Agent ไม่ตัดสินรับหรือปฏิเสธ</b></p>
+    <div class="msg info" id="qb-sum"></div>
+    <h4 style="margin:10px 0 4px">Hard Skill</h4>${items.filter(q => q.c[0] === 'H').map(row).join('')}
+    <h4 style="margin:14px 0 4px">Soft Skill</h4>${items.filter(q => q.c[0] === 'S').map(row).join('')}`, readonly ? 'ปิด' : 'ใช้คะแนนนี้', async dd => {
+      if (readonly) return true;
+      const s = qbSummary(items, sc); if (!s.asked) { toast('ยังไม่ได้ให้คะแนนข้อใด', true); return false; }
+      dd.querySelectorAll('[data-qn]').forEach(x => { if (x.value.trim()) notes[x.dataset.qn] = x.value.trim(); else delete notes[x.dataset.qn]; });
+      onSave && onSave({ doc, scores:sc, notes, ...s, at:new Date().toISOString(), by:S.user.user_metadata?.full_name || '' });
+    });
+  d.style.width = 'min(860px,calc(100% - 32px))';
+  if (readonly) d.querySelector('button[value=cancel]')?.remove();
+  const upd = () => { const s = qbSummary(items, sc); const f = v => v == null ? '—' : v.toFixed(2);
+    $('#qb-sum', d).innerHTML = `ถาม ${s.asked} ข้อ (Hard ${s.hard} · Soft ${s.soft}) · เฉลี่ย Hard <b>${f(s.avgH)}</b> · Soft <b>${f(s.avgS)}</b> · รวม (H×0.6 + S×0.4) <b>${f(s.total)}</b>${s.conv ? ` → FM-HR-01-03 หมวดความรู้/ประสบการณ์ = <b>${s.conv}</b>` : ''}${s.red.length ? `<br><b style="color:var(--crit)">ข้อความปลอดภัยได้ 0–1: ${s.red.join(', ')} — ผู้สัมภาษณ์หลักพิจารณาไม่ผ่าน</b>` : ''}`;
+    $('#qb-sum', d).className = 'msg ' + (s.red.length ? 'err' : 'info'); };
+  d.addEventListener('change', e => { const k = e.target.dataset?.qs; if (!k) return; if (e.target.value === '') delete sc[k]; else sc[k] = +e.target.value; upd(); });
+  upd();
+}
+
+/* ===== Positions & JD/JS ===== */
+async function pageHRPos(){
+  const el = $('#page');
+  el.innerHTML = `<div class="ph"><div><h1>งานบุคคล · ตำแหน่ง & JD/JS</h1><p class="mut small" style="margin:4px 0 0">Position Master ST-HR-[กลุ่ม]-[ลำดับ] จากทะเบียนพนักงานจริง · JD/JS ทุกตำแหน่ง · การ์ดคำถามสัมภาษณ์ · สถานะ DRAFT จนกว่าหัวหน้าสายงานตรวจและผู้บริหารอนุมัติ</p></div><div class="act">${hrTabs()}</div></div><div id="hr-b"><div class="empty">กำลังโหลด…</div></div>`;
+  bindHrTabs();
+  const [P, C, ST] = await Promise.all([hrPositions(true), hrContent(), sb.from('staff').select('position_code,status').eq('company_id', S.cid).in('status', ['active','intern'])]);
+  const n = countBy(ST.data || [], s => s.position_code || '—'), cnt0 = Object.fromEntries(n), grp = S.hrPosGrp || '';
+  const list = P.filter(p => !grp || p.grp === grp), canE = S.isOwner || can('hr','e');
+  const ver = P.filter(p => ['VERIFIED_ACTUAL','APPROVED_ACTUAL'].includes(p.status)).length, qbN = P.filter(p => p.qb_doc).length;
+  const people = (ST.data || []).length, mapped = (ST.data || []).filter(s => s.position_code).length;
+  $('#hr-b').innerHTML = `${C ? '' : noContent()}
+    <div class="stats">${stat('ตำแหน่ง', cnt(P.length), `${P.filter(p => !cnt0[p.code]).length} ตำแหน่งยังไม่มีคน`)}${stat('JD/JS ร่างแล้ว', `${C ? P.filter(p => C.jd[p.code]).length : '—'}/${P.length}`, 'DRAFT')}${stat('ตรวจยืนยัน / อนุมัติ', `${ver}/${P.length}`, 'ต้องให้หัวหน้าสายงานตรวจ', ver ? '' : 'gold')}${stat('พนักงานผูกรหัสตำแหน่ง', `${cnt(mapped)}/${cnt(people)}`, `การ์ดคำถาม ${qbN} ตำแหน่ง`)}</div>
+    <div class="bu-cards">${[['', 'ทุกกลุ่ม', P.length], ...Object.entries(POS_GRP).map(([k, l]) => [k, l, P.filter(p => p.grp === k).length])].map(([k, l, c]) => `<button class="bu-card" data-pg="${k}" aria-pressed="${grp === k}"><div class="bu-top"><b>${k || 'ALL'}</b><span class="bu-n">${c}</span></div><div class="bu-nm">${h(l)}</div><div class="bu-v">${cnt(k ? P.filter(p => p.grp === k).reduce((a, p) => a + (cnt0[p.code] || 0), 0) : people)} คน</div></button>`).join('')}</div>
+    <div class="panel"><div class="tw"><table><thead><tr><th>รหัส</th><th>ตำแหน่ง</th><th>คน</th><th>รายงานต่อ</th><th>V3</th><th>JD/JS</th><th>การ์ดคำถาม</th><th>สถานะ</th></tr></thead><tbody>
+      ${list.map(p => `<tr class="clk" data-pos="${p.code}"><td class="mono small">${p.code}</td><td><b>${h(p.title)}</b>${p.note ? `<div class="small" style="color:var(--gold)">${h(p.note)}</div>` : ''}</td><td class="num">${cnt(cnt0[p.code] || 0)}</td>
+        <td class="small mono">${h(p.reports_to || '—')}</td><td class="small">${(p.v3_codes || []).map(x => `<span class="chip">${x}</span>`).join(' ')}</td>
+        <td>${C?.jd[p.code] ? `<span class="chip blue">v${h(p.jdjs_version)}</span>` : '<span class="chip">—</span>'}</td><td>${p.qb_doc ? `<span class="chip amber">${h(p.qb_doc)}</span>` : ''}</td><td>${chip(POS_ST, p.status)}</td></tr>`).join('')}</tbody></table></div></div>
+    <p class="small faint">Owner BN15 · Reviewer หัวหน้าสายงาน · Approver EX02 · พนักงาน ${cnt(people - mapped)} คนยังไม่ผูกรหัส (ชื่อตำแหน่งไม่ตรง Position Master)</p>`;
+  document.querySelectorAll('[data-pg]').forEach(b => b.onclick = () => { S.hrPosGrp = b.dataset.pg; pageHRPos(); });
+  document.querySelectorAll('[data-pos]').forEach(r => r.onclick = () => dlgPos(P.find(p => p.code === r.dataset.pos), C, canE));
+}
+function dlgPos(p, C, canE){
+  const md = C?.jd?.[p.code];
+  const d = dialog(`${p.code} · ${p.title}`, `${md ? mdLite(md) : (C ? '<div class="empty">ยังไม่มี JD/JS</div>' : noContent())}
+    ${canE ? `<div class="pb-cat"><div class="row"><div class="field"><label for="ps-st">สถานะเอกสาร</label><select id="ps-st" class="inp">${Object.entries(POS_ST).filter(([k]) => k !== 'APPROVED_ACTUAL' || S.isOwner).map(([k, v]) => `<option value="${k}" ${p.status === k ? 'selected' : ''}>${v[0]}</option>`).join('')}</select></div>
+      <div class="field"><label for="ps-rv">ผู้ตรวจ (Reviewer)</label><input id="ps-rv" class="inp" value="${h(p.reviewer || '')}" placeholder="ชื่อ/ตำแหน่งหัวหน้าสายงาน"></div><div class="field"><label for="ps-nt">หมายเหตุ</label><input id="ps-nt" class="inp" value="${h(p.note || '')}"></div></div>
+      <p class="small faint">"อนุมัติแล้ว" ตั้งได้เฉพาะผู้บริหาร · ทุกการเปลี่ยนบันทึกใน Audit Log</p></div>` : ''}
+    ${p.qb_doc ? `<button type="button" class="btn" id="ps-qb">เปิดการ์ดคำถามสัมภาษณ์ ${h(p.qb_doc)}</button>` : ''}`, canE ? 'บันทึก' : 'ปิด', async dd => {
+      if (!canE) return true;
+      const row = { status:$('#ps-st', dd).value, reviewer:$('#ps-rv', dd).value.trim() || null, note:$('#ps-nt', dd).value.trim() || null };
+      const { error } = await sb.from('hr_positions').update(row).eq('code', p.code); if (error) { fail(error); return false; }
+      toast('บันทึกแล้ว'); S.hrPos = null; pageHRPos();
+    });
+  d.style.width = 'min(900px,calc(100% - 32px))';
+  if (!canE) d.querySelector('button[value=cancel]')?.remove();
+  const qb = $('#ps-qb', d); if (qb) qb.onclick = () => dlgQB(p.qb_doc, null, null, true);
+}
+
+/* ===== Recruitment cases ===== */
+async function pageHRCases(){
+  const el = $('#page');
+  el.innerHTML = `<div class="ph"><div><h1>งานบุคคล · เคสสรรหา</h1><p class="mut small" style="margin:4px 0 0">1 อัตราที่อนุมัติ = 1 เคส · ขออัตรา → คัดกรอง → สัมภาษณ์ → ข้อเสนอจ้าง (Agent AC ตรวจงบ · ผู้มีอำนาจอนุมัติ) → สัญญา → Onboarding → ปิดเคสเมื่อหลักฐานครบ · <b>Agent ไม่ตัดสินรับ/ปฏิเสธ ไม่กำหนดค่าจ้าง ไม่ส่ง LINE เอง</b></p></div><div class="act">${hrTabs()}</div></div><div id="hr-b"><div class="empty">กำลังโหลด…</div></div>`;
+  bindHrTabs();
+  const [CS, F, OB] = await Promise.all([
+    sb.from('recruitment_cases').select('*').eq('company_id', S.cid).order('opened_at', { ascending:false }),
+    sb.from('hr_forms').select('id,form,no,status,result,score,project_id,staff_id,data,created_at').eq('company_id', S.cid).in('form', ['FM-HR-01-01','FM-HR-01-02','FM-HR-01-03','FM-HR-01-04']),
+    sb.from('onboarding_tasks').select('*').eq('company_id', S.cid).order('seq')]);
+  if (CS.error) return $('#hr-b').innerHTML = `<div class="msg err">${h(errText(CS.error))}</div>`;
+  await hrPositions();
+  const cases = CS.data || [], docs = F.data || [], tasks = OB.data || [], today = todayStr();
+  S.rcDocs = docs; S.rcTasks = tasks;
+  const pj = id => (S.hrProj || S.projects || []).find(p => p.id === id)?.code || '';
+  const app = id => docs.find(x => x.id === id);
+  const prog = c => { const t = tasks.filter(x => x.case_id === c.id); return t.length ? `${t.filter(x => x.status !== 'open').length}/${t.length}` : '—'; };
+  const age = c => Math.round((Date.now() - new Date(c.opened_at)) / 864e5);
+  const open = cases.filter(c => !['closed','cancelled'].includes(c.stage)), late = open.filter(c => age(c) > 30 || (c.need_by && c.need_by < today));
+  const overdue = tasks.filter(t => t.status === 'open' && t.due_on && t.due_on < today);
+  const q = (S.rcQ || '').toLowerCase(), stg = S.rcStage || '';
+  const rows = cases.filter(c => (!stg || c.stage === stg) && (!q || [c.no, c.position_title, c.position_code, app(c.selected_application_id)?.data?.full_name, pj(c.project_id)].join(' ').toLowerCase().includes(q)));
+  $('#hr-b').innerHTML = `
+    <div class="stats">${stat('เคสเปิดอยู่', cnt(open.length), `ปิดแล้ว ${cases.filter(c => c.stage === 'closed').length}`)}${stat('เกิน 30 วัน / เลยวันที่ต้องการ', cnt(late.length), 'แจ้ง BM Agent', late.length ? 'crit' : '')}${stat('ข้อเสนอรออนุมัติ / รอตอบ', cnt(cases.filter(c => ['submitted','reviewed'].includes(c.offer_status)).length) + ' / ' + cnt(cases.filter(c => c.offer_status === 'sent').length), 'Offer')}${stat('Onboarding เลยกำหนด', cnt(overdue.length), 'รายการ', overdue.length ? 'gold' : '')}</div>
+    <div class="cal-sum hr-pipe">${Object.entries(RC_ST).filter(([k]) => k !== 'cancelled').map(([k, [l, tone]]) => `<button class="cal-k" data-rcs="${k}" style="--c:var(--${tone || 'faint'})" ${stg === k ? 'aria-pressed="true"' : ''}><small>${l}</small><b>${cases.filter(c => c.stage === k).length}</b><span>เคส</span></button>`).join('')}</div>
+    <div class="panel"><div class="hd" style="flex-wrap:wrap;gap:8px"><input id="rc-q" class="inp" placeholder="ค้นหา เลขเคส / ตำแหน่ง / ผู้สมัคร / โครงการ" style="max-width:300px" value="${h(S.rcQ || '')}">${stg ? `<button class="btn sm" id="rc-all">ทุกขั้น</button>` : ''}<span class="small mut" style="margin-left:auto">${rows.length} เคส</span></div>
+      <div class="tw">${rows.length ? `<table><thead><tr><th>เคส</th><th>ตำแหน่ง</th><th>โครงการ / หน้างาน</th><th>ผู้สมัครที่เลือก</th><th>ขั้น</th><th>ข้อเสนอ</th><th>Onboarding</th><th>อายุ</th></tr></thead><tbody>
+        ${rows.map(c => `<tr class="clk" data-rc="${c.id}"><td class="mono small">${h(c.no)}<div class="faint">อัตราที่ ${c.seat} · ${h(docs.find(x => x.id === c.rq_id)?.no || '')}</div></td><td>${h(c.position_title || '')}<div class="small mono faint">${h(c.position_code || 'ไม่มีรหัส')}</div></td>
+          <td class="small">${h(pj(c.project_id))}<div class="mut">${h(c.site || '')}</div></td><td class="small">${h(app(c.selected_application_id)?.data?.full_name || '—')}</td><td>${chip(RC_ST, c.stage)}</td>
+          <td>${c.offer_status ? chip(OF_ST, c.offer_status) : ''}</td><td class="num">${prog(c)}</td><td class="num" style="color:${age(c) > 30 && !['closed','cancelled'].includes(c.stage) ? 'var(--crit)' : ''}">${age(c)} วัน</td></tr>`).join('')}</tbody></table>`
+        : `<div class="empty">${cases.length ? 'ไม่มีเคสตามตัวกรอง' : 'ยังไม่มีเคส — เคสเปิดเองเมื่อใบขออัตรากำลัง (FM-HR-01-01) ได้รับอนุมัติ'}</div>`}</div></div>${asOf()}`;
+  $('#rc-q').oninput = e => { S.rcQ = e.target.value; clearTimeout(pageHRCases.t); pageHRCases.t = setTimeout(pageHRCases, 250); };
+  document.querySelectorAll('[data-rcs]').forEach(b => b.onclick = () => { S.rcStage = S.rcStage === b.dataset.rcs ? '' : b.dataset.rcs; pageHRCases(); });
+  const all = $('#rc-all'); if (all) all.onclick = () => { S.rcStage = ''; pageHRCases(); };
+  document.querySelectorAll('[data-rc]').forEach(r => r.onclick = () => dlgCase(cases.find(c => c.id === r.dataset.rc)));
+}
+async function dlgCase(c){
+  const docs = S.rcDocs || [], C = await hrContent(), pay = canPay(), canE = S.isOwner || can('hr','e') || can('hr','c');
+  const rq = docs.find(x => x.id === c.rq_id), apps = docs.filter(x => x.form === 'FM-HR-01-02' && x.data?.req_id === c.rq_id);
+  const ivOf = a => docs.filter(x => x.form === 'FM-HR-01-03' && x.data?.application_id === a.id).sort((x, y) => x.created_at < y.created_at ? 1 : -1)[0];
+  const sel = docs.find(x => x.id === c.selected_application_id), ec = docs.find(x => x.id === c.contract_id) || (sel && docs.find(x => x.form === 'FM-HR-01-04' && x.data?.application_id === sel.id));
+  const offers = pay ? ((await sb.from('hr_offers').select('*').eq('case_id', c.id).order('round')).data || []) : [];
+  const tasks = (S.rcTasks || []).filter(t => t.case_id === c.id);
+  const last = offers[offers.length - 1], passed = apps.filter(a => ivOf(a)?.result === 'pass' && ivOf(a)?.status === 'approved');
+  const steps = ['screen','interview','offer','contract','onboarding','closed'], si = steps.indexOf(c.stage);
+  const pj = (S.hrProj || S.projects || []).find(p => p.id === c.project_id);
+  const agentBoxO = o => o.agent_checked_at ? `<div class="msg ${o.agent_status === 'returned' && !o.override_reason ? 'err' : 'ok'} small" style="margin:6px 0"><b>Agent AC ตรวจ:</b> ${o.agent_status === 'passed' ? 'ผ่าน — พร้อมเสนอผู้มีอำนาจ' : 'ส่งกลับ'}${(o.agent_issues || []).map(x => `<div>${x.level === 'block' ? '• ต้องแก้: ' : '• ข้อสังเกต: '}${h(x.msg)} <span class="faint mono">${h(x.code)}</span></div>`).join('')}${o.override_reason ? `<div>อนุมัติทับ: ${h(o.override_reason)}</div>` : ''}</div>` : '';
+  const offerRow = o => { const P = o.pay || {}; const mine = o.requested_by === S.user.id, A = [];
+    if (['draft','returned'].includes(o.status) && (mine || S.isOwner)) A.push(`<button type="button" class="btn sm primary" data-of="${o.id}" data-oa="submit">ส่งให้ Agent AC ตรวจ + ขออนุมัติ</button>`);
+    if (['submitted','reviewed'].includes(o.status) && !mine && (S.isOwner || can('hr','a'))) A.push(`<button type="button" class="btn sm ${o.agent_status === 'passed' ? 'primary' : ''}" data-of="${o.id}" data-oa="approve">${o.agent_status === 'passed' ? 'อนุมัติ' : 'อนุมัติทับ'}</button><button type="button" class="btn sm ghost" data-of="${o.id}" data-oa="return">ตีกลับ</button>`);
+    if (o.status === 'approved') A.push(`<button type="button" class="btn sm primary" data-of="${o.id}" data-oa="sent">บันทึกว่าส่ง LINE แล้ว</button>`);
+    if (o.status === 'sent') A.push(`<button type="button" class="btn sm primary" data-of="${o.id}" data-oa="accepted">ผู้สมัครตอบรับ</button><button type="button" class="btn sm" data-of="${o.id}" data-oa="declined">ไม่ตกลง</button><button type="button" class="btn sm ghost" data-of="${o.id}" data-oa="expired">หมดอายุ</button>`);
+    if (['draft','returned','approved','sent'].includes(o.status)) A.push(`<button type="button" class="btn sm ghost" data-of="${o.id}" data-oa="withdrawn">ถอน</button>`);
+    return `<div class="pb-cat"><div class="pb-h"><b>${h(o.no)} · รอบ ${o.round} · ${h(sel?.data?.full_name || docs.find(x => x.id === o.application_id)?.data?.full_name || '')}</b>${chip(OF_ST, o.status)}</div>
+      <div class="small">ทดลองงาน <b>${money(P.pp_total)}</b> · หลังผ่าน <b>${money(P.ap_total)}</b> บาท/เดือน · เริ่ม ${thDate(o.start_date)} · ตอบภายใน ${thDate(o.expires_on)}${o.decline_reason ? `<div style="color:var(--crit)">เหตุผลที่ไม่ตกลง: ${h(o.decline_reason)}</div>` : ''}${o.evidence_note ? `<div>หลักฐานตอบรับ: ${h(o.evidence_note)}</div>` : ''}</div>
+      ${agentBoxO(o)}<div class="gates" style="margin-top:6px">${A.join(' ')}</div></div>`; };
+  const lineVal = k => { const t = C?.line?.[k]?.x || ''; const A = sel?.data || {}, o = last || {};
+    return t.replace(/\{ชื่อ\}/g, A.full_name || '{ชื่อ}').replace(/\{ตำแหน่ง\}/g, c.position_title || '').replace(/\{หน้างาน\}/g, c.site || A.site || '').replace(/\{เลขที่ AP\}/g, sel?.no || '').replace(/\{เลขที่ Offer\}/g, o.no || '{เลขที่ Offer}')
+      .replace(/\{วันที่ หมดอายุ Offer\}/g, o.expires_on ? thDate(o.expires_on) : '{วันที่}').replace(/\{รหัสโครงการ\}/g, pj?.code || ''); };
+  const d = dialog(`เคส ${c.no} · ${c.position_title || ''} (อัตราที่ ${c.seat})`, `
+    <div class="gs" style="min-width:0;margin-bottom:10px"><div class="gs-bar" style="max-width:none;grid-template-columns:repeat(6,1fr)">${steps.map((s, i) => `<i style="background:${i < si ? 'var(--good)' : i === si ? 'var(--amber)' : 'var(--line)'}"${i === si ? ' class="cur"' : ''}></i>`).join('')}</div>
+      <div class="gs-t">${steps.map(s => RC_ST[s][0]).join(' → ')} · ตอนนี้ <b>${RC_ST[c.stage][0]}</b> · ${h(c.data_status)}</div></div>
+    <div class="small mut">ใบขออัตรา ${h(rq?.no || '')} · ${h(c.position_code || 'ไม่มีรหัสตำแหน่ง')} · โครงการ ${h(pj?.code || '—')} · หน้างาน ${h(c.site || '—')} · ต้องการภายใน ${thDate(c.need_by)}</div>
+    <h4 style="margin:12px 0 4px">ผู้สมัครของใบขออัตรานี้ (${apps.length})</h4>
+    ${apps.length ? `<div class="tw"><table><thead><tr><th>ใบสมัคร</th><th>ชื่อ</th><th>สัมภาษณ์</th><th>การ์ดคำถาม</th></tr></thead><tbody>${apps.map(a => { const iv = ivOf(a); return `<tr${a.id === c.selected_application_id ? ' class="sel"' : ''}><td class="mono small">${h(a.no)}</td><td>${h(a.data?.full_name || '')}</td>
+      <td class="small">${iv ? `${h(iv.no)} · ${iv.score ?? ''} คะแนน · ${h(iv.data?.resultText || '')}` : '<span class="faint">ยังไม่สัมภาษณ์</span>'}</td><td class="small">${iv?.data?.qb ? `${h(iv.data.qb.doc)} · รวม ${Number(iv.data.qb.total).toFixed(2)}${iv.data.qb.red?.length ? ' · <b style="color:var(--crit)">ความปลอดภัย 0–1</b>' : ''}` : '—'}</td></tr>`; }).join('')}</tbody></table></div>`
+      : '<div class="small faint">ยังไม่มีใบสมัคร — สร้างที่แท็บ "เอกสาร HR" แล้วอ้างอิงใบขออัตรานี้</div>'}
+    <h4 style="margin:12px 0 4px">ข้อเสนอจ้าง (Offer)</h4>
+    ${pay ? `${offers.map(offerRow).join('') || '<div class="small faint">ยังไม่มีข้อเสนอ</div>'}
+      ${passed.length && !['contract','onboarding','closed','cancelled'].includes(c.stage) && !offers.some(o => ['draft','submitted','reviewed','approved','sent','returned'].includes(o.status)) ? `<button type="button" class="btn sm" id="of-new">+ สร้างข้อเสนอจ้าง</button>` : ''}`
+      : `<div class="small">${c.offer_status ? chip(OF_ST, c.offer_status) : '—'} <span class="faint">· รายละเอียดค่าจ้างเห็นเฉพาะผู้มีสิทธิ์เงินเดือน</span></div>`}
+    ${ec ? `<div class="small" style="margin-top:6px">สัญญาจ้าง ${h(ec.no)} · ${chip(HR_ST, ec.status)} ${pay || ec.status !== 'draft' ? `<button type="button" class="btn sm ghost" id="rc-ec">เปิดสัญญา</button>` : ''}</div>` : ''}
+    <h4 style="margin:12px 0 4px">ข้อความ LINE (Agent ร่าง · คนกดส่ง)</h4>
+    ${C ? `<div class="row"><div class="field"><select id="ln-k" class="inp">${Object.entries(C.line).map(([k, v]) => `<option value="${k}">${k} ${h(v.t)}</option>`).join('')}</select></div></div>
+      <textarea id="ln-x" class="inp" rows="6"></textarea><div class="small faint" id="ln-n"></div>
+      <div class="gates" style="margin-top:6px"><button type="button" class="btn sm" id="ln-cp">คัดลอก</button>${canE ? `<button type="button" class="btn sm" id="ln-log">บันทึกว่าส่งแล้ว</button>` : ''}</div>
+      ${(c.line_log || []).length ? `<div class="small mut" style="margin-top:6px">ประวัติส่ง: ${(c.line_log || []).map(x => `${h(x.k)} ${new Date(x.at).toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' })} (${h(x.by || '')})`).join(' · ')}</div>` : ''}` : noContent()}
+    <h4 style="margin:12px 0 4px">Onboarding</h4>
+    ${tasks.length ? `<div class="tw"><table><tbody>${tasks.map(t => `<tr><td class="small">${t.seq}. ${h(t.item)}<div class="faint">${h(t.owner_position)} · ครบ ${thDate(t.due_on)}${t.evidence ? ' · ' + h(t.evidence) : ''}</div></td>
+      <td class="nw">${chip(ONB_ST, t.status)} ${canE && t.status === 'open' ? `<button type="button" class="btn sm" data-ob="${t.id}" data-s="done">เสร็จ</button><button type="button" class="btn sm ghost" data-ob="${t.id}" data-s="na">ไม่เกี่ยว</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`
+      : '<div class="small faint">เริ่มเมื่อสัญญาจ้างได้รับอนุมัติ (ระบบสร้างรายการ 12 ข้อพร้อมวันครบกำหนด)</div>'}
+    ${c.stage === 'closed' ? `<div class="msg ok small">ปิดเคส ${thDate((c.closed_at || '').slice(0, 10))} · ${h(c.close_reason || '')}</div>` : ''}
+    ${canE && !['closed','cancelled'].includes(c.stage) ? `<div style="margin-top:10px"><button type="button" class="btn sm ghost" id="rc-cancel">ยกเลิกเคส</button></div>` : ''}`, 'ปิด', async () => true);
+  d.style.width = 'min(880px,calc(100% - 32px))'; d.querySelector('button[value=cancel]')?.remove();
+  const reload = () => { d.close(); pageHRCases(); };
+  if ($('#ln-k', d)) { const fill = () => { const k = $('#ln-k', d).value; $('#ln-x', d).value = lineVal(k); $('#ln-n', d).textContent = C.line[k].n || ''; }; $('#ln-k', d).onchange = fill; fill();
+    $('#ln-cp', d).onclick = async () => { try { await navigator.clipboard.writeText($('#ln-x', d).value); toast('คัดลอกแล้ว — เปิด LINE แล้ววางข้อความ'); } catch(e){ $('#ln-x', d).select(); toast('กด Ctrl+C เพื่อคัดลอก'); } };
+    const lg = $('#ln-log', d); if (lg) lg.onclick = async () => { const k = $('#ln-k', d).value;
+      if (k === 'L05' && !offers.some(o => ['approved','sent'].includes(o.status)) && c.offer_status !== 'approved' && c.offer_status !== 'sent') return toast('ส่ง Offer (L05) ได้หลังข้อเสนอได้รับอนุมัติเท่านั้น', true);
+      const log = [...(c.line_log || []), { k, at:new Date().toISOString(), by:S.user.user_metadata?.full_name || S.user.email || '' }];
+      const { error } = await sb.from('recruitment_cases').update({ line_log:log }).eq('id', c.id); if (error) return fail(error); toast('บันทึกการส่งแล้ว'); reload(); }; }
+  const nw = $('#of-new', d); if (nw) nw.onclick = () => dlgOffer(c, passed, reload);
+  const ecb = $('#rc-ec', d); if (ecb) ecb.onclick = async () => { const { data } = await sb.from('hr_forms').select('*').eq('id', ec.id).single(); if (data) { S.hrDocs = S.hrDocs || docs; dlgHRF('FM-HR-01-04', data, null, !['draft','returned'].includes(data.status) && !(data.status === 'submitted' && data.agent_status === 'returned')); } };
+  d.querySelectorAll('[data-ob]').forEach(b => b.onclick = async () => { const ev = b.dataset.s === 'done' ? prompt('หลักฐาน (เช่น เลขรับแจ้ง สปส. / ใบลงชื่อ) — เว้นว่างได้') : prompt('เหตุผลที่ไม่เกี่ยว'); if (ev === null) return;
+    const { error } = await sb.from('onboarding_tasks').update({ status:b.dataset.s, evidence:ev.trim() || null }).eq('id', b.dataset.ob); if (error) return fail(error); toast('บันทึกแล้ว'); reload(); });
+  const cc = $('#rc-cancel', d); if (cc) cc.onclick = async () => { const r = prompt('เหตุผลที่ยกเลิกเคส'); if (!r || !r.trim()) return;
+    const { error } = await sb.from('recruitment_cases').update({ stage:'cancelled', close_reason:r.trim(), closed_at:new Date().toISOString() }).eq('id', c.id); if (error) return fail(error); toast('ยกเลิกเคสแล้ว'); reload(); };
+  d.querySelectorAll('[data-of]').forEach(b => b.onclick = async () => { const id = b.dataset.of, a = b.dataset.oa, o = offers.find(x => x.id === id); let patch = null;
+    if (a === 'submit') patch = { status:'submitted' };
+    else if (a === 'approve' || a === 'return') { let note = null;
+      if (a === 'return') { note = prompt('เหตุผลที่ตีกลับ'); if (note === null) return; }
+      else if (o.agent_status !== 'passed') { note = prompt(`Agent AC ส่งกลับ:\n${(o.agent_issues || []).filter(x => x.level === 'block').map(x => '• ' + x.msg).join('\n') || '(ยังไม่ได้ตรวจ)'}\n\nถ้าจะอนุมัติทับ พิมพ์เหตุผล:`); if (note === null) return; if (note.trim().length < 5) return toast('เหตุผลต้องอย่างน้อย 5 ตัวอักษร', true); }
+      else if (!confirm(`อนุมัติข้อเสนอ ${o.no}?${(o.agent_issues || []).length ? '\n\nข้อสังเกตจาก Agent AC:\n' + o.agent_issues.map(x => '• ' + x.msg).join('\n') : ''}`)) return;
+      const { error } = await sb.rpc('decide', { p_doc_type:'offer', p_doc_id:id, p_action:a, p_note:note }); if (error) return fail(error); toast(a === 'approve' ? 'อนุมัติข้อเสนอแล้ว' : 'ตีกลับแล้ว'); return reload(); }
+    else if (a === 'sent') { if (!confirm('ยืนยันว่าส่งข้อความ LINE (L05) ถึงผู้สมัครแล้ว?')) return; patch = { status:'sent' }; }
+    else if (a === 'accepted') { const ev = prompt('หลักฐานการตอบรับ (เช่น "ตอบรับใน LINE 21 ต.ค. 10:05" / แนบไฟล์ลงชื่อ)'); if (!ev || !ev.trim()) return; patch = { status:'accepted', evidence_note:ev.trim() }; }
+    else if (a === 'declined') { const r = prompt('เหตุผลที่ผู้สมัครไม่ตกลง (บันทึกไว้เพื่อเจรจาใหม่หรือเลือกผู้สมัครสำรอง)'); if (!r || !r.trim()) return; patch = { status:'declined', decline_reason:r.trim() }; }
+    else if (a === 'expired' || a === 'withdrawn') { if (!confirm(a === 'expired' ? 'ปิดข้อเสนอเพราะหมดอายุ?' : 'ถอนข้อเสนอนี้?')) return; patch = { status:a }; }
+    const { data: r, error } = await sb.from('hr_offers').update(patch).eq('id', id).select('status,agent_status,agent_issues').single(); if (error) return fail(error);
+    if (a === 'submit') toast(r.agent_status === 'passed' ? 'Agent AC ตรวจผ่าน — รอผู้มีอำนาจอนุมัติ' : 'Agent AC ส่งกลับ: ' + (r.agent_issues || []).filter(x => x.level === 'block').map(x => x.msg).join(' · '), r.agent_status !== 'passed');
+    else if (a === 'accepted') toast('ตอบรับแล้ว — ระบบเติมค่าจ้างและวันเริ่มงานลงร่างสัญญาจ้างให้แล้ว ส่ง BN15 ตรวจ');
+    else if (a === 'declined') toast('บันทึกแล้ว — เคสกลับไปขั้นสัมภาษณ์: เจรจาใหม่ (สร้างข้อเสนอรอบถัดไป) หรือเลือกผู้สมัครสำรอง');
+    else toast('บันทึกแล้ว');
+    reload(); });
+}
+function dlgOffer(c, passed, after){
+  const d = dialog(`ข้อเสนอจ้าง · เคส ${c.no}`, `<p class="small mut" style="margin:0 0 6px">BN15 เสนอค่าจ้าง → Agent AC ตรวจงบ → ผู้มีอำนาจตาม DOA อนุมัติ → HR ส่ง LINE (L05) · ผู้เสนอกับผู้อนุมัติต้องคนละคน</p>
+    <div class="field"><label for="of-a">ผู้สมัคร (สัมภาษณ์ผ่านแล้ว)</label><select id="of-a" class="inp" required>${passed.map(a => `<option value="${a.id}">${h(a.no)} · ${h(a.data?.full_name || '')}${a.data?.expected_salary ? ` · ขอ ${money(a.data.expected_salary)}` : ''}</option>`).join('')}</select></div>
+    ${['pp','ap'].map(p => `<div class="pb-cat"><b>${p === 'pp' ? 'ระหว่างทดลองงาน' : 'หลังผ่านทดลองงาน'}</b><div class="row">${[['b','เงินเดือน'],['x','ค่าประสบการณ์'],['s','ค่ากะ']].map(([k, l]) => `<div class="field"><label for="of-${p}${k}">${l}</label><input id="of-${p}${k}" class="inp mono" type="number" min="0" step="0.01"></div>`).join('')}</div></div>`).join('')}
+    <div class="row"><div class="field"><label for="of-st">วันเริ่มงาน</label><input id="of-st" class="inp" type="date" required></div><div class="field"><label for="of-ex">ตอบรับภายใน</label><input id="of-ex" class="inp" type="date" value="${addD(todayStr(), 7)}"></div></div>
+    <div class="field"><label for="of-nt">หมายเหตุ / เงื่อนไขอื่น</label><input id="of-nt" class="inp"></div>
+    <label class="small" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="of-send" checked> ส่งให้ Agent AC ตรวจและขออนุมัติทันที</label>`, 'บันทึก', async dd => {
+      const v = k => +$(`#of-${k}`, dd).value || 0, pay = {};
+      ['pp','ap'].forEach(p => { pay[p + '_base'] = v(p + 'b'); pay[p + '_exp'] = v(p + 'x'); pay[p + '_shift'] = v(p + 's'); pay[p + '_total'] = v(p + 'b') + v(p + 'x') + v(p + 's'); });
+      const row = { company_id:S.cid, case_id:c.id, application_id:$('#of-a', dd).value, pay, start_date:$('#of-st', dd).value || null, expires_on:$('#of-ex', dd).value || null, note:$('#of-nt', dd).value.trim() || null, status:$('#of-send', dd).checked ? 'submitted' : 'draft' };
+      const { data: r, error } = await sb.from('hr_offers').insert(row).select('no,agent_status,agent_issues').single(); if (error) { fail(error); return false; }
+      toast(row.status === 'draft' ? `บันทึก ${r.no} แล้ว` : r.agent_status === 'passed' ? `${r.no}: Agent AC ตรวจผ่าน — รอผู้มีอำนาจอนุมัติ` : `${r.no}: Agent AC ส่งกลับ — ${(r.agent_issues || []).filter(x => x.level === 'block').map(x => x.msg).join(' · ')}`, row.status !== 'draft' && r.agent_status !== 'passed');
+      after();
+    });
+  const a = $('#of-a', d), fillSt = () => { const x = passed.find(p => p.id === a.value); const iv = (S.rcDocs || []).find(z => z.form === 'FM-HR-01-03' && z.data?.application_id === x?.id); if (iv?.data?.start_date) $('#of-st', d).value = iv.data.start_date; else if (x?.data?.available_date) $('#of-st', d).value = x.data.available_date; };
+  a.onchange = fillSt; fillSt();
+}
+
+async function pageHRF(){
+  if (S.hrTab === 'cases') return pageHRCases();
+  if (S.hrTab === 'pos') return pageHRPos();
+  const el = $('#page'), canC = S.isOwner || can('hr','c');
+  el.innerHTML = `<div class="ph"><div><h1>งานบุคคล</h1><p class="mut small" style="margin:4px 0 0">ขั้นตอนกระชับ HR-FLOW-02 · ส่งแล้ว Manager Agent ตรวจก่อนทุกฉบับ · บอสอนุมัติเฉพาะ ขออัตรา · สัญญาจ้าง · ทดลองงานไม่ผ่าน · ต่อสัญญา/ปรับรายได้ · โอนข้ามโครงการ · ที่เหลือ Agent ปิดเรื่องให้ · อนุมัติแล้วระบบอัปเดตทะเบียนพนักงานเอง</p></div>
+    <div class="act">${hrTabs()} ${dvSeg('hrf','เอกสารทั้งหมด')}</div></div><div id="hr-b"><div class="empty">กำลังโหลด…</div></div>`;
+  bindDv(pageHRF); bindHrTabs();
+  const [F, staff, PJ] = await Promise.all([sb.from('hr_forms').select('*').eq('company_id', S.cid).order('created_at', { ascending:false }), hrStaff(), S.projects ? { data:S.projects } : sb.from('projects').select('id,code,name').eq('company_id', S.cid).order('code')]);
+  if (F.error) return fail(F.error);
+  const docs = F.data || [], byId = Object.fromEntries(staff.map(s => [s.id, s])), pcode = id => (PJ.data || []).find(p => p.id === id)?.code || '';
+  S.hrDocs = docs; S.hrProj = PJ.data || [];
+  const today = todayStr(), in14 = addD(today, 14);
+  const cards = `<div class="bu-cards hr-cards">${Object.entries(HRF).map(([k, f]) => `<button class="bu-card${f.ready ? '' : ' empty-bu'}" data-newf="${k}" ${f.ready && canC && (!f.pay || canPay()) ? '' : 'disabled'} title="${h(f.name)}">
+      <div class="bu-top"><b style="font-family:var(--head);font-size:15px">${h(f.short)}</b><span class="small mono faint">${k.slice(-5)}</span></div>
+      <div class="bu-nm">${h(f.name)}</div><div class="bu-v">${f.ready ? (canC && (!f.pay || canPay()) ? '+ สร้างเอกสาร' : f.pay ? 'เฉพาะผู้มีสิทธิ์เงินเดือน' : 'ดูได้อย่างเดียว') : 'ระยะถัดไป'}</div></button>`).join('')}</div>`;
+  /* probation due: active staff who started within the last 130 days */
+  const pbDone = new Set(docs.filter(d => d.form === 'FM-HR-01-05' && !['rejected','cancelled'].includes(d.status)).map(d => d.staff_id + ':' + d.variant));
+  const due = staff.filter(s => ['active','intern'].includes(s.status) && s.start_date && s.start_date > addD(today, -130)).map(s => { const v = pbVariantFor(s), d = addD(s.start_date, PB[v].days); return { s, v, d, done: pbDone.has(s.id + ':' + v) }; })
+    .filter(x => !x.done).sort((a, b) => a.d < b.d ? -1 : 1);
+  if (dvIs('hrf')) {
+    const pend = docs.filter(d => ['submitted','reviewed'].includes(d.status)), m = today.slice(0, 7);
+    const boss = pend.filter(d => d.agent_status === 'passed'), back = pend.filter(d => d.agent_status !== 'passed'), closed = docs.filter(d => d.agent_closed && (d.updated_at || d.created_at) > addD(today, -7));
+    $('#hr-b').innerHTML = `
+      <div class="stats">
+        ${stat('รอบอสอนุมัติ', cnt(boss.length), `Agent ตรวจผ่านแล้ว · Agent ส่งกลับ ${back.length}`, boss.length ? 'gold' : '')}
+        ${stat('ครบกำหนดประเมินทดลองงาน', cnt(due.filter(x => x.d <= in14).length), `ภายใน 14 วัน · เลยกำหนด ${due.filter(x => x.d < today).length}`, due.some(x => x.d < today) ? 'crit' : '')}
+        ${stat('ลาออก (อนุมัติแล้ว)', cnt(docs.filter(d => d.form === 'FM-HR-01-09' && d.status === 'approved').length), `เดือนนี้ ${docs.filter(d => d.form === 'FM-HR-01-09' && d.status === 'approved' && (d.effective_date || '').startsWith(m)).length} คน`)}
+        ${stat('ขออัตรากำลัง (อนุมัติแล้ว)', cnt(docs.filter(d => d.form === 'FM-HR-01-01' && d.status === 'approved').reduce((a, d) => a + Number(d.data?.count || 0), 0)), 'อัตรา')}
+      </div>
+      ${cards}
+      <div class="dg">
+        ${pnl('ครบกำหนดประเมินทดลองงาน', due.length ? `<div class="tw"><table><thead><tr><th>พนักงาน</th><th>ตำแหน่ง / หน้างาน</th><th>เริ่มงาน</th><th>ครบ</th><th></th></tr></thead><tbody>
+          ${due.slice(0, 30).map(x => `<tr><td><span class="mono small">${h(x.s.employee_code)}</span> ${h(x.s.full_name)}</td><td class="small">${h(x.s.position || '')}<div class="mut">${h(x.s.site || '')}</div></td><td class="small nw">${thDate(x.s.start_date)}</td>
+            <td class="small nw" style="color:${x.d < today ? 'var(--crit)' : x.d <= in14 ? 'var(--gold)' : ''}">${PB[x.v].days} วัน · ${thDate(x.d)}</td><td>${canC ? `<button class="btn sm" data-pbnew="${x.s.id}" data-v="${x.v}">ประเมิน</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">ไม่มีพนักงานในช่วงทดลองงาน</div>', { note:'เริ่มงานไม่เกิน 130 วัน · วิศวกร/หัวหน้า/ผู้จัดการ = 45 วัน · อื่น ๆ = 80 วัน' })}
+        ${pnl('สายรับคนเข้า (ขออัตรา → สมัคร → สัมภาษณ์ → สัญญา → ทดลองงาน)', `<div class="cal-sum hr-pipe">${[
+            ['ขออัตรากำลัง', docs.filter(d => d.form === 'FM-HR-01-01' && d.status === 'approved').reduce((a, d) => a + Number(d.data?.count || 0), 0) + ' อัตรา', 'อนุมัติแล้ว', 'var(--budget)'],
+            ['ใบสมัคร', docs.filter(d => d.form === 'FM-HR-01-02' && !['rejected','cancelled'].includes(d.status) && !docs.some(i => i.form === 'FM-HR-01-03' && i.data?.application_id === d.id)).length + ' คน', 'รอสัมภาษณ์', 'var(--gold)'],
+            ['สัมภาษณ์', docs.filter(d => d.form === 'FM-HR-01-03' && ['submitted','reviewed'].includes(d.status)).length + ' คน', 'Agent ส่งกลับ', 'var(--gold)'],
+            ['สัญญาจ้าง', docs.filter(d => d.form === 'FM-HR-01-04' && !['approved','rejected','cancelled'].includes(d.status)).length + ' ฉบับ', 'ร่าง/รออนุมัติ', 'var(--amber)'],
+            ['ทดลองงาน', due.length + ' คน', 'รอประเมิน', 'var(--good)']].map(([a, b, c, col]) => `<div class="cal-k" style="--c:${col};cursor:default"><small>${a}</small><b>${b}</b><span>${c}</span></div>`).join('')}</div>`, { cls:'w2' })}
+        ${pnl('รอบอสอนุมัติ (Manager Agent ตรวจผ่านแล้ว)', boss.length ? `<div class="tw"><table><tbody>${boss.map(d => `<tr class="clk" data-hro="${d.id}"><td class="mono small">${h(d.no)}</td><td>${h(HRF[d.form].short)}<div class="small mut">${h(staffLabel(byId[d.staff_id]) || d.title || '')}</div></td><td>${agentChip(d)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">ไม่มีเอกสารรออนุมัติ</div>')}
+        ${pnl('Agent ส่งกลับ / ปิดเรื่องให้ 7 วันล่าสุด', back.length || closed.length ? `<div class="tw"><table><tbody>${[...back, ...closed].map(d => `<tr class="clk" data-hro="${d.id}"><td class="mono small">${h(d.no)}</td><td>${h(HRF[d.form].short)}<div class="small mut">${h(staffLabel(byId[d.staff_id]) || d.title || '')}</div>${d.agent_status === 'returned' ? `<div class="small" style="color:var(--crit)">${h((d.agent_issues || []).filter(x => x.level === 'block').map(x => x.msg).join(' · '))}</div>` : ''}</td><td>${agentChip(d)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">ไม่มี</div>', { note:'ส่งกลับ = ผู้ทำต้องแก้ · ปิดเรื่อง = ใบสมัคร สัมภาษณ์ ทดลองงานผ่าน ลาออก โอนย้ายในโครงการ' })}
+        ${pnl('เอกสารตามแบบฟอร์ม', donut(countBy(docs, d => HRF[d.form].short), { sub:'เอกสาร' }))}
+        ${pnl('สถานะเอกสาร', donut(countBy(docs, d => HR_ST[d.status][0]), { sub:'เอกสาร', colors:['var(--good)','var(--gold)','var(--budget)','var(--crit)','var(--faint)','#8E6CB8'] }))}
+      </div>${asOf()}`;
+  } else {
+    const q = (S.hrQ || '').toLowerCase();
+    const rows = docs.filter(d => (!S.hrForm || d.form === S.hrForm) && (!q || [d.no, d.title, staffLabel(byId[d.staff_id]), HRF[d.form].short].join(' ').toLowerCase().includes(q)));
+    $('#hr-b').innerHTML = `${cards}
+      <div class="panel"><div class="hd" style="flex-wrap:wrap;gap:8px"><input id="hr-q" class="inp" placeholder="ค้นหา เลขที่ / ชื่อ / รหัส" style="max-width:260px" value="${h(S.hrQ || '')}">
+        <select id="hr-f" class="inp" style="width:auto"><option value="">ทุกแบบฟอร์ม</option>${Object.entries(HRF).map(([k, f]) => `<option value="${k}" ${S.hrForm === k ? 'selected' : ''}>${k.slice(-5)} ${h(f.short)}</option>`).join('')}</select>
+        <span class="small mut" style="margin-left:auto">${rows.length} เอกสาร</span></div>
+      <div class="tw">${rows.length ? `<table><thead><tr><th>เลขที่</th><th>แบบฟอร์ม</th><th>พนักงาน / เรื่อง</th><th>ผล / วันที่มีผล</th><th style="min-width:200px">สถานะ / ดำเนินการ</th></tr></thead><tbody>
+        ${rows.map(d => `<tr><td class="mono">${h(d.no)}<div class="small faint">${thDate(d.created_at)}</div></td><td>${h(HRF[d.form].short)}<div class="small faint mono">${d.form}${d.variant ? ' · ' + PB[d.variant]?.days + ' วัน' : ''}</div></td>
+          <td>${h(staffLabel(byId[d.staff_id]) || d.title || '—')}${d.project_id ? `<div class="small mut mono">${h(pcode(d.project_id))}</div>` : ''}</td>
+          <td class="small">${d.score != null ? `<b>${d.score}</b> คะแนน · ` : ''}${h(d.data?.resultText || '')}${d.effective_date ? `<div class="mut">มีผล ${thDate(d.effective_date)}</div>` : ''}</td>
+          <td>${chip(HR_ST, d.status)} ${agentChip(d)}<div class="gates" style="margin-top:8px">${hrActs(d)}</div></td></tr>`).join('')}</tbody></table>` : '<div class="empty">ยังไม่มีเอกสาร</div>'}</div></div>`;
+    $('#hr-q').oninput = e => { S.hrQ = e.target.value; clearTimeout(pageHRF.t); pageHRF.t = setTimeout(pageHRF, 250); };
+    $('#hr-f').onchange = e => { S.hrForm = e.target.value; pageHRF(); };
+  }
+  document.querySelectorAll('[data-newf]').forEach(b => b.onclick = () => dlgHRF(b.dataset.newf, null));
+  document.querySelectorAll('[data-pbnew]').forEach(b => b.onclick = () => dlgHRF('FM-HR-01-05', null, { staff_id:b.dataset.pbnew, variant:b.dataset.v }));
+  document.querySelectorAll('[data-hro]').forEach(r => r.onclick = () => { (S.dv ||= {}).hrf = 'list'; S.hrQ = docs.find(d => d.id === r.dataset.hro)?.no || ''; pageHRF(); });
+  bindHrActs(docs);
+}
+const HR_BOSS = d => !(['FM-HR-01-02','FM-HR-01-03','FM-HR-01-09'].includes(d.form) || (d.form === 'FM-HR-01-05' && d.result === 'pass'));
+function agentChip(d){
+  if (d.agent_closed) return '<span class="chip good" title="Manager Agent ตรวจผ่านและปิดเรื่องตาม HR-FLOW-02">ปิดโดย Agent</span>';
+  if (d.override_reason) return `<span class="chip amber" title="${h(d.override_reason)}">อนุมัติทับผล Agent</span>`;
+  if (d.status !== 'submitted' && d.status !== 'reviewed') return '';
+  if (d.agent_status === 'passed') return `<span class="chip good">Agent ✓ ผ่าน${(d.agent_issues || []).length ? ` · ข้อสังเกต ${d.agent_issues.length}` : ''}</span>`;
+  if (d.agent_status === 'returned') return `<span class="chip crit">Agent ↩ ส่งกลับ ${(d.agent_issues || []).filter(x => x.level === 'block').length} ข้อ</span>`;
+  return '<span class="chip">Agent รอตรวจ</span>';
+}
+function agentBox(d){
+  if (!d || !['submitted','reviewed','approved'].includes(d.status) || (d.status === 'approved' && !d.agent_checked_at)) return '';
+  const L = d.agent_issues || [], B = L.filter(x => x.level === 'block'), W = L.filter(x => x.level !== 'block');
+  const head = d.agent_closed ? 'ตรวจผ่าน และปิดเรื่องแล้ว (ไม่ต้องรอบอสอนุมัติ)' : d.agent_status === 'passed' ? (HR_BOSS(d) ? 'ตรวจผ่าน — พร้อมเสนอบอสอนุมัติ' : 'ตรวจผ่าน') : d.agent_status === 'returned' ? 'ส่งกลับ — ผู้ทำต้องแก้ก่อน (บอสอนุมัติทับได้โดยพิมพ์เหตุผล)' : 'รอตรวจ';
+  return `<div class="msg ${d.agent_status === 'returned' && !d.override_reason ? 'err' : 'ok'}" style="margin:0 0 10px"><b>ผล Manager Agent:</b> ${head}${d.agent_checked_at ? ` <span class="small faint">· ตรวจ ${new Date(d.agent_checked_at).toLocaleString('th-TH', { dateStyle:'medium', timeStyle:'short' })}</span>` : ''}
+    ${B.length ? `<ul style="margin:6px 0 0;padding-left:20px">${B.map(x => `<li><b>ต้องแก้:</b> ${h(x.msg)} <span class="faint mono small">${h(x.code)}</span></li>`).join('')}</ul>` : ''}
+    ${W.length ? `<ul style="margin:6px 0 0;padding-left:20px;color:var(--gold)">${W.map(x => `<li>ข้อสังเกต: ${h(x.msg)} <span class="faint mono small">${h(x.code)}</span></li>`).join('')}</ul>` : ''}
+    ${d.override_reason ? `<div class="small" style="margin-top:6px">เหตุผลที่อนุมัติทับ: ${h(d.override_reason)}</div>` : ''}
+    ${d.status === 'submitted' ? `<div style="margin-top:8px"><button type="button" class="btn sm" data-agrecheck="${d.id}">ให้ Agent ตรวจใหม่</button></div>` : ''}</div>`;
+}
+async function hrDecide(d, action){
+  if (action !== 'approve') return decide('hr', d.id, action, pageHRF);
+  let note = null;
+  if (d.agent_status !== 'passed') {
+    const B = (d.agent_issues || []).filter(x => x.level === 'block').map(x => '• ' + x.msg).join('\n');
+    note = prompt(`Manager Agent ส่งกลับเอกสารนี้:\n${B || '(ยังไม่ได้ตรวจ)'}\n\nถ้าจะอนุมัติทับ พิมพ์เหตุผล (บันทึกในประวัติ):`);
+    if (note === null) return; if (note.trim().length < 5) return toast('เหตุผลต้องอย่างน้อย 5 ตัวอักษร', true);
+  } else {
+    const W = (d.agent_issues || []).map(x => '• ' + x.msg).join('\n');
+    if (!confirm(`ยืนยันอนุมัติ ${d.no}?${W ? '\n\nข้อสังเกตจาก Manager Agent:\n' + W : ''}`)) return;
+  }
+  const { error } = await sb.rpc('decide', { p_doc_type:'hr', p_doc_id:d.id, p_action:'approve', p_note:note });
+  if (error) return fail(error);
+  toast(note ? 'อนุมัติทับผล Agent แล้ว (บันทึกเหตุผล)' : 'อนุมัติแล้ว'); pageHRF();
+}
+function hrActs(d){
+  const me = S.user.id, mine = d.requested_by === me, o = [];
+  if (['draft','returned'].includes(d.status) && (mine || S.isOwner || can('hr','e'))) o.push(`<button class="btn sm" data-hre="${d.id}">แก้ไข</button><button class="btn sm primary" data-hrs="${d.id}">ส่งพิจารณา</button>`);
+  if (d.status === 'submitted' && d.agent_status === 'returned' && (mine || S.isOwner || can('hr','e'))) o.push(`<button class="btn sm primary" data-hre="${d.id}">แก้ตาม Agent</button>`);
+  if (['submitted','reviewed'].includes(d.status) && !mine && (S.isOwner || can('hr','r') || can('hr','a'))) {
+    if (S.isOwner || can('hr','a')) o.push(d.agent_status === 'passed' ? `<button class="btn sm primary" data-hrd="${d.id}" data-a="approve">อนุมัติ</button>` : `<button class="btn sm" data-hrd="${d.id}" data-a="approve" title="Agent ส่งกลับ — ต้องพิมพ์เหตุผล">อนุมัติทับ</button>`);
+    o.push(`<button class="btn sm ghost" data-hrd="${d.id}" data-a="return">ตีกลับ</button><button class="btn sm ghost" data-hrd="${d.id}" data-a="reject">ไม่อนุมัติ</button>`);
+  }
+  if (!['draft','returned'].includes(d.status)) o.push(`<button class="btn sm ghost" data-hrv="${d.id}">ดู</button>`);
+  o.push(`<button class="btn sm ghost" data-hrp="${d.id}">พิมพ์</button>`);
+  if (d.approval_id || d.status !== 'draft') o.push(`<button class="btn sm ghost" data-hrh="${d.id}" data-no="${h(d.no)}">ประวัติ</button>`);
+  return o.join(' ');
+}
+function hrAgentToast(r){
+  if (!r) return;
+  if (r.status === 'approved') return toast(`${r.no}: Manager Agent ตรวจผ่านและปิดเรื่องแล้ว`);
+  if (r.agent_status === 'returned') return toast(`${r.no}: Manager Agent ส่งกลับ — ${(r.agent_issues || []).filter(x => x.level === 'block').map(x => x.msg).join(' · ')}`, true);
+  if (r.agent_status === 'passed') return toast(`${r.no}: Manager Agent ตรวจผ่าน — รอบอสอนุมัติ${(r.agent_issues || []).length ? ` (ข้อสังเกต ${r.agent_issues.length})` : ''}`);
+  toast(`บันทึก ${r.no} แล้ว`);
+}
+function bindAgentRecheck(root = document){
+  root.querySelectorAll('[data-agrecheck]').forEach(b => b.onclick = async () => { b.disabled = true;
+    const { error } = await sb.rpc('hr_agent_verify', { p_id:b.dataset.agrecheck }); if (error) { b.disabled = false; return fail(error); }
+    toast('Manager Agent ตรวจใหม่แล้ว'); b.closest('dialog')?.close(); pageHRF(); });
+}
+function bindHrActs(docs){
+  const f = id => docs.find(d => d.id === id);
+  document.querySelectorAll('[data-hre]').forEach(b => b.onclick = () => dlgHRF(f(b.dataset.hre).form, f(b.dataset.hre)));
+  document.querySelectorAll('[data-hrv]').forEach(b => b.onclick = () => dlgHRF(f(b.dataset.hrv).form, f(b.dataset.hrv), null, true));
+  document.querySelectorAll('[data-hrs]').forEach(b => b.onclick = async () => { if (!confirm('ส่งเอกสารให้ผู้มีอำนาจพิจารณา?')) return;
+    const { data: r, error } = await sb.from('hr_forms').update({ status:'submitted' }).eq('id', b.dataset.hrs).select('no,status,agent_status,agent_issues').single(); if (error) return fail(error); hrAgentToast(r); pageHRF(); });
+  document.querySelectorAll('[data-hrd]').forEach(b => b.onclick = () => hrDecide(f(b.dataset.hrd), b.dataset.a));
+  bindAgentRecheck();
+  document.querySelectorAll('[data-hrh]').forEach(b => b.onclick = () => showHistory('hr', b.dataset.hrh, b.dataset.no));
+  document.querySelectorAll('[data-hrp]').forEach(b => b.onclick = () => printHRF(f(b.dataset.hrp)));
+}
+async function dlgHRF(form, doc, pre = {}, readonly = false){
+  const staff = await hrStaff(), projs = S.hrProj || S.projects || [], POS = await hrPositions();
+  const d0 = doc || { form, data:{}, variant: pre.variant, staff_id: pre.staff_id };
+  const D = d0.data || {}, dis = readonly ? 'disabled' : '';
+  const sOpt = `<datalist id="hr-staff">${staff.filter(s => s.status !== 'resigned' || s.id === d0.staff_id).map(s => `<option value="${h(staffLabel(s))}">`).join('')}</datalist>`;
+  const curS = staff.find(s => s.id === d0.staff_id);
+  const staffField = (label = 'พนักงาน') => `<div class="field"><label for="hf-s">${label}</label><input id="hf-s" class="inp" list="hr-staff" required ${dis} value="${h(staffLabel(curS))}" placeholder="พิมพ์รหัสหรือชื่อ">${sOpt}<div id="hf-si" class="small mut"></div></div>`;
+  const projSel = (id, val) => `<select id="${id}" class="inp" ${dis}><option value="">—</option>${projs.map(p => `<option value="${p.id}" ${p.id === val ? 'selected' : ''}>${h(p.code)}</option>`).join('')}</select>`;
+  let body = '', collect;
+  S.hrEdit = doc;
+  if (['FM-HR-01-02','FM-HR-01-03','FM-HR-01-04'].includes(form)) { body = hireBody(form, d0, dis); collect = dd => hireCollect(form, dd); }
+  else if (form === 'FM-HR-01-09') {
+    body = `${staffField('ผู้ขอลาออก')}
+      <div class="row"><div class="field"><label for="hf-eff">ขอสิ้นสุดการปฏิบัติงาน ตั้งแต่วันที่</label><input id="hf-eff" class="inp" type="date" required ${dis} value="${h(d0.effective_date || '')}"></div></div>
+      <div class="field"><label for="hf-r">ด้วยเหตุผล</label><textarea id="hf-r" class="inp" rows="2" required ${dis}>${h(D.reason || '')}</textarea></div>
+      <div class="field"><label>สิ่งของที่คืนบริษัท</label><div id="hf-ret" class="small"></div><textarea id="hf-ret2" class="inp" rows="2" placeholder="รายการอื่น บรรทัดละ 1 รายการ (เช่น บัตรพนักงาน ยูนิฟอร์ม กุญแจ)" ${dis}>${h((D.returns_extra || []).join('\n'))}</textarea></div>
+      <p class="small faint">ส่งแล้ว Manager Agent ตรวจและปิดเรื่องเอง (ไม่ต้องรอบอสอนุมัติ — HR-FLOW-02) แล้วระบบจะ: ร่างใบขออัตรากำลังทดแทนให้หัวหน้า · ตั้งวันสิ้นสุดการจ้าง · ประกันสังคม "กำลังแจ้งออก" (แจ้งภายในวันที่ 15 ของเดือนถัดไป) · ถึงวันสิ้นสุดแล้วเปลี่ยนสถานะเป็นลาออกและระงับบัญชีเข้าระบบ · ผู้ช่วยตรวจ AI เตือนถ้ายังถือทรัพย์สิน · ไม่เก็บเลขบัตรประชาชน (กรอกมือในฉบับพิมพ์)</p>`;
+    collect = dd => { const s = pickStaff(dd); if (!s) return null; const assets = [...dd.querySelectorAll('[data-ret]')].map(c => ({ code:c.dataset.ret, name:c.dataset.n, returned:c.checked }));
+      return { staff_id:s.id, project_id:s.project_id, effective_date:$('#hf-eff', dd).value || null, title:'ลาออก ' + s.full_name, data:{ reason:$('#hf-r', dd).value.trim(), returns_assets:assets, returns_extra:$('#hf-ret2', dd).value.split('\n').map(x => x.trim()).filter(Boolean), position:s.position, site:s.site, start_date:s.start_date } }; };
+  } else if (form === 'FM-HR-01-01') {
+    const pc0 = d0.position_code || posOf(D.position)?.code || '';
+    body = `<div class="row"><div class="field"><label for="hf-pc">ตำแหน่งตาม Position Master</label><select id="hf-pc" class="inp" ${dis}><option value="">— ไม่อยู่ในทะเบียน (พิมพ์ชื่อเอง · Agent จะเตือน) —</option>${Object.entries(POS_GRP).map(([g, gl]) => `<optgroup label="${h(gl)}">${POS.filter(p => p.grp === g).map(p => `<option value="${p.code}" ${p.code === pc0 ? 'selected' : ''}>${p.code.slice(6)} · ${h(p.title)}</option>`).join('')}</optgroup>`).join('')}</select><div id="hf-pci" class="small mut"></div></div>
+        <div class="field"><label for="hf-pos">ชื่อตำแหน่ง</label><input id="hf-pos" class="inp" required ${dis} value="${h(D.position || '')}"></div>
+        <div class="field" style="max-width:130px"><label for="hf-n">อัตราที่ต้องการ</label><input id="hf-n" class="inp" type="number" min="1" required ${dis} value="${h(D.count || 1)}"></div></div>
+      <div class="row"><div class="field"><label for="hf-dept">สังกัดแผนก / หน้างาน</label><input id="hf-dept" class="inp" list="hr-sites" ${dis} value="${h(D.dept || '')}"><datalist id="hr-sites">${[...new Set(staff.map(s => s.site).filter(Boolean))].map(x => `<option>${h(x)}</option>`).join('')}</datalist></div>
+        <div class="field"><label for="hf-p">โครงการ</label>${projSel('hf-p', d0.project_id)}</div></div>
+      <div class="row"><div class="field"><label for="hf-k">เป็น</label><select id="hf-k" class="inp" ${dis}>${[['replace','ตำแหน่งเดิม เพื่อทดแทน'],['new','ตำแหน่งที่ตั้งขึ้นใหม่'],['other','อื่น ๆ']].map(([k, l]) => `<option value="${k}" ${D.kind === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+        <div class="field"><label for="hf-rep">ทดแทน (ชื่อ) / หมายเหตุ</label><input id="hf-rep" class="inp" ${dis} value="${h(D.replace || '')}"></div>
+        <div class="field"><label for="hf-bud"><input type="checkbox" id="hf-bud" ${D.in_budget ? 'checked' : ''} ${dis}> อยู่ในงบประมาณ</label></div></div>
+      <div class="field"><label for="hf-desc">ลักษณะงานโดยย่อ</label><textarea id="hf-desc" class="inp" rows="3" ${dis}>${h(D.desc || '')}</textarea></div>
+      <div class="row"><div class="field"><label for="hf-sex">เพศ</label><input id="hf-sex" class="inp" ${dis} value="${h(D.sex || 'ไม่จำกัด')}"></div><div class="field"><label for="hf-age">อายุ (ปี)</label><input id="hf-age" class="inp" ${dis} value="${h(D.age || '')}" placeholder="เช่น 20–45"></div>
+        <div class="field"><label for="hf-edu">การศึกษา</label><input id="hf-edu" class="inp" ${dis} value="${h(D.edu || '')}"></div><div class="field"><label for="hf-maj">วิชาเอก</label><input id="hf-maj" class="inp" ${dis} value="${h(D.major || '')}"></div></div>
+      <div class="row"><div class="field"><label for="hf-exp">ประสบการณ์</label><input id="hf-exp" class="inp" ${dis} value="${h(D.exp || '')}" placeholder="ไม่จำเป็น / งานที่ต้องมี"></div><div class="field" style="max-width:130px"><label for="hf-expy">จำนวนปี</label><input id="hf-expy" class="inp" type="number" min="0" ${dis} value="${h(D.exp_years ?? '')}"></div></div>
+      <div class="row"><div class="field"><label for="hf-sk">ความสามารถอื่น ๆ</label><input id="hf-sk" class="inp" ${dis} value="${h(D.skills || '')}"></div><div class="field"><label for="hf-need">ต้องการภายในวันที่</label><input id="hf-need" class="inp" type="date" ${dis} value="${h(D.need_by || '')}"></div></div>`;
+    collect = dd => ({ project_id:$('#hf-p', dd).value || null, position_code:$('#hf-pc', dd).value || null, title:`ขอ ${$('#hf-pos', dd).value.trim()} ${$('#hf-n', dd).value} อัตรา`, data:{ position:$('#hf-pos', dd).value.trim(), count:+$('#hf-n', dd).value || 1, dept:$('#hf-dept', dd).value.trim(), kind:$('#hf-k', dd).value, replace:$('#hf-rep', dd).value.trim(), in_budget:$('#hf-bud', dd).checked, desc:$('#hf-desc', dd).value.trim(), sex:$('#hf-sex', dd).value.trim(), age:$('#hf-age', dd).value.trim(), edu:$('#hf-edu', dd).value.trim(), major:$('#hf-maj', dd).value.trim(), exp:$('#hf-exp', dd).value.trim(), exp_years:$('#hf-expy', dd).value === '' ? null : +$('#hf-expy', dd).value, skills:$('#hf-sk', dd).value.trim(), need_by:$('#hf-need', dd).value || null } });
+  } else if (form === 'FM-HR-01-05') {
+    const v = d0.variant || pbVariantFor(curS), P = PB[v], sc = D.scores || {};
+    const row = (ci, ii, txt, scale, labels) => { const k = `${ci}.${ii}`, val = sc[k];
+      return `<tr><td class="small">${ii + 1}. ${h(txt)}</td><td class="nw">${Array.from({ length:scale }, (_, j) => scale - j).map(n => `<label class="pb-r" title="${labels ? labels[scale - n] : n + ' คะแนน'}"><input type="radio" name="pb-${k}" value="${n}" ${val == n ? 'checked' : ''} ${dis}><span>${labels ? labels[scale - n] : n}</span></label>`).join('')}</td></tr>`; };
+    body = `<div class="row"><div class="field" style="max-width:220px"><label for="hf-v">แบบประเมิน</label><select id="hf-v" class="inp" ${doc ? 'disabled' : ''}>${Object.entries(PB).map(([k, p]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${p.days} วัน${k === 'probation45' ? ' (วิศวกร/หัวหน้างาน)' : ' (ช่าง)'}</option>`).join('')}</select></div>
+        ${staffField('ผู้รับการประเมิน')}</div>
+      <div class="row"><div class="field"><label for="hf-ed">ประเมินถึงวันที่</label><input id="hf-ed" class="inp" type="date" ${dis} value="${h(d0.effective_date || '')}"></div><div class="field"><label for="hf-p">โครงการ</label>${projSel('hf-p', d0.project_id)}</div></div>
+      <div class="field"><label>${h(P.branchLabel)}</label><div class="gates">${P.branches.map(b => `<label class="chip"><input type="checkbox" data-br="${h(b)}" ${(D.branches || []).includes(b) ? 'checked' : ''} ${dis}> ${h(b)}</label>`).join('')}</div></div>
+      ${P.test ? `<details class="pb-cat"><summary><b>${h(P.test.title)}</b></summary><table class="pb-t"><tbody>${P.test.items.map((t, i) => row('t', i, t, 3)).join('')}</tbody></table></details>` : ''}
+      ${P.cats.map((c, ci) => `<div class="pb-cat"><div class="pb-h"><b>${h(c.t)}</b><span class="small mut">เต็ม ${c.max} · <b data-sub="${ci}">0</b></span></div><table class="pb-t"><tbody>${c.items.map((t, i) => row(ci, i, t, c.scale, c.labels)).join('')}</tbody></table></div>`).join('')}
+      <div class="msg info" id="pb-tot"></div>
+      <div class="field"><label for="hf-cm">ความคิดเห็นผู้ประเมิน</label><textarea id="hf-cm" class="inp" rows="2" ${dis}>${h(D.comment || '')}</textarea></div>
+      <div class="field"><label for="hf-imp">เรื่องที่ควรปรับปรุง</label><textarea id="hf-imp" class="inp" rows="2" ${dis}>${h(D.improve || '')}</textarea></div>
+      <p class="small faint">${h(P.rule)} · หมวดความประพฤติให้ 1–5 ต่อข้อ (รวม 15 ตามหัวแบบฟอร์ม) หมวดอื่น 1–3 · อนุมัติแล้วบันทึกเป็นผลประเมินของพนักงาน</p>`;
+    collect = dd => { const s = pickStaff(dd); if (!s) return null; const v2 = $('#hf-v', dd).value, P2 = PB[v2], scores = {}; let tot = 0, miss = 0;
+      P2.cats.forEach((c, ci) => c.items.forEach((_, i) => { const r = dd.querySelector(`[name="pb-${ci}.${i}"]:checked`); if (r) { scores[`${ci}.${i}`] = +r.value; tot += +r.value; } else miss++; }));
+      (P2.test?.items || []).forEach((_, i) => { const r = dd.querySelector(`[name="pb-t.${i}"]:checked`); if (r) scores[`t.${i}`] = +r.value; });
+      const g = P2.grade(tot);
+      return { staff_id:s.id, project_id:$('#hf-p', dd).value || s.project_id || null, variant:v2, effective_date:$('#hf-ed', dd).value || null, score:tot, result:g[0], title:`${P2.title} · ${s.full_name}`,
+        data:{ scores, total:tot, missing:miss, resultText:g[1], branches:[...dd.querySelectorAll('[data-br]:checked')].map(x => x.dataset.br), comment:$('#hf-cm', dd).value.trim(), improve:$('#hf-imp', dd).value.trim(), position:s.position, site:s.site, start_date:s.start_date, evaluator:S.user.user_metadata?.full_name || '' }, _miss:miss }; };
+  }
+  const isNew = !doc;
+  const resub = doc?.status === 'submitted';
+  const d = dialog(`${HRF[form].name}${doc ? ' · ' + doc.no : ''}`, `${agentBox(doc)}<p class="small faint" style="margin:0 0 6px">${form} · ฉบับแก้ไข 00 · มีผล 15/07/2568</p>${body}
+    ${readonly ? '' : resub ? `<p class="small" style="margin:8px 0"><input type="checkbox" id="hf-send" checked hidden>บันทึกแล้ว Manager Agent จะตรวจใหม่ทันที</p>` : `<label class="small" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="hf-send"> ส่งพิจารณาทันที (Manager Agent ตรวจก่อนถึงผู้อนุมัติ)</label>`}`,
+    readonly ? 'ปิด' : 'บันทึก', async dd => {
+      if (readonly) return true;
+      const r = collect(dd); if (!r) return false;
+      if (r._miss) { if ($('#hf-send', dd).checked) { toast(`ยังให้คะแนนไม่ครบ ${r._miss} ข้อ`, true); return false; } } delete r._miss;
+      if (r._needCode && $('#hf-send', dd).checked) { toast('ใส่รหัสพนักงานก่อนส่งพิจารณา', true); return false; } delete r._needCode;
+      const row = { ...r, status: $('#hf-send', dd).checked ? 'submitted' : (doc?.status === 'returned' ? 'returned' : 'draft') };
+      const cols = 'no,status,agent_status,agent_issues';
+      const { data: saved, error } = isNew ? await sb.from('hr_forms').insert({ ...row, company_id:S.cid, form }).select(cols).single() : await sb.from('hr_forms').update(row).eq('id', doc.id).select(cols).single();
+      if (error) { fail(error); return false; }
+      if (row.status === 'submitted') hrAgentToast(saved); else toast(`บันทึก ${saved?.no || ''} แล้ว`); pageHRF();
+    });
+  if (readonly) d.querySelector('button[value=cancel]')?.remove();
+  bindAgentRecheck(d);
+  hireWire(form, d);
+  const pcs = $('#hf-pc', d); if (pcs) { const info = () => { const p = POS.find(x => x.code === pcs.value); $('#hf-pci', d).innerHTML = p ? `${chip(POS_ST, p.status)} JD/JS v${h(p.jdjs_version)}${p.qb_doc ? ' · การ์ดคำถาม ' + h(p.qb_doc) : ''} · รายงานต่อ ${h(p.reports_to || '—')}` : ''; };
+    pcs.onchange = () => { const p = POS.find(x => x.code === pcs.value); if (p) $('#hf-pos', d).value = p.title; info(); }; info(); }
+  /* live staff info + resignation asset list + probation totals */
+  const onStaff = async () => { const s = pickStaff(d, true); $('#hf-si', d) && ($('#hf-si', d).textContent = s ? `${s.position || ''} · ${s.site || ''} · เริ่มงาน ${thDate(s.start_date)}` : '');
+    if (form === 'FM-HR-01-09' && $('#hf-ret', d)) { if (!s) return $('#hf-ret', d).innerHTML = ''; const { data } = await sb.rpc('staff_assets', { p_staff:s.id }); const prev = Object.fromEntries((D.returns_assets || []).map(a => [a.code, a.returned]));
+      $('#hf-ret', d).innerHTML = (data || []).length ? (data || []).map(a => `<label style="display:block"><input type="checkbox" data-ret="${h(a.code)}" data-n="${h(a.name)}" ${prev[a.code] ? 'checked' : ''} ${dis}> ${h(a.code)} ${h(a.name)} (${cnt(a.qty)} ${h(a.unit || '')}) — ติ๊กเมื่อคืนแล้ว</label>`).join('') : '<span class="faint">ไม่มีทรัพย์สินในทะเบียนที่ถืออยู่</span>'; }
+    if (form === 'FM-HR-01-05' && s && !$('#hf-ed', d).value && s.start_date) $('#hf-ed', d).value = addD(s.start_date, PB[$('#hf-v', d).value].days);
+    if (form === 'FM-HR-01-05' && s && !$('#hf-p', d).value && s.project_id) $('#hf-p', d).value = s.project_id; };
+  const hs = $('#hf-s', d); if (hs) { hs.onchange = onStaff; onStaff(); }
+  if (form === 'FM-HR-01-05') {
+    const v = $('#hf-v', d).value, sum = () => { const P = PB[$('#hf-v', d).value]; let t = 0;
+      P.cats.forEach((c, ci) => { let st = 0; c.items.forEach((_, i) => { const r = d.querySelector(`[name="pb-${ci}.${i}"]:checked`); if (r) st += +r.value; }); const e = d.querySelector(`[data-sub="${ci}"]`); if (e) e.textContent = st; t += st; });
+      const g = P.grade(t), max = P.cats.reduce((a, c) => a + c.max, 0); $('#pb-tot', d).innerHTML = `รวม <b>${t}</b> / ${max} คะแนน → <b>${g[1]}</b>`; $('#pb-tot', d).className = 'msg ' + (g[0] === 'pass' ? 'ok' : g[0] === 'retry' ? 'warn' : 'err'); };
+    d.addEventListener('change', e => { if (e.target.type === 'radio') sum(); });
+    $('#hf-v', d).onchange = () => { const s = pickStaff(d, true); d.close(); dlgHRF(form, null, { staff_id:s?.id, variant:$('#hf-v', d).value }); };
+    sum(); void v;
+  }
+}
+function pickStaff(dd, quiet){
+  const v = ($('#hf-s', dd)?.value || '').trim(), st = S.hrStaff || [];
+  const s = st.find(x => staffLabel(x) === v) || st.find(x => x.employee_code === v) || st.find(x => x.full_name === v);
+  if (!s && !quiet) toast('เลือกพนักงานจากรายชื่อ (พิมพ์รหัสหรือชื่อแล้วเลือก)', true);
+  return s || null;
+}
+/* print in the original form layout (browser print → PDF) */
+function printHRF(doc){
+  const s = (S.hrStaff || []).find(x => x.id === doc.staff_id), D = doc.data || {}, P = doc.variant ? PB[doc.variant] : null;
+  const pj = (S.hrProj || []).find(p => p.id === doc.project_id), dot = (v, w = 160) => v ? `<u>&nbsp;${h(v)}&nbsp;</u>` : `<span class="dl" style="width:${w}px"></span>`;
+  const th = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('th-TH', { day:'numeric', month:'long', year:'numeric' }) : '';
+  const head = (title, pages) => `<table class="hd"><tr><td class="t">${h(title)}</td><td class="m">รหัสเอกสาร :<br>วันที่มีผลบังคับใช้ :<br>ครั้งที่แก้ไข :<br>จำนวนหน้า :</td><td class="m">${doc.form}<br>15/07/2568<br>00<br>1 จาก ${pages}</td></tr></table>`;
+  const sign = (a, b) => `<div class="sg"><div>ลงชื่อ ${dot('', 180)} ${a}<br>( ${dot('', 170)} )<br>วันที่ ${dot('', 120)}</div><div>ลงชื่อ ${dot('', 180)} ${b}<br>( ${dot('', 170)} )<br>วันที่ ${dot('', 120)}</div></div>`;
+  let body = '';
+  if (doc.form === 'FM-HR-01-09') {
+    const items = [...(D.returns_assets || []).map(a => `${a.code} ${a.name}${a.returned ? ' (คืนแล้ว)' : ''}`), ...(D.returns_extra || [])];
+    body = head('แบบฟอร์มใบลาออก', 1) + `<p style="text-align:right">วันที่ ${th(doc.created_at.slice(0, 10))}</p><p>เรียน ประธานกรรมการบริหาร / หัวหน้าแผนก<br>เรื่อง ขอลาออก</p>
+      <p class="ind">ข้าพเจ้า ${dot(s?.full_name, 260)} บัตรประจำตัวประชาชน ${dot('', 200)} วันที่เริ่มงาน ${dot(th(D.start_date || s?.start_date))} ตำแหน่ง ${dot(D.position || s?.position)} ฝ่าย ${dot(D.site || s?.site)} โครงการ ${dot(pj?.code)}
+      ของบริษัท สมาร์ท เทอร์มินอล คอร์ปอเรชั่น จำกัด มีความประสงค์ขอลาออกจากการเป็นพนักงานของบริษัทฯ เนื่องจาก ด้วยเหตุผล ${dot(D.reason, 400)} และจึงขอสิ้นสุดการปฏิบัติงาน ตั้งแต่วันที่ ${dot(th(doc.effective_date))}</p>
+      <p>สิ่งของที่คืนบริษัท</p><ol>${(items.length ? items : ['', '', '']).map(x => `<li>${x ? h(x) : dot('', 380)}</li>`).join('')}</ol>
+      <p style="text-align:center;margin-top:24px">ขอแสดงความนับถือ<br><br>ลงชื่อ ${dot('', 200)}<br>( ${h(s?.full_name || '')} )</p>
+      <div class="sg"><div><b>หัวหน้าแผนก</b><br>☐ อนุมัติ ☐ ไม่อนุมัติ เนื่องจาก ${dot('', 160)}<br><br>ลงชื่อ ${dot('', 170)}<br>วันที่ ${dot('', 120)}</div><div><b>ฝ่ายทรัพยากรบุคคล</b><br>☐ ทราบ ☐ ลงนามรับทราบ<br><br>ลงชื่อ ${dot('', 170)}<br>วันที่ ${dot('', 120)}</div></div>`;
+  } else if (doc.form === 'FM-HR-01-01') {
+    body = head('แบบใบขออัตรากำลัง', 1) + `<p style="text-align:right">ใบขออัตรากำลังเลขที่ <b>${h(doc.no)}</b></p><p><b>สำหรับหน่วยงานที่ขอ</b></p>
+      <p>ชื่อตำแหน่ง ${dot(D.position, 260)} อัตราที่ต้องการ ${dot(D.count, 60)} อัตรา<br>สังกัดแผนก ${dot(D.dept, 220)} โครงการ ${dot(pj?.code, 140)}</p>
+      <p>เป็น ${D.kind === 'replace' ? '☑' : '☐'} ตำแหน่งงานที่มีอยู่ตามอัตรากำลังเดิม เพื่อทดแทนอัตรากำลังของ ${dot(D.kind === 'replace' ? D.replace : '', 200)}<br>&emsp;&ensp;${D.kind === 'new' ? '☑' : '☐'} เป็นตำแหน่งที่ตั้งขึ้นใหม่ &emsp;${D.kind === 'other' ? '☑' : '☐'} อื่น ๆ ${dot(D.kind === 'other' ? D.replace : '', 160)} &emsp;${D.in_budget ? '☑' : '☐'} อยู่ในงบประมาณ</p>
+      <p><b>ลักษณะงานโดยย่อ</b><br><span class="box">${h(D.desc || '')}</span></p>
+      <p><b>คุณสมบัติที่ต้องการ</b><br>เพศ ${dot(D.sex)} อายุ ${dot(D.age, 80)} ปี<br>การศึกษาระดับ ${dot(D.edu)} วิชาเอก ${dot(D.major)}<br>${D.exp ? '☑ จำเป็นต้องมีประสบการณ์ ' + dot(D.exp, 220) + ' จำนวน ' + dot(D.exp_years, 50) + ' ปี' : '☑ ไม่จำเป็นต้องมีประสบการณ์'}<br>ความสามารถอื่น ๆ ${dot(D.skills, 360)}<br>ต้องการภายในวันที่ ${dot(th(D.need_by))}</p>
+      ${sign('ผู้ขอ', 'ฝ่ายบุคคล')}<div class="sg"><div><b>คำสั่งผู้มีอำนาจอนุมัติ</b><br>☐ อนุมัติ ☐ ไม่อนุมัติ เนื่องจาก ${dot('', 160)}<br><br>ลงชื่อ ${dot('', 170)}<br>วันที่ ${dot('', 120)}</div><div><b>บันทึกฝ่ายบุคคล</b><br>ชื่อ ${dot('', 150)} วันเริ่มงาน ${dot('', 80)}<br>ชื่อ ${dot('', 150)} วันเริ่มงาน ${dot('', 80)}</div></div>`;
+  } else if (doc.form === 'FM-HR-01-05' && P) {
+    const sc = D.scores || {}, tbl = (c, ci) => `<table class="sc"><tr><th>รายการประเมิน</th>${c.labels ? c.labels.map(l => `<th>${l}</th>`).join('') : Array.from({ length:c.scale }, (_, j) => `<th>${c.scale - j}</th>`).join('')}<th>หมายเหตุ</th></tr>
+      ${c.items.map((t, i) => `<tr><td>${i + 1}. ${h(t)}</td>${Array.from({ length:c.scale }, (_, j) => `<td class="c">${sc[`${ci}.${i}`] == c.scale - j ? '✓' : ''}</td>`).join('')}<td></td></tr>`).join('')}
+      <tr><td style="text-align:right"><b>รวมคะแนน</b></td><td colspan="${c.scale}" class="c"><b>${c.items.reduce((a, _, i) => a + (sc[`${ci}.${i}`] || 0), 0)}</b> / ${c.max}</td><td></td></tr></table>`;
+    body = head(P.title, P.pages) + `<p style="text-align:right">วันที่ ${th(todayStr())}</p>
+      <p class="ind">บริษัท สมาร์ท เทอร์มินอล คอร์ปอเรชั่น จำกัด ได้จ้าง ${dot(s?.full_name, 220)} ตำแหน่ง ${dot(D.position || s?.position)} โครงการ ${dot(pj?.code)} ได้ปฏิบัติงานกับบริษัทฯ มาเป็นเวลา ${P.days} วัน ตั้งแต่วันที่ ${dot(th(D.start_date || s?.start_date))} ถึงวันที่ ${dot(th(doc.effective_date))}</p>
+      <p>${h(P.branchLabel)} : ${P.branches.map(b => `${(D.branches || []).includes(b) ? '☑' : '☐'} ${h(b)}`).join(' &ensp;')}</p>
+      ${P.test ? `<p><b>${h(P.test.title)}</b></p>${tbl({ scale:3, items:P.test.items, max:15 }, 't')}` : ''}
+      <p class="small">คะแนน : 3 = ดีมาก · 2 = พอใช้ · 1 = ควรปรับปรุง</p>
+      ${P.cats.map((c, ci) => `<p><b>หมวดหมู่การประเมิน ${h(c.t)} ${c.max} คะแนน</b></p>${tbl(c, ci)}`).join('')}
+      <p><b>ความคิดเห็นผู้ประเมิน</b><br><span class="box">${h(D.comment || '')}</span></p><p><b>เรื่องที่ควรปรับปรุง</b><br><span class="box">${h(D.improve || '')}</span></p>
+      <p><b>เกณฑ์การให้คะแนน</b> ${h(P.rule)} &emsp; รวมคะแนนทั้งหมด <b>${doc.score ?? ''}</b> คะแนน · ผลการประเมิน <b>${h(D.resultText || '')}</b></p>
+      ${sign('ผู้ประเมิน', 'ผู้รับการประเมิน')}<p style="text-align:center">ลงชื่อ ${dot('', 200)} ผู้อำนวยการฝ่าย<br>( ${dot('', 180)} )</p>`;
+  } else body = hirePrint(doc, dot, th, head, sign) || (head(HRF[doc.form].name, 1) + '<p>แบบฟอร์มนี้ยังไม่รองรับการพิมพ์</p>');
+  const w = window.open('', '_blank'); if (!w) return toast('เบราว์เซอร์บล็อกหน้าต่างใหม่ — อนุญาต pop-up แล้วลองอีกครั้ง', true);
+  w.document.write(`<!doctype html><html lang="th"><head><meta charset="utf-8"><title>${h(doc.no)} ${h(HRF[doc.form].name)}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <style>@page{size:A4;margin:14mm 14mm 16mm}body{font:15px/1.65 Sarabun,'TH Sarabun New',sans-serif;color:#000;margin:0}
+    table.hd{width:100%;border-collapse:collapse;margin-bottom:10px}table.hd td{border:1px solid #000;padding:6px 8px;vertical-align:middle}table.hd .t{font-size:20px;font-weight:700;text-align:center;width:60%}table.hd .m{font-size:13px;white-space:nowrap}
+    .dl{display:inline-block;border-bottom:1px dotted #000;height:1em;vertical-align:baseline}u{text-decoration:underline dotted}.ind{text-indent:2.5em}
+    table.sc{width:100%;border-collapse:collapse;margin:4px 0 10px;font-size:13.5px}table.sc th,table.sc td{border:1px solid #000;padding:3px 6px}table.sc .c{text-align:center;width:44px}
+    table.pay{margin:4px 0 8px 3em;border-collapse:collapse}table.pay td{padding:2px 10px}.box{display:block;min-height:3.2em;border-bottom:1px dotted #000;white-space:pre-wrap}.sg{display:flex;justify-content:space-between;gap:24px;margin-top:22px}.sg>div{flex:1}
+    .ft{font-size:10.5px;text-align:center;color:#444;margin-top:24px}@media print{.ft{position:fixed;bottom:0;left:0;right:0;margin:0}}.small{font-size:13px}@media screen{body{padding:24px;max-width:820px;margin:auto}}</style></head>
+    <body>${body}<div class="ft">Copyright© SMART Terminal Corporation Co., Ltd All Right Reserved. · ${h(doc.no)} · พิมพ์จาก SMART ERP</div><script>setTimeout(()=>print(),600)<\/script></body></html>`);
+  w.document.close();
+}
+
+/* hiring flow: 01-02 application → 01-03 interview (approve pass ⇒ DB drafts 01-04 contract) → 01-04 approve ⇒ DB registers staff */
+const IV_ITEMS = [['1. บุคลิกภาพภายนอก', ['บุคลิกภาพ การแต่งกาย','การตรงต่อเวลา']], ['2. การสื่อสาร และทัศนคติ', ['ทัศนคติต่อตนเอง ผู้อื่น และบริษัท','ปฏิภาณ ไหวพริบ ในการตอบคำถาม','การสื่อสาร ความมีมนุษยสัมพันธ์']],
+  ['3. ความรู้ และความสามารถ', ['ความวิริยะ อุตสาหะ และสู้งาน','ความเป็นผู้นำ ความคิดสร้างสรรค์','การใช้โปรแกรมคอมพิวเตอร์','การใช้ภาษาอังกฤษ']], ['4. ประสบการณ์', ['ความเหมาะสมด้านประสบการณ์ในการทำงาน']]];
+const ivGrade = t => t >= 30 ? ['pass','ผ่าน และนัดผู้สมัคร'] : t >= 26 ? ['wait','รอเปรียบเทียบผู้สมัครอื่น ๆ'] : ['fail','ไม่ผ่านการสัมภาษณ์'];
+function hireBody(form, d0, dis){
+  const D = d0.data || {}, docs = S.hrDocs || [], projs = S.hrProj || [];
+  const inp = (id, label, val, extra = '') => `<div class="field"><label for="${id}">${label}</label><input id="${id}" class="inp" ${extra} ${dis} value="${h(val ?? '')}"></div>`;
+  const projSel = val => `<div class="field"><label for="hf-p">โครงการ</label><select id="hf-p" class="inp" ${dis}><option value="">—</option>${projs.map(p => `<option value="${p.id}" ${p.id === val ? 'selected' : ''}>${h(p.code)}</option>`).join('')}</select></div>`;
+  const sites = `<datalist id="hr-sites">${[...new Set((S.hrStaff || []).map(s => s.site).filter(Boolean))].map(x => `<option>${h(x)}</option>`).join('')}</datalist>`;
+  if (form === 'FM-HR-01-02') {
+    const reqs = docs.filter(x => x.form === 'FM-HR-01-01' && x.status === 'approved');
+    const edu = D.edu || [{}, {}], exp = D.exp || [{}, {}, {}];
+    return `<div class="row"><div class="field"><label for="hf-req">อ้างอิงใบขออัตรากำลัง</label><select id="hf-req" class="inp" ${dis}><option value="">—</option>${reqs.map(r => `<option value="${r.id}" ${r.id === D.req_id ? 'selected' : ''}>${h(r.no)} · ${h(r.data?.position || '')}</option>`).join('')}</select></div>${inp('hf-pos', 'สมัครตำแหน่ง', D.position, 'required')}</div>
+      <div class="row">${inp('hf-cur', 'เงินเดือนปัจจุบัน (บาท)', D.current_salary, 'type="number" min="0"')}${inp('hf-exs', 'เงินเดือนที่คาดหวัง (บาท)', D.expected_salary, 'type="number" min="0"')}${inp('hf-av', 'วันที่เริ่มงานได้', D.available_date, 'type="date"')}</div>
+      <div class="row">${inp('hf-fn', 'ชื่อ-สกุล (มีคำนำหน้า)', D.full_name, 'required')}${inp('hf-nn', 'ชื่อเล่น', D.nickname)}${inp('hf-en', 'ชื่อ-สกุล ภาษาอังกฤษ', D.name_en)}</div>
+      <div class="row">${inp('hf-ph', 'เบอร์ติดต่อ', D.phone)}${inp('hf-em', 'อีเมล', D.email, 'type="email"')}${inp('hf-ln', 'LINE ID', D.line)}</div>
+      <div class="row"><div class="field"><label for="hf-site">หน้างานที่ต้องการ / ที่จะไปประจำ</label><input id="hf-site" class="inp" list="hr-sites" ${dis} value="${h(D.site || '')}">${sites}</div>${projSel(d0.project_id)}</div>
+      <div class="field"><label>การศึกษา</label>${edu.map((e, i) => `<div class="row" style="margin-bottom:4px"><select class="inp" data-edu="${i}" data-f="lv" ${dis} style="flex:1">${['','ม.3','ม.6','ปวช.','ปวส.','ปริญญาตรี','ปริญญาโท','อื่น ๆ'].map(x => `<option ${x === e.lv ? 'selected' : ''}>${x}</option>`).join('')}</select><input class="inp" data-edu="${i}" data-f="inst" placeholder="สถาบัน" ${dis} value="${h(e.inst || '')}" style="flex:2"><input class="inp" data-edu="${i}" data-f="major" placeholder="สาขา" ${dis} value="${h(e.major || '')}" style="flex:2"><input class="inp" data-edu="${i}" data-f="year" placeholder="ปีที่จบ" ${dis} value="${h(e.year || '')}" style="flex:1"></div>`).join('')}</div>
+      <div class="field"><label>ประวัติการทำงาน</label>${exp.map((e, i) => `<div class="row" style="margin-bottom:4px"><input class="inp" data-exp="${i}" data-f="emp" placeholder="สถานที่ทำงาน" ${dis} value="${h(e.emp || '')}" style="flex:2"><input class="inp" data-exp="${i}" data-f="pos" placeholder="ตำแหน่ง" ${dis} value="${h(e.pos || '')}" style="flex:2"><input class="inp" data-exp="${i}" data-f="yrs" placeholder="กี่ปี" ${dis} value="${h(e.yrs || '')}" style="flex:1"><input class="inp" data-exp="${i}" data-f="why" placeholder="เหตุที่ออก" ${dis} value="${h(e.why || '')}" style="flex:2"></div>`).join('')}</div>
+      <div class="row"><div class="field"><label>ภาษาอังกฤษ</label><select id="hf-eng" class="inp" ${dis}>${['','ดี','พอใช้','ไม่ดี'].map(x => `<option ${x === D.english ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+        <div class="field"><label>ใบขับขี่</label><div class="gates"><label class="chip"><input type="checkbox" id="hf-car" ${D.car ? 'checked' : ''} ${dis}> รถยนต์</label><label class="chip"><input type="checkbox" id="hf-moto" ${D.moto ? 'checked' : ''} ${dis}> จักรยานยนต์</label></div></div>
+        ${inp('hf-cert', 'ใบอนุญาต / ใบรับรอง (เช่น กว., ฝีมือแรงงาน)', D.certs)}</div>
+      ${inp('hf-src', 'ทราบข่าวจาก', D.source)}
+      <p class="small faint">ตาม PDPA ระบบไม่เก็บเลขบัตรประชาชน เลขบัญชี วันเกิด ที่อยู่ ข้อมูลสุขภาพ ศาสนา และข้อมูลบิดามารดา — ผู้สมัครกรอกส่วนนั้นในฉบับพิมพ์</p>`;
+  }
+  if (form === 'FM-HR-01-03') {
+    const apps = docs.filter(x => x.form === 'FM-HR-01-02' && !['rejected','cancelled'].includes(x.status));
+    S.ivQB = D.qb || null; S.ivRO = !!dis;
+    const sc = D.scores || {}, r = (k, n) => `<label class="pb-r"><input type="radio" name="iv-${k}" value="${n}" ${sc[k] == n ? 'checked' : ''} ${dis}><span>${{ 5:'ดี 5', 3:'ปานกลาง 3', 1:'ปรับปรุง 1' }[n]}</span></label>`;
+    const opt = (id, vals, cur) => `<select id="${id}" class="inp" ${dis}>${['', ...vals].map(x => `<option ${x === cur ? 'selected' : ''}>${x}</option>`).join('')}</select>`;
+    return `<div class="row"><div class="field"><label for="hf-app">ใบสมัคร</label><select id="hf-app" class="inp" required ${dis}><option value="">— เลือกใบสมัคร —</option>${apps.map(a => `<option value="${a.id}" ${a.id === D.application_id ? 'selected' : ''}>${h(a.no)} · ${h(a.data?.full_name || '')} · ${h(a.data?.position || '')}</option>`).join('')}</select></div></div>
+      <div class="row">${inp('hf-fn', 'ชื่อผู้สมัคร', D.full_name, 'required')}${inp('hf-pos', 'ตำแหน่งที่สมัคร', D.position, 'required')}</div>
+      <div class="row"><div class="field"><label>ประสบการณ์ด้าน ISO</label>${opt('hf-iso', ['ดี','พอใช้','ไม่ดี'], D.iso)}</div><div class="field"><label>ประวัติการเปลี่ยนงาน</label>${opt('hf-wh', ['ไม่ค่อยเปลี่ยนงาน','เปลี่ยนงานบ่อย'], D.history)}</div><div class="field"><label>ที่พัก</label>${opt('hf-res', ['ใกล้บริษัท','ไกลบริษัท'], D.residence)}</div></div>
+      <div class="pb-cat" id="iv-qb" style="border-color:var(--amber)"></div>
+      ${IV_ITEMS.map(([t, items], ci) => `<div class="pb-cat"><div class="pb-h"><b>ส่วนที่ ${h(t)}</b><span class="small mut"><b data-ivs="${ci}">0</b></span></div><table class="pb-t"><tbody>${items.map((x, i) => `<tr><td class="small">${ci + 1}.${i + 1} ${h(x)}</td><td class="nw">${[5, 3, 1].map(n => r(`${ci}.${i}`, n)).join('')}</td></tr>`).join('')}</tbody></table></div>`).join('')}
+      <div class="msg info" id="iv-tot"></div>
+      <div class="row">${inp('hf-st', 'วันเริ่มงาน (ถ้าผ่าน)', D.start_date, 'type="date"')}<div class="field"><label for="hf-site">หน้างานที่จะไปประจำ</label><input id="hf-site" class="inp" list="hr-sites" ${dis} value="${h(D.site || '')}">${sites}</div>${projSel(d0.project_id)}</div>
+      <div class="field"><label for="hf-cm">ความคิดเห็นเพิ่มเติม</label><textarea id="hf-cm" class="inp" rows="2" ${dis}>${h(D.comment || '')}</textarea></div>
+      <p class="small faint">30–50 ผ่าน และนัดผู้สมัคร · 26–29 รอเปรียบเทียบ · 0–25 ไม่ผ่าน · <b>อนุมัติผล "ผ่าน" แล้ว ระบบเตรียมร่างสัญญาจ้าง (FM-HR-01-04) ให้อัตโนมัติ</b> — อัตราเงินเดือนกรอกในสัญญาโดยผู้มีสิทธิ์เงินเดือน</p>`;
+  }
+  if (form === 'FM-HR-01-04') {
+    const pay = (pre, lbl) => `<div class="pb-cat"><div class="pb-h"><b>${lbl}</b><span class="small mut" id="${pre}-sum"></span></div><div class="row">${inp(pre + '-b', 'เงินเดือน (บาท/เดือน)', D[pre + '_base'], 'type="number" min="0" step="0.01"')}${inp(pre + '-x', 'เงินเพิ่มค่าประสบการณ์', D[pre + '_exp'], 'type="number" min="0" step="0.01"')}${inp(pre + '-s', 'ค่าทำงานเป็นกะ', D[pre + '_shift'], 'type="number" min="0" step="0.01"')}</div></div>`;
+    return `${D.auto ? `<div class="msg info small">เตรียมอัตโนมัติจากผลสัมภาษณ์ ${h(D.interview_no || '')} (ใบสมัคร ${h(D.application_no || '')})${D.expected_salary ? ` · ผู้สมัครคาดหวัง ${money(D.expected_salary)} บาท` : ''}</div>` : ''}
+      <div class="row">${inp('hf-code', 'รหัสพนักงาน (ต้องใส่ก่อนอนุมัติ)', D.employee_code, 'pattern="[A-Za-z0-9-]{3,20}"')}${inp('hf-fn', 'ชื่อ-สกุล', D.full_name, 'required')}${inp('hf-nn', 'ชื่อเล่น', D.nickname)}</div>
+      <div class="row">${inp('hf-pos', 'ตำแหน่ง', D.position, 'required')}<div class="field"><label for="hf-site">แผนก / หน้างาน</label><input id="hf-site" class="inp" list="hr-sites" ${dis} value="${h(D.site || '')}">${sites}</div>${projSel(d0.project_id)}</div>
+      <div class="row"><div class="field"><label for="hf-et">ประเภทการจ้าง</label><select id="hf-et" class="inp" ${dis}>${['พนักงานรายเดือน','เหมาจ่าย','นักศึกษาฝึกงาน'].map(x => `<option ${x === D.emp_type ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+        ${inp('hf-st', 'วันเริ่มงาน', D.start_date, 'type="date" required')}${inp('hf-pe', 'สิ้นสุดทดลองงาน (119 วัน)', D.probation_end, 'type="date"')}${inp('hf-ce', 'สิ้นสุดสัญญา (330 วัน)', D.contract_end, 'type="date"')}</div>
+      ${pay('pp', 'ระหว่างทดลองงาน')}${pay('ap', 'หลังผ่านทดลองงาน')}
+      ${inp('hf-edu', 'การศึกษา', D.education)}
+      <p class="small faint">เห็นได้เฉพาะเจ้าของ / BN15 / BN17 และผู้ทำเอกสาร · อนุมัติแล้วระบบขึ้นทะเบียนพนักงานให้ (สถานะทำงาน) และนับวันประเมินทดลองงานต่อเอง · ฉบับพิมพ์เว้นช่องเลขบัตรประชาชน วันเกิด ที่อยู่ ให้กรอกด้วยมือ</p>`;
+  }
+  return '';
+}
+function hireCollect(form, dd){
+  const v = id => $(id, dd)?.value?.trim() ?? '', n = id => v(id) === '' ? null : +v(id);
+  if (form === 'FM-HR-01-02') {
+    if (!v('#hf-fn') || !v('#hf-pos')) { toast('กรอกชื่อและตำแหน่งที่สมัคร', true); return null; }
+    const rows = (attr, keys) => { const m = {}; dd.querySelectorAll(`[data-${attr}]`).forEach(e => { (m[e.dataset[attr]] ||= {})[e.dataset.f] = e.value.trim(); }); return Object.values(m).filter(r => keys.some(k => r[k])); };
+    const edu = rows('edu', ['lv','inst']), exp = rows('exp', ['emp','pos']);
+    return { project_id:v('#hf-p') || null, title:'ใบสมัคร ' + v('#hf-fn'), effective_date:v('#hf-av') || null,
+      data:{ req_id:v('#hf-req') || null, position:v('#hf-pos'), current_salary:n('#hf-cur'), expected_salary:n('#hf-exs'), available_date:v('#hf-av') || null, full_name:v('#hf-fn'), nickname:v('#hf-nn'), name_en:v('#hf-en'), phone:v('#hf-ph'), email:v('#hf-em'), line:v('#hf-ln'), site:v('#hf-site'),
+        edu, exp, edu_summary: edu.map(e => [e.lv, e.major, e.inst].filter(Boolean).join(' ')).join(' / '), english:v('#hf-eng'), car:$('#hf-car', dd).checked, moto:$('#hf-moto', dd).checked, certs:v('#hf-cert'), source:v('#hf-src') } };
+  }
+  if (form === 'FM-HR-01-03') {
+    if (!v('#hf-app')) { toast('เลือกใบสมัคร', true); return null; }
+    const scores = {}; let tot = 0, miss = 0;
+    IV_ITEMS.forEach(([, items], ci) => items.forEach((_, i) => { const r = dd.querySelector(`[name="iv-${ci}.${i}"]:checked`); if (r) { scores[`${ci}.${i}`] = +r.value; tot += +r.value; } else miss++; }));
+    const g = ivGrade(tot), app = (S.hrDocs || []).find(x => x.id === v('#hf-app'));
+    return { project_id:v('#hf-p') || app?.project_id || null, score:tot, result:g[0], title:`สัมภาษณ์ ${v('#hf-fn')}`, effective_date:v('#hf-st') || null, _miss:miss,
+      data:{ application_id:v('#hf-app'), application_no:app?.no, req_no:(S.hrDocs || []).find(x => x.id === app?.data?.req_id)?.no || null, full_name:v('#hf-fn'), position:v('#hf-pos'), iso:v('#hf-iso'), history:v('#hf-wh'), residence:v('#hf-res'), scores, total:tot, resultText:g[1], start_date:v('#hf-st') || null, site:v('#hf-site'), comment:v('#hf-cm'), interviewer:S.user.user_metadata?.full_name || '', ...(S.ivQB ? { qb:S.ivQB } : {}) } };
+  }
+  if (form === 'FM-HR-01-04') {
+    if (!v('#hf-fn') || !v('#hf-pos') || !v('#hf-st')) { toast('กรอกชื่อ ตำแหน่ง และวันเริ่มงาน', true); return null; }
+    const D = (S.hrEdit?.data) || {}, tot = p => ['b','x','s'].reduce((a, k) => a + (n(`#${p}-${k}`) || 0), 0);
+    return { project_id:v('#hf-p') || null, title:'สัญญาจ้าง ' + v('#hf-fn'), effective_date:v('#hf-st'),
+      data:{ ...D, employee_code:v('#hf-code').toUpperCase(), full_name:v('#hf-fn'), nickname:v('#hf-nn'), position:v('#hf-pos'), site:v('#hf-site'), emp_type:v('#hf-et'), start_date:v('#hf-st'), probation_end:v('#hf-pe') || null, contract_end:v('#hf-ce') || null,
+        pp_base:n('#pp-b'), pp_exp:n('#pp-x'), pp_shift:n('#pp-s'), pp_total:tot('pp'), ap_base:n('#ap-b'), ap_exp:n('#ap-x'), ap_shift:n('#ap-s'), ap_total:tot('ap'), education:v('#hf-edu') }, _needCode: !v('#hf-code') };
+  }
+  return null;
+}
+function hireWire(form, d){
+  if (form === 'FM-HR-01-03') {
+    const sum = () => { let t = 0; IV_ITEMS.forEach(([, items], ci) => { let s = 0; items.forEach((_, i) => { const r = d.querySelector(`[name="iv-${ci}.${i}"]:checked`); if (r) s += +r.value; }); d.querySelector(`[data-ivs="${ci}"]`).textContent = s; t += s; });
+      const g = ivGrade(t); $('#iv-tot', d).innerHTML = `รวม <b>${t}</b> / 45 คะแนน → <b>${g[1]}</b>`; $('#iv-tot', d).className = 'msg ' + (g[0] === 'pass' ? 'ok' : g[0] === 'wait' ? 'warn' : 'err'); };
+    d.addEventListener('change', e => { if (e.target.type === 'radio') sum(); }); sum();
+    const qbBox = async () => { const box = $('#iv-qb', d); if (!box) return; await hrPositions(); const p = posOf($('#hf-pos', d).value), Q = S.ivQB, doc = Q?.doc || p?.qb_doc;
+      if (!doc) { box.innerHTML = `<span class="small faint">ตำแหน่ง "${h($('#hf-pos', d).value || '—')}" ยังไม่มีการ์ดคำถามสัมภาษณ์ (Question Bank) — ใช้แบบประเมินด้านบนตามเดิม</span>`; return; }
+      box.innerHTML = `<div class="pb-h"><b>การ์ดคำถามสัมภาษณ์ ${h(doc)}</b>${Q ? `<span class="small">ถาม ${Q.asked} ข้อ · รวม <b>${Number(Q.total).toFixed(2)}</b>/5${Q.red?.length ? ' · <b style="color:var(--crit)">ข้อความปลอดภัยได้ 0–1</b>' : ''}</span>` : '<span class="small" style="color:var(--gold)">ยังไม่ให้คะแนน (Agent จะเตือน A35)</span>'}</div>
+        <button type="button" class="btn sm" id="iv-qbo">${S.ivRO ? 'ดูคะแนนในการ์ด' : Q ? 'แก้คะแนนในการ์ด' : 'เปิดการ์ดคำถาม + ให้คะแนน'}</button> <span class="small faint">คะแนนการ์ดเก็บแนบกับใบสัมภาษณ์นี้ · ผู้สัมภาษณ์เป็นผู้ตัดสิน</span>`;
+      $('#iv-qbo', d).onclick = () => dlgQB(doc, S.ivQB, q => { S.ivQB = q; qbBox(); }, S.ivRO); };
+    qbBox(); $('#hf-pos', d)?.addEventListener('change', qbBox);
+    const ap = $('#hf-app', d); if (ap) ap.addEventListener('change', () => { const a = (S.hrDocs || []).find(x => x.id === ap.value); if (!a) return;
+      if (!$('#hf-fn', d).value) $('#hf-fn', d).value = a.data?.full_name || ''; if (!$('#hf-pos', d).value) $('#hf-pos', d).value = a.data?.position || '';
+      if (!$('#hf-st', d).value && a.data?.available_date) $('#hf-st', d).value = a.data.available_date; if (!$('#hf-site', d).value) $('#hf-site', d).value = a.data?.site || ''; if (a.project_id) $('#hf-p', d).value = a.project_id; qbBox(); });
+  }
+  if (form === 'FM-HR-01-04') {
+    const st = $('#hf-st', d); if (st) st.addEventListener('change', () => { if (!st.value) return; $('#hf-pe', d).value = addD(st.value, 118); $('#hf-ce', d).value = addD(st.value, 329); });
+    const tot = () => ['pp','ap'].forEach(p => { const t = ['b','x','s'].reduce((a, k) => a + (+$(`#${p}-${k}`, d).value || 0), 0); $(`#${p}-sum`, d).textContent = t ? `รวม ${money(t)} บาท` : ''; });
+    d.addEventListener('input', tot); tot();
+  }
+}
+function hirePrint(doc, dot, th, head, sign){
+  const D = doc.data || {}, pj = (S.hrProj || []).find(p => p.id === doc.project_id);
+  if (doc.form === 'FM-HR-01-02') return head('แบบฟอร์มการสมัครงาน (APPLICATION FORM)', 2) + `<p>วันที่ ${th(doc.created_at.slice(0, 10))} &emsp; สมัครตำแหน่ง ${dot(D.position, 220)}</p>
+    <p>เงินเดือนปัจจุบัน ${dot(D.current_salary ? money(D.current_salary) : '', 100)} บาท &emsp; เงินเดือนที่คาดหวัง ${dot(D.expected_salary ? money(D.expected_salary) : '', 100)} บาท &emsp; วันที่สามารถเริ่มงานได้ ${dot(th(D.available_date))}</p>
+    <p><b>ประวัติส่วนตัว</b><br>ชื่อ-สกุล ${dot(D.full_name, 240)} ชื่อเล่น ${dot(D.nickname, 80)}<br>ชื่อ-สกุล (อังกฤษ) ${dot(D.name_en, 260)}<br>อีเมล ${dot(D.email, 200)} LINE ID ${dot(D.line, 120)} เบอร์ติดต่อ ${dot(D.phone, 120)}<br>
+      วัน/เดือน/ปีเกิด ${dot('', 130)} อายุ ${dot('', 40)} ปี ศาสนา ${dot('', 90)}<br>บัตรประจำตัวประชาชนเลขที่ ${dot('', 220)}<br>ที่อยู่ปัจจุบัน ${dot('', 460)}<br>เบอร์โทรติดต่อฉุกเฉิน ${dot('', 150)} ความสัมพันธ์ ${dot('', 100)}<br>สถานภาพทางทหาร ☐ เกณฑ์ทหารแล้ว ☐ ยังไม่ได้เกณฑ์ ☐ ได้รับการยกเว้น</p>
+    <p><b>การศึกษา</b></p><table class="sc"><tr><th>ระดับ</th><th>สถาบัน</th><th>สาขา</th><th>ปีที่จบ</th></tr>${(D.edu?.length ? D.edu : [{}, {}]).map(e => `<tr><td>${h(e.lv || '')}</td><td>${h(e.inst || '')}</td><td>${h(e.major || '')}</td><td>${h(e.year || '')}</td></tr>`).join('')}</table>
+    <p>ภาษาอังกฤษ ${dot(D.english, 80)} &emsp; ใบขับขี่ ${D.car ? '☑' : '☐'} รถยนต์ ${D.moto ? '☑' : '☐'} รถจักรยานยนต์ &emsp; ใบอนุญาต/ใบรับรอง ${dot(D.certs, 200)}</p>
+    <p><b>ประวัติการทำงาน</b></p><table class="sc"><tr><th>สถานที่ทำงาน</th><th>ตำแหน่ง</th><th>ระยะเวลา</th><th>เหตุที่ออก</th></tr>${(D.exp?.length ? D.exp : [{}, {}, {}]).map(e => `<tr><td>${h(e.emp || '')}</td><td>${h(e.pos || '')}</td><td>${h(e.yrs || '')}</td><td>${h(e.why || '')}</td></tr>`).join('')}</table>
+    <p class="small">ข้าพเจ้าขอรับรองว่าข้อความข้างต้นเป็นความจริงทุกประการ</p><p style="text-align:right">ลงชื่อ ${dot('', 200)} ผู้สมัคร<br>( ${h(D.full_name || '')} )</p>`;
+  if (doc.form === 'FM-HR-01-03') { const sc = D.scores || {}; const g = ivGrade(doc.score || 0);
+    return head('แบบประเมินการสัมภาษณ์ผู้สมัครงาน (Applicant Evaluation Form)', 1) + `<p style="text-align:right">อ้างอิงใบขออัตรากำลังเลขที่ ${dot(D.req_no, 120)}</p>
+    <p>ชื่อผู้สมัคร ${dot(D.full_name, 240)} ตำแหน่งที่สมัคร ${dot(D.position, 200)}</p>
+    <p><b>ข้อมูลเบื้องต้นของผู้สมัคร</b><br>ประสบการณ์ด้าน ISO ${['ดี','พอใช้','ไม่ดี'].map(x => `${D.iso === x ? '☑' : '☐'} ${x}`).join(' ')} &emsp; ประวัติการเปลี่ยนงาน ${['ไม่ค่อยเปลี่ยนงาน','เปลี่ยนงานบ่อย'].map(x => `${D.history === x ? '☑' : '☐'} ${x}`).join(' ')} &emsp; ที่พัก ${['ใกล้บริษัท','ไกลบริษัท'].map(x => `${D.residence === x ? '☑' : '☐'} ${x}`).join(' ')}</p>
+    <p class="small">เกณฑ์การให้คะแนน : 5 = ดี, 3 = ปานกลาง, 1 = ปรับปรุง</p>
+    <table class="sc"><tr><th>หัวข้อประเมิน</th><th>ดี</th><th>ปานกลาง</th><th>ปรับปรุง</th></tr>${IV_ITEMS.map(([t, items], ci) => `<tr><td colspan="4"><b>ส่วนที่ ${h(t)}</b></td></tr>${items.map((x, i) => `<tr><td>${ci + 1}.${i + 1} ${h(x)}</td>${[5, 3, 1].map(nn => `<td class="c">${sc[`${ci}.${i}`] == nn ? '✓' : ''}</td>`).join('')}</tr>`).join('')}`).join('')}</table>
+    <p>รวมคะแนนทั้งหมด <b>${doc.score ?? ''}</b> คะแนน · ผล <b>${h(g[1])}</b> (30–50 ผ่าน · 26–29 รอเปรียบเทียบ · 0–25 ไม่ผ่าน)</p><p>ความคิดเห็นเพิ่มเติม<br><span class="box">${h(D.comment || '')}</span></p>
+    <p style="text-align:right">ลงชื่อผู้สัมภาษณ์ ${dot('', 200)}<br>วันที่ ${dot('', 120)}</p><p><b>สำหรับเจ้าหน้าที่</b> เรียน ผู้จัดการแผนกงานบุคคล ผู้สมัครรายนี้ได้ผ่านกระบวนการคัดเลือกโดยวิธีการสัมภาษณ์ โดยมีอัตราจ้างตามสัญญาจ้างที่แนบ &emsp; ☐ อนุมัติ</p>`; }
+  if (doc.form === 'FM-HR-01-04') { const m = v => v ? money(v) : '';
+    return head('หนังสือสัญญาจ้างพนักงาน', 2) + `<p style="text-align:right">เขียนที่ บริษัท สมาร์ท เทอร์มินอล คอร์ปอเรชั่น จำกัด<br>วันที่ ${dot(th(D.contract_date || ''), 160)}</p>
+    <p class="ind">หนังสือข้อตกลงเกี่ยวกับสภาพการจ้างฉบับนี้ ทำขึ้นระหว่าง บริษัท สมาร์ท เทอร์มินอล คอร์ปอเรชั่น จำกัด ตั้งอยู่เลขที่ 972 ถนนริมคลองสามเสน แขวงบางกะปิ เขตห้วยขวาง กรุงเทพมหานคร 10310 ซึ่งในสัญญานี้เรียกว่า "ผู้ว่าจ้าง" หรือ "บริษัท" ฝ่ายหนึ่ง กับ ${dot(D.full_name, 220)} เลขที่บัตรประชาชน ${dot('', 200)} เกิดวัน/เดือน/ปี ${dot('', 140)} สัญชาติ ${dot('', 70)} เชื้อชาติ ${dot('', 70)} อยู่บ้านเลขที่ ${dot('', 380)} ซึ่งในสัญญานี้เรียกว่า "ผู้รับจ้าง" อีกฝ่ายหนึ่ง คู่สัญญาทั้งสองฝ่ายตกลงทำสัญญาข้อตกลงสภาพการจ้างฉบับนี้ไว้ต่อกัน ดังนี้</p>
+    <p class="ind">1. ผู้ว่าจ้าง ตกลงรับ ผู้รับจ้าง เข้าทดลองงานในตำแหน่ง ${dot(D.position, 180)} แผนก/ฝ่าย ${dot(D.site || pj?.code, 160)} (ลักษณะงานตามผู้ว่าจ้างกำหนดหรือเปลี่ยนแปลงเพิ่มเติมภายหลัง) โดยระยะเวลาทดลองงานเริ่มตั้งแต่วันที่ ${dot(th(D.start_date))} ถึงวันสิ้นสุด ${dot(th(D.probation_end))} รวมระยะเวลาทดลองงาน 119 วัน โดยมีอัตราเงินเดือน/ค่าแรงระหว่างทดลองงาน ดังนี้</p>
+    <table class="pay"><tr><td>เงินเดือน เดือนละ</td><td>${dot(m(D.pp_base), 120)} บาท</td></tr><tr><td>เงินเพิ่มค่าประสบการณ์</td><td>${dot(m(D.pp_exp), 120)} บาท</td></tr><tr><td>ค่าทำงานเป็นกะ</td><td>${dot(m(D.pp_shift), 120)} บาท</td></tr><tr><td><b>รวมเป็นเงิน</b></td><td>${dot(m(D.pp_total), 120)} บาท</td></tr></table>
+    <p class="ind">หากพนักงานผ่านการทดลองงาน โดยมีเอกสารผ่านการทดลองงานจากหัวหน้างาน บริษัทจะพิจารณาปรับเงินเดือนให้ในอัตราดังนี้</p>
+    <table class="pay"><tr><td>เงินเดือน เดือนละ</td><td>${dot(m(D.ap_base), 120)} บาท</td></tr><tr><td>เงินเพิ่มค่าประสบการณ์</td><td>${dot(m(D.ap_exp), 120)} บาท</td></tr><tr><td>ค่าทำงานเป็นกะ</td><td>${dot(m(D.ap_shift), 120)} บาท</td></tr><tr><td><b>รวมเป็นเงิน</b></td><td>${dot(m(D.ap_total), 120)} บาท</td></tr></table>
+    <p class="ind">ผู้ว่าจ้างสามารถหักภาษีเงินได้บุคคลธรรมดาจากค่าจ้างที่ได้รับเพื่อนำส่งกรมสรรพากรและเงินประกันสังคมต่อไป ตามระเบียบว่าด้วยประกันสังคม ถ้าผลการปฏิบัติงานของท่านในระยะทดลองงานไม่เป็นที่พอใจของผู้ว่าจ้าง ผู้ว่าจ้างสามารถระงับการทดลองงานของท่านโดยจะแจ้งให้ท่านทราบล่วงหน้าไม่น้อยกว่า 30 วัน โดยที่ ผู้ว่าจ้าง ไม่จำเป็นต้องจ่ายเงินชดเชยใด ๆ ทั้งสิ้น</p>
+    <p class="ind">2. ผู้รับจ้าง ตกลงทำงานให้กับ ผู้ว่าจ้าง ตามกำหนดวันเวลา สถานที่ดังนี้ 2.1 วันทำงาน วันจันทร์ ถึง วันอาทิตย์ (อาทิตย์ละ 6 วัน) หรือตามตกลงกัน นิยมเป็นไปตามข้อบังคับ หรือประกาศของบริษัทฯ เป็นปี ๆ ไป 2.2 เวลาทำงานอาทิตย์ละ 6 วัน โดยทำงานเป็นกะ กะเช้าเวลา 07.00–16.00 น. กะบ่ายเวลา 15.00–24.00 น. กะดึกเวลา 23.00–08.00 น. หรือตามตกลงกัน เวลาพัก 1 ชั่วโมง รวมเวลากำหนดทำงานปกติ 48 ชม. ต่อสัปดาห์ และสถานที่ที่ผู้ว่าจ้างกำหนด อนึ่งผู้ว่าจ้างมีสิทธิกำหนดวัน และเวลาทำงาน หรือโยกย้ายตำแหน่ง หน้าที่ ให้แตกต่างเปลี่ยนแปลง หรือเพิ่มเติม นอกเหนือจากที่กำหนดไว้ดังกล่าวได้</p>
+    <p class="ind">3. ผู้ว่าจ้าง จะจ่ายค่าจ้างให้ ผู้รับจ้าง 1 งวดต่อเดือน ทุกวันสุดท้ายของเดือนนั้น ถึงแม้ว่าวันดังกล่าวตรงกับวันหยุด การตัดงวดการจ่ายเงินค่าจ้างตัดทุกวันที่ 25 ของทุกเดือน</p>
+    <p class="ind">4. ระเบียบสวัสดิการสิทธิได้รับการช่วยรักษาพยาบาล การเลิกจ้าง การยื่นเรื่องราวร้องทุกข์ให้เป็นไปตามกฎข้อบังคับเกี่ยวกับการทำงานของบริษัทฯ และเป็นไปตามกฎหมายที่ใช้บังคับอยู่ในขณะนั้น ๆ</p>
+    <p class="ind">5. ในระหว่างที่ ผู้รับจ้าง เป็นพนักงานจ้างโครงการของบริษัทฯ ถ้าผู้รับจ้าง มีความประสงค์จะใช้สิทธิในการลา ให้เป็นไปตามกฎข้อบังคับ</p>
+    <p class="ind">6. ผู้ว่าจ้างมีสิทธิบอกเลิกสัญญาข้อตกลงเกี่ยวกับสภาพการจ้างนี้ได้ทันที โดย ผู้รับจ้าง ไม่มีสิทธิเรียกร้องสิทธิ และเงินชดเชยใด ๆ ทั้งสิ้น หากมีกรณีอย่างใดอย่างหนึ่ง 6.1 ทุจริตต่อหน้าที่หรือกระทำความผิดอาญาโดยเจตนาแก่ผู้ว่าจ้าง 6.2 จงใจทำให้ผู้ว่าจ้างได้รับความเสียหาย 6.3 ประมาทเลินเล่ออันเป็นเหตุให้ผู้ว่าจ้างได้รับความเสียหายอย่างร้ายแรง 6.4 ฝ่าฝืนข้อบังคับเกี่ยวกับการทำงาน ระเบียบ หรือคำสั่งของผู้ว่าจ้างอันชอบด้วยกฎหมายและเป็นธรรมและนายจ้างได้ตักเตือนเป็นหนังสือแล้ว เว้นแต่กรณีที่ร้ายแรง 6.5 ละทิ้งหน้าที่เป็นเวลาสามวันทำงานติดต่อกันไม่ว่าจะมีวันหยุดคั่นหรือไม่ก็ตามโดยไม่มีเหตุอันสมควร 6.6 ได้รับโทษให้จำคุกตามคำพิพากษาถึงที่สุดให้จำคุก</p>
+    <p class="ind">7. ระยะเวลาของสัญญาจ้างฉบับนี้ มีระยะเวลา 11 เดือน (330 วัน) ถึงวันที่ ${dot(th(D.contract_end))} นับจากวันที่ ผู้รับจ้าง เริ่มปฏิบัติงานให้กับผู้ว่าจ้าง หลังจากครบกำหนดสัญญาดังกล่าวนี้ ผู้ว่าจ้าง จะพิจารณาต่อสัญญาจ้างเป็นราย ๆ ไป ซึ่งขึ้นอยู่กับผลของการปฏิบัติงานของ ผู้รับจ้าง</p>
+    <p class="ind">8. กฎระเบียบข้อบังคับอื่น ๆ ที่ไม่ได้ระบุอยู่ในสัญญานี้ให้อ้างอิงจากกฎระเบียบของบริษัท</p>
+    <p class="ind">สัญญาข้อตกลงนี้ทำขึ้นเป็นสองฉบับ มีข้อความตรงกัน และคู่ความทั้งสองได้อ่านและเข้าใจข้อความ ตลอดจนเงื่อนไขแห่งสัญญานี้ทุกประการเรียบร้อยแล้ว จึงได้ลงลายมือชื่อไว้เป็นหลักฐานต่อหน้าพยานเป็นสำคัญ และต่างยึดถือไว้ฝ่ายละหนึ่งฉบับ</p>
+    <div class="sg"><div>ลงชื่อ ${dot('', 180)} ผู้ว่าจ้าง<br>( ${dot('', 170)} )</div><div>ลงชื่อ ${dot('', 180)} ผู้รับจ้าง<br>( ${h(D.full_name || '')} )</div></div>
+    <div class="sg"><div>ลงชื่อ ${dot('', 180)} พยาน<br>( ${dot('', 170)} )</div><div>ลงชื่อ ${dot('', 180)} พยาน<br>( ${dot('', 170)} )</div></div>`; }
+  return null;
 }
 
 /* ---------- staff register ---------- */
