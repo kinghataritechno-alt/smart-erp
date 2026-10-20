@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
+<script>try{var t=localStorage.getItem("sop.theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SMART ERP · Smart Office Platform</title>
 <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,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">
@@ -34,6 +35,12 @@
   --char:#171513; --char2:#22201D; --pri:#EDECE8; --pri-h:#FFFFFF; --pri-ink:#1C1C1A; --accent-ink:#1C1C1A; --logo-bg:#2A2825; --amber:#F7A43A; --amber-soft:#3A2614; --budget:#7FA6FF; --budget-soft:#1A2338;
   --good:#4CC28A; --good-soft:#14281E; --crit:#FF7A6B; --crit-soft:#3A1A16; --gold:#F5B04A; --gold-soft:#33270F;
 }}
+:root[data-theme="dark"]{
+  --bg:#100F0E; --surface:#1A1917; --surface2:#211F1D; --line:#34322F; --ink:#EDECE8; --mut:#B5B3AC; --faint:#7D7B75;
+  --char:#171513; --char2:#22201D; --pri:#EDECE8; --pri-h:#FFFFFF; --pri-ink:#1C1C1A; --accent-ink:#1C1C1A; --logo-bg:#2A2825; --amber:#F7A43A; --amber-soft:#3A2614; --budget:#7FA6FF; --budget-soft:#1A2338;
+  --good:#4CC28A; --good-soft:#14281E; --crit:#FF7A6B; --crit-soft:#3A1A16; --gold:#F5B04A; --gold-soft:#33270F;
+}
+:root[data-theme="dark"]{color-scheme:dark} :root[data-theme="light"]{color-scheme:light}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--body);-webkit-font-smoothing:antialiased}
@@ -221,6 +228,7 @@ table.cards td .gates{justify-content:flex-end}
 .tw:has(table.cards){overflow:visible}
 .btn-out{display:inline-flex;align-items:center;gap:6px;color:var(--crit);border-color:color-mix(in srgb,var(--crit) 45%,var(--line))}
 .btn-out svg{width:16px;height:16px;flex:none}
+[data-theme-btn] svg{width:17px;height:17px} @media (max-width:1199px){.top [data-theme-btn] .th-l{display:none}}
 .btn-out:hover{background:var(--crit);color:#fff;border-color:var(--crit)}
 .bu-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:18px}
 .bu-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;text-align:left;cursor:pointer;font:inherit;color:inherit;display:grid;gap:4px}
@@ -458,6 +466,9 @@ function errText(e){ return (e && (e.message || e.error_description || e.msg)) |
 function fail(e){ console.error(e); toast(errText(e), true); }
 
 const ICON = {
+  sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+  tauto:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>',
   spark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
   coin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>',
   box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
@@ -564,8 +575,10 @@ async function securityGate(){
   const { data: sec, error } = await sb.rpc('my_security', { p_company: S.cid });
   if (error) { fail(error); return false; }
   if (sec.ok) return true;
-  if (sec.default_password) { viewChangePw(true); return false; }
   const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  // MFA first: Supabase refuses password changes on an aal1 session once MFA is enrolled
+  if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') { viewMfaChallenge(); return false; }
+  if (sec.default_password) { viewChangePw(true); return false; }
   if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') viewMfaChallenge(); else viewMfaEnroll();
   return false;
 }
@@ -645,6 +658,19 @@ async function viewMfaChallenge(){
   };
 }
 
+
+/* theme: auto (follow device) → light → dark */
+const THEME_L = { auto:'ตามเครื่อง', light:'สว่าง', dark:'มืด' };
+const themeNow = () => { try { return localStorage.getItem('sop.theme') || 'auto'; } catch(e){ return 'auto'; } };
+const themeBtn = () => `<button class="btn sm ghost" data-theme-btn title="โหมดแสดงผล: ${THEME_L[themeNow()]} (กดเพื่อเปลี่ยน)" aria-label="โหมดแสดงผล">${ICON[{ auto:'tauto', light:'sun', dark:'moon' }[themeNow()]]}<span class="th-l">${THEME_L[themeNow()]}</span></button>`;
+function cycleTheme(){
+  const nx = { auto:'light', light:'dark', dark:'auto' }[themeNow()];
+  try { nx === 'auto' ? localStorage.removeItem('sop.theme') : localStorage.setItem('sop.theme', nx); } catch(e){}
+  if (nx === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = nx;
+  document.querySelectorAll('[data-theme-btn]').forEach(b => b.outerHTML = themeBtn());
+  document.querySelectorAll('[data-theme-btn]').forEach(b => b.onclick = cycleTheme);
+  toast('โหมดแสดงผล: ' + THEME_L[nx]);
+}
 async function signOut(){ if (S.rt) { sb.removeChannel(S.rt); S.rt = S.rtCid = null; } await sb.auth.signOut(); S.cid = null; S.members = S.projects = S.people = S.thrIdx = null; viewLogin(); }
 
 async function loadCompanies(){
@@ -745,14 +771,14 @@ function moreSheet(pages){
   d.innerHTML = `<div class="hd"><h3 style="margin:0">เมนู</h3><button class="btn sm ghost" style="margin-left:auto" data-x>ปิด</button></div>
     <div class="bd"><div class="sheet-grid">${pages.map(p => `<button class="sheet-it" data-page="${p.id}" ${S.page === p.id ? 'aria-current="page"' : ''}>${ICON[p.icon]}<span>${h(p.label)}</span></button>`).join('')}</div>
     <div class="sheet-acc"><div><b>${h(S.user.user_metadata?.full_name || S.user.email)}</b><div class="small mut">${S.isOwner ? 'เจ้าของ' : h(S.positions.join(', ') || '—')} · ${h(S.company.name_th)}</div></div>
-      <button class="btn sm" data-pw>เปลี่ยนรหัส</button><button class="btn sm btn-out" data-out>${ICON.logout}<span>ออกจากระบบ</span></button></div></div>`;
+      ${themeBtn()}<button class="btn sm" data-pw>เปลี่ยนรหัส</button><button class="btn sm btn-out" data-out>${ICON.logout}<span>ออกจากระบบ</span></button></div></div>`;
   document.body.appendChild(d); d.showModal();
   d.addEventListener('close', () => d.remove());
   $('[data-x]', d).onclick = () => d.close();
   d.addEventListener('click', e => { if (e.target === d) d.close(); });
   d.querySelectorAll('[data-page]').forEach(b => b.onclick = () => { d.close(); goto(b.dataset.page); });
   $('[data-pw]', d).onclick = () => { d.close(); viewChangePw(false); };
-  $('[data-out]', d).onclick = () => { d.close(); signOut(); };
+  $('[data-out]', d).onclick = () => { d.close(); signOut(); }; d.querySelectorAll('[data-theme-btn]').forEach(b => b.onclick = cycleTheme);
 }
 /* PC: "/" focuses the page's search box */
 document.addEventListener('keydown', e => {
@@ -797,7 +823,7 @@ function renderApp(){
         ${S.companies.length > 1 ? `<select class="inp" id="s-co" style="width:auto">${S.companies.map(c => `<option value="${c.company_id}" ${c.company_id === S.cid ? 'selected' : ''}>${h(c.name_th)}</option>`).join('')}</select>` : ''}
         <div class="who"><span class="small mut">${h(S.user.user_metadata?.full_name || S.user.email)}</span>
           ${S.isOwner ? '<span class="chip amber">เจ้าของ</span>' : S.positions.slice(0,3).map(c => `<span class="chip">${h(c)}</span>`).join('')}
-          <button class="btn sm ghost" id="b-pw">เปลี่ยนรหัส</button><button class="btn sm btn-out" id="b-out">${ICON.logout}<span>ออกจากระบบ</span></button></div>
+          ${themeBtn()}<button class="btn sm ghost" id="b-pw">เปลี่ยนรหัส</button><button class="btn sm btn-out" id="b-out">${ICON.logout}<span>ออกจากระบบ</span></button></div>
       </header>
       <main class="page" id="page"></main>
     </div>
@@ -808,6 +834,7 @@ function renderApp(){
   $('#b-more').onclick = () => moreSheet(more);
   $('#b-out').onclick = signOut;
   $('#b-pw').onclick = () => viewChangePw(false);
+  document.querySelectorAll('[data-theme-btn]').forEach(b => b.onclick = cycleTheme);
   $('#b-menu').onclick = () => $('#app').classList.toggle('open');
   $('#app').addEventListener('click', e => { if (e.target.id === 'app') $('#app').classList.remove('open'); });
   const sc = $('#s-co'); if (sc) sc.onchange = async () => { S.cid = sc.value; try{ localStorage.setItem('sop.cid', S.cid) }catch(e){}; S.company = S.companies.find(c => c.company_id === S.cid); S.isOwner = S.company.role === 'owner'; S.members = S.projects = S.people = S.thrIdx = null; await loadContext(); renderApp(); };
