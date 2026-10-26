@@ -1101,9 +1101,15 @@ async function putFile({ pid, kind, name, blob, type, at }){
   if (error) { await sb.storage.from('files').remove([path]); throw error; }
 }
 async function openFile(f){
-  const { data, error } = await sb.storage.from('files').createSignedUrl(f.storage_path, 120);
-  if (error) return fail(error);
-  window.open(data.signedUrl, '_blank', 'noopener');
+  if (!f) return toast('ไม่พบไฟล์', true);
+  // open the tab synchronously inside the click — Safari/iPad blocks window.open() that happens after an await
+  const w = window.open('', '_blank');
+  if (w) { try { w.opener = null; w.document.write('<p style="font:16px sans-serif;padding:24px">กำลังเปิดไฟล์…</p>'); } catch(e){} }
+  const { data, error } = await sb.storage.from('files').createSignedUrl(f.storage_path, 300);
+  if (error) { if (w) w.close(); return fail(error); }
+  if (w && !w.closed) { w.location.href = data.signedUrl; return; }
+  const d = dialog('เปิดไฟล์', `<p class="small">เบราว์เซอร์บล็อกการเปิดหน้าต่างใหม่ — กดลิงก์นี้เพื่อเปิดไฟล์ (ใช้ได้ 5 นาที)</p><p><a class="btn primary" href="${h(data.signedUrl)}" target="_blank" rel="noopener">เปิด ${h(f.name)}</a></p>`, 'ปิด', async () => true);
+  d.querySelector('button[value=cancel]')?.remove();
 }
 const upKinds = () => Object.keys(FILE_KIND).filter(k => S.isOwner || can(FILE_MOD[k] || 'project', 'c') || (k === 'tor' && (can('contract','c') || can('sysadmin','c'))));   // p1_25: TOR = ทีมประมูล BN01–03 + ผู้ดูแลระบบ SY01
 function dlgUpload(pid, after, kind0){
@@ -1283,6 +1289,74 @@ async function pageThreads(){
   $('#th-f').onchange = draw; $('#th-q').oninput = draw; draw();
 }
 
+const CON_ST = { draft:['ร่าง / รอลงนาม','gold'], signed:['ลงนามแล้ว','blue'], active:['ดำเนินงาน','good'], closed:['ปิดสัญญา',''], terminated:['บอกเลิก','crit'] };
+function dlgContract(p, con){
+  const c = con || { status:'draft', value:p.win_price || p.bid_price || null };
+  const f = (id, l, v, t = 'text', x = '') => `<div class="field"><label for="${id}">${l}</label><input id="${id}" class="inp" type="${t}" value="${h(v ?? '')}" ${x}></div>`;
+  dialog(con ? `สัญญา · ${p.code}` : `สร้างสัญญา · ${p.code}`, `
+    <div class="row">${f('ct-no', 'เลขที่สัญญา', c.contract_no)}${f('ct-ctl', 'เลขคุมสัญญา (e-GP)', c.control_no)}</div>
+    <div class="row">${f('ct-sd', 'วันลงนาม', c.signed_date, 'date')}${f('ct-dl', 'ต้องลงนามภายใน', c.sign_deadline, 'date')}
+      <div class="field"><label for="ct-st">สถานะ</label><select id="ct-st" class="inp">${Object.entries(CON_ST).map(([k, v]) => `<option value="${k}" ${k === c.status ? 'selected' : ''}>${v[0]}</option>`).join('')}</select></div></div>
+    <div class="row">${f('ct-v', 'มูลค่า (รวม VAT)', c.value, 'number', 'min="0" step="0.01"')}${f('ct-vp', 'มูลค่าก่อน VAT', c.value_pre_vat, 'number', 'min="0" step="0.01"')}</div>
+    <div class="row">${f('ct-s', 'เริ่มสัญญา', c.start_date, 'date')}${f('ct-e', 'สิ้นสุดสัญญา', c.end_date, 'date')}</div>
+    ${f('ct-cr', 'กิจการค้าร่วม (ถ้ามี)', c.consortium_ref)}
+    <p class="small faint">ใส่วันลงนามแล้วสถานะ "ร่าง" จะเปลี่ยนเป็น "ลงนามแล้ว" ให้อัตโนมัติ · แนบไฟล์สัญญาที่ลงนามด้วยปุ่ม "+ แนบไฟล์" ประเภท "สัญญา"</p>`, 'บันทึก', async d => {
+      const v = id => $(id, d).value.trim(), n = id => v(id) === '' ? null : +v(id);
+      let st = v('#ct-st'); if (st === 'draft' && v('#ct-sd')) st = 'signed';
+      const row = { contract_no:v('#ct-no') || null, control_no:v('#ct-ctl') || null, signed_date:v('#ct-sd') || null, sign_deadline:v('#ct-dl') || null, status:st,
+        value:n('#ct-v'), value_pre_vat:n('#ct-vp'), start_date:v('#ct-s') || null, end_date:v('#ct-e') || null, consortium_ref:v('#ct-cr') || null };
+      if (row.start_date && row.end_date && row.end_date < row.start_date) { toast('วันสิ้นสุดต้องไม่ก่อนวันเริ่ม', true); return false; }
+      if (['signed','active'].includes(st) && !row.contract_no) { toast('ใส่เลขที่สัญญาก่อนบันทึกว่าลงนามแล้ว', true); return false; }
+      const { error } = con ? await sb.from('contracts').update(row).eq('id', con.id) : await sb.from('contracts').insert({ ...row, company_id:p.company_id, project_id:p.id });
+      if (error) { fail(error); return false; }
+      toast('บันทึกสัญญาแล้ว'); pageProjectDetail();
+    });
+}
+function dlgGuarantee(p, g, used){
+  const k0 = g?.kind || Object.keys(GUAR_KIND).find(k => !used.includes(k)) || 'contract';
+  const c = g || { kind:k0, status:'issued', required:true };
+  const f = (id, l, v, t = 'text', x = '') => `<div class="field"><label for="${id}">${l}</label><input id="${id}" class="inp" type="${t}" value="${h(v ?? '')}" ${x}></div>`;
+  dialog(g ? `หลักประกัน · ${p.code}` : `เพิ่มหลักประกัน · ${p.code}`, `
+    <div class="row"><div class="field"><label for="gu-k">ประเภท</label><select id="gu-k" class="inp" ${g ? 'disabled' : ''}>${Object.entries(GUAR_KIND).filter(([k]) => g ? k === g.kind : !used.includes(k)).map(([k, v]) => `<option value="${k}" ${k === c.kind ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+      <div class="field"><label for="gu-st">สถานะ</label><select id="gu-st" class="inp">${Object.entries(GUAR_ST).map(([k, v]) => `<option value="${k}" ${k === c.status ? 'selected' : ''}>${v[0]}</option>`).join('')}</select></div></div>
+    <div class="row">${f('gu-a', 'จำนวนเงิน (บาท)', c.amount, 'number', 'min="0" step="0.01"')}${f('gu-r', 'เลขที่หนังสือค้ำประกัน', c.ref_no)}</div>
+    ${f('gu-i', 'ผู้ออก (ธนาคาร / สาขา)', c.issuer)}
+    <div class="row">${f('gu-d', 'ต้องยื่นภายใน', c.due_date, 'date')}${f('gu-is', 'วันที่ออก', c.issued_at, 'date')}${f('gu-ex', 'วันหมดอายุ', c.expires_at, 'date')}</div>
+    <div class="row">${f('gu-rq', 'วันที่ขอธนาคาร', c.requested_at, 'date')}${f('gu-rt', 'วันที่ได้คืน', c.returned_at, 'date')}</div>
+    ${f('gu-n', 'หมายเหตุ', c.note)}
+    <p class="small faint">แนบสำเนาหนังสือค้ำประกันด้วยปุ่ม "+ แนบหนังสือค้ำประกัน"</p>`, 'บันทึก', async d => {
+      const v = id => $(id, d).value.trim(), dt = id => v(id) || null;
+      const row = { status:v('#gu-st'), amount:v('#gu-a') === '' ? null : +v('#gu-a'), ref_no:v('#gu-r') || null, issuer:v('#gu-i') || null,
+        due_date:dt('#gu-d'), issued_at:dt('#gu-is'), expires_at:dt('#gu-ex'), requested_at:dt('#gu-rq'), returned_at:dt('#gu-rt'), note:v('#gu-n') || null };
+      if (row.amount != null && row.amount < 0) { toast('จำนวนเงินต้องไม่ติดลบ', true); return false; }
+      if (row.issued_at && row.expires_at && row.expires_at < row.issued_at) { toast('วันหมดอายุต้องไม่ก่อนวันที่ออก', true); return false; }
+      if (['issued','submitted'].includes(row.status) && !row.issued_at) row.issued_at = todayStr();
+      if (row.status === 'returned' && !row.returned_at) row.returned_at = todayStr();
+      const { error } = g ? await sb.from('guarantees').update(row).eq('id', g.id)
+        : await sb.from('guarantees').insert({ ...row, kind:v('#gu-k'), required:true, company_id:p.company_id, project_id:p.id });
+      if (error) { fail(error); return false; }
+      toast('บันทึกหลักประกันแล้ว'); pageProjectDetail();
+    });
+}
+function dlgProjectInfo(p){
+  const f = (id, l, v, t = 'text', x = '') => `<div class="field"><label for="${id}">${l}</label><input id="${id}" class="inp" type="${t}" value="${h(v ?? '')}" ${x}></div>`, num = 'min="0" step="0.01"';
+  dialog(`ข้อมูลโครงการ · ${p.code}`, `
+    ${f('pi-nm', 'ชื่อโครงการ', p.name)}
+    <div class="row">${f('pi-pm', 'วิธีจัดซื้อจัดจ้าง', p.procurement_method)}${f('pi-eg', 'เลขที่โครงการ e-GP', p.egp_no)}</div>
+    <div class="row">${f('pi-bl', 'วงเงินงบประมาณ', p.budget_limit, 'number', num)}${f('pi-rp', 'ราคากลาง', p.ref_price, 'number', num)}${f('pi-bp', 'ราคาเสนอ', p.bid_price, 'number', num)}</div>
+    <div class="row">${f('pi-wp', 'ราคาที่ได้ (ส่วน SMART)', p.win_price, 'number', num)}${f('pi-wt', 'ราคาทั้งสัญญา (ถ้าร่วมค้า)', p.win_price_total, 'number', num)}</div>
+    <div class="row">${f('pi-ad', 'วันประกาศ', p.announce_date, 'date')}${f('pi-sd', 'วันยื่นซอง', p.submit_date, 'date')}${f('pi-aw', 'วันประกาศผู้ชนะ', p.award_date, 'date')}</div>
+    <p class="small faint">ผลการประมูลและ Gate อนุมัติแยกตามขั้นตอนอนุมัติ — หน้านี้แก้เฉพาะข้อมูลโครงการ</p>`, 'บันทึก', async d => {
+      const v = id => $(id, d).value.trim(), n = id => v(id) === '' ? null : +v(id), dt = id => v(id) || null;
+      if (!v('#pi-nm')) { toast('ใส่ชื่อโครงการ', true); return false; }
+      const row = { name:v('#pi-nm'), procurement_method:v('#pi-pm') || null, egp_no:v('#pi-eg') || null, budget_limit:n('#pi-bl'), ref_price:n('#pi-rp'), bid_price:n('#pi-bp'),
+        win_price:n('#pi-wp'), win_price_total:n('#pi-wt'), announce_date:dt('#pi-ad'), submit_date:dt('#pi-sd'), award_date:dt('#pi-aw') };
+      if (['budget_limit','ref_price','bid_price','win_price','win_price_total'].some(k => row[k] != null && row[k] < 0)) { toast('จำนวนเงินต้องไม่ติดลบ', true); return false; }
+      const { error } = await sb.from('projects').update(row).eq('id', p.id);
+      if (error) { fail(error); return false; }
+      toast('บันทึกข้อมูลโครงการแล้ว'); pageProjectDetail();
+    });
+}
 async function pageProjectDetail(){
   const el = $('#page'); const pid = S.pid;
   el.innerHTML = '<div class="empty">กำลังโหลด…</div>';
@@ -1313,7 +1387,7 @@ async function pageProjectDetail(){
     <div class="ph"><div><button class="btn sm ghost" id="b-back" style="margin:0 0 6px -10px">← โครงการทั้งหมด</button>
       <h1><span class="mono">${h(p.code)}</span> ${h(p.name)}</h1>
       <p class="mut small" style="margin:4px 0 0">${h(p.clients?.name || '')} · ${h(p.business_units?.code || '')} · ${h(p.procurement_method || '')}${p.egp_no ? ' · e-GP ' + h(p.egp_no) : ''}${p.renamed_from ? ' · รหัสเดิม ' + h(p.renamed_from) : ''}</p></div>
-      <div class="act"><span class="chip ${r[1]}">${h(r[0])}</span></div></div>
+      <div class="act">${canCE ? '<button class="btn sm" id="b-pinfo">แก้ไขข้อมูลโครงการ</button>' : ''}<span class="chip ${r[1]}">${h(r[0])}</span></div></div>
     <div class="stats">
       <div class="stat"><small>ราคากลาง</small><b>${money(p.ref_price)}</b></div>
       <div class="stat"><small>ราคาเสนอ</small><b>${money(p.bid_price)}</b></div>
@@ -1335,7 +1409,7 @@ async function pageProjectDetail(){
       ${(G.data || []).map(g => `<tr><td class="mono">${g.gate}</td><td>${h(GATES[g.gate])}</td><td>${g.status === 'pending' ? '<span class="small faint">ยังไม่ส่ง</span>' : chip(GATE_ST, g.status)}</td><td class="small">${g.decided_at ? new Date(g.decided_at).toLocaleDateString('th-TH', { dateStyle:'medium' }) : '—'}</td><td class="small">${h(g.note || '')}</td><td style="white-space:nowrap">${gateBtns(g)}</td></tr>`).join('')}
       </tbody></table></div></div>
 
-    <div class="panel"><div class="hd"><h3>สัญญา</h3>${con?.status === 'draft' && con?.sign_deadline ? `<span style="margin-left:auto">${dueChip(con.sign_deadline)}</span>` : ''}</div><div class="bd">
+    <div class="panel"><div class="hd"><h3>สัญญา</h3>${con ? chip(CON_ST, con.status) : ''}<span style="margin-left:auto;display:flex;gap:6px;align-items:center">${con?.status === 'draft' && con?.sign_deadline ? dueChip(con.sign_deadline) : ''}${canCE ? `<button class="btn sm" id="b-con">${con ? 'แก้ไข / บันทึกการลงนาม' : '+ สร้างสัญญา'}</button>` : ''}</span></div><div class="bd">
       ${con ? `<div class="stats" style="margin:0">
         <div class="stat"><small>เลขที่สัญญา</small><b style="font-size:17px">${h(con.contract_no || 'ยังไม่ลงนาม')}</b>${con.control_no ? `<small>เลขคุม ${h(con.control_no)}</small>` : ''}</div>
         <div class="stat"><small>${con.signed_date ? 'ลงนามเมื่อ' : 'ต้องลงนามภายใน'}</small><b style="font-size:17px">${thDate(con.signed_date || con.sign_deadline)}</b></div>
@@ -1344,10 +1418,12 @@ async function pageProjectDetail(){
         ${con.consortium_ref ? `<p class="small mut" style="margin:10px 0 0">กิจการค้าร่วม: ${h(con.consortium_ref)}</p>` : ''}` : '<div class="empty" style="padding:8px">ยังไม่มีสัญญา</div>'}
     </div></div>
 
-    <div class="panel"><div class="hd"><h3>หลักประกัน</h3>${upKinds().includes('guarantee') ? '<button class="btn sm" id="b-upg" style="margin-left:auto">+ แนบหนังสือค้ำประกัน</button>' : ''}</div><div class="tw"><table><thead><tr><th>ประเภท</th><th class="num">จำนวนเงิน</th><th>สถานะ</th><th>กำหนด</th></tr></thead><tbody>
+    <div class="panel"><div class="hd"><h3>หลักประกัน</h3><span style="margin-left:auto;display:flex;gap:6px">${canCE && guar.length < Object.keys(GUAR_KIND).length ? '<button class="btn sm" id="b-addg">+ เพิ่มหลักประกัน</button>' : ''}${upKinds().includes('guarantee') ? '<button class="btn sm" id="b-upg">+ แนบหนังสือค้ำประกัน</button>' : ''}</span></div><div class="tw"><table><thead><tr><th>ประเภท</th><th class="num">จำนวนเงิน</th><th>เลขที่ / ผู้ออก</th><th>สถานะ</th><th>กำหนด / หมดอายุ</th><th></th></tr></thead><tbody>
       ${guar.sort((a,b) => Object.keys(GUAR_KIND).indexOf(a.kind) - Object.keys(GUAR_KIND).indexOf(b.kind)).map(g => `<tr><td>${h(GUAR_KIND[g.kind] || g.kind)}</td><td class="num">${money(g.amount)}</td>
+        <td class="small">${g.ref_no ? `<span class="mono">${h(g.ref_no)}</span>` : '<span class="faint">—</span>'}${g.issuer ? `<br><span class="mut">${h(g.issuer)}</span>` : ''}</td>
         <td>${canCE ? `<select class="inp" style="width:auto;padding:4px 8px" data-guar="${g.id}">${Object.entries(GUAR_ST).map(([k, v]) => `<option value="${k}" ${k === g.status ? 'selected' : ''}>${v[0]}</option>`).join('')}</select>` : chip(GUAR_ST, g.status)}</td>
-        <td>${g.due_date ? thDate(g.due_date) + ' ' + (['not_requested','requested','unknown'].includes(g.status) ? dueChip(g.due_date) : '') : '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">—</td></tr>'}
+        <td class="small">${g.due_date ? thDate(g.due_date) + ' ' + (['not_requested','requested','unknown'].includes(g.status) ? dueChip(g.due_date) : '') : '—'}${g.expires_at ? `<br><span class="mut">หมดอายุ ${thDate(g.expires_at)}</span>${['issued','submitted'].includes(g.status) ? ' ' + dueChip(g.expires_at) : ''}` : ''}</td>
+        <td>${canCE ? `<button class="btn sm ghost" data-gedit="${g.id}">แก้ไข</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">—</td></tr>'}
     </tbody></table></div></div>
 
     <div class="panel"><div class="hd"><h3>งวดงาน</h3>${d.instNote ? `<span class="small gold" style="margin-left:auto;color:var(--gold)">${h(d.instNote)}</span>` : ''}</div><div class="tw"><table><thead><tr><th>งวด</th><th>รายละเอียด</th><th>ครบกำหนด</th><th class="num">จำนวนเงิน</th><th>สถานะ</th></tr></thead><tbody>
@@ -1385,7 +1461,11 @@ async function pageProjectDetail(){
   mountThread($('#pj-thr'), 'project:' + pid);
   $('#b-back').onclick = () => { (S.dv ||= {}).proj = S.dv.projFrom || 'list'; goto('proj'); };
   const bu = $('#b-upl'); if (bu) bu.onclick = () => dlgUpload(pid, pageProjectDetail);
+  const bc = $('#b-con'); if (bc) bc.onclick = () => dlgContract(p, con);
   const bg = $('#b-upg'); if (bg) bg.onclick = () => dlgUpload(pid, pageProjectDetail, 'guarantee');
+  const bpi = $('#b-pinfo'); if (bpi) bpi.onclick = () => dlgProjectInfo(p);
+  const bag = $('#b-addg'); if (bag) bag.onclick = () => dlgGuarantee(p, null, guar.map(x => x.kind));
+  document.querySelectorAll('[data-gedit]').forEach(b => b.onclick = () => dlgGuarantee(p, guar.find(x => x.id === b.dataset.gedit), []));
   const lg = $('#b-legacy'); if (lg) lg.onclick = () => dlgLegacyImport(pageProjectDetail);
   document.querySelectorAll('[data-fopen]').forEach(b => b.onclick = () => openFile(F.data.find(f => f.id === b.dataset.fopen)));
   document.querySelectorAll('[data-fdel]').forEach(b => b.onclick = async () => {
@@ -1405,11 +1485,9 @@ async function pageProjectDetail(){
   const bl = document.querySelector('[data-block]'); if (bl) bl.onclick = () => decide('budget', bl.dataset.block, 'approve', pageProjectDetail);
   document.querySelectorAll('[data-guar]').forEach(s => s.onchange = async () => {
     const st = s.value, patch = { status: st }, today = todayStr();
-    if (st === 'paid') { if (!(S.isOwner || can('finance','c'))) { toast('การรับเงินต้องบันทึกโดยฝ่ายการเงิน (เมนูบัญชีการเงิน)', true); return pageProjectDetail(); }
-      return dlgPayment({ source:'installment', source_id:s.dataset.inst }, pageProjectDetail).then(() => { const dd = document.querySelector('dialog:last-of-type'); dd && dd.addEventListener('close', () => pageProjectDetail()); }); }
     if (st === 'requested') patch.requested_at = today; if (st === 'issued') patch.issued_at = today; if (st === 'returned') patch.returned_at = today;
     const { error } = await sb.from('guarantees').update(patch).eq('id', s.dataset.guar);
-    if (error) { fail(error); return pageProjectDetail(); } toast('บันทึกสถานะหลักประกันแล้ว');
+    if (error) { fail(error); return pageProjectDetail(); } toast('บันทึกสถานะหลักประกันแล้ว'); pageProjectDetail();
   });
   document.querySelectorAll('[data-inst]').forEach(s => s.onchange = async () => {
     const st = s.value, patch = { status: st }, today = todayStr();
@@ -3966,11 +4044,11 @@ function dlgAssign(m){
 function pageV3(){
   const g = S.posGrp;
   const grps = [['all','ทั้งหมด'],['EX','ผู้บริหาร'],['BN','Budget Node'],['OC','OC Node'],['BU','Business Unit'],['SY','ระบบ'],['AI','AI Agent']];
-  const rows = S.catalog.filter(p => g === 'all' || p.code.startsWith(g));
+  const rows = (S.catalog || []).filter(p => g === 'all' || p.code.startsWith(g));
   const cell = raw => { if (!raw || raw === '—') return '<span class="pm n">—</span>';
     const cls = raw.includes('A*') ? 'a' : /Recommendation/.test(raw) ? 'v' : /[CEX]/.test(raw.replace(/\(.*?\)/g,'')) ? 'c' : raw.includes('R') ? 'r' : 'v';
     return `<span class="pm ${cls}" title="${h(raw)}">${h(raw.replace('Recommendation only','AI').replace(/ \(.*\)/,'*'))}</span>`; };
-  $('#page').innerHTML = `<div class="ph"><div><h1>ตำแหน่งและสิทธิ์ (Permission Matrix V3)</h1><p class="mut small" style="margin:4px 0 0">${S.catalog.length} ตำแหน่ง × 14 โมดูล · * = มีขอบเขต (ชี้เพื่อดู) · AI = แนะนำเท่านั้น</p></div>
+  $('#page').innerHTML = `<div class="ph"><div><h1>ตำแหน่งและสิทธิ์ (Permission Matrix V3)</h1><p class="mut small" style="margin:4px 0 0">${(S.catalog || []).length} ตำแหน่ง × 14 โมดูล · * = มีขอบเขต (ชี้เพื่อดู) · AI = แนะนำเท่านั้น</p></div>
     <div class="act"><div class="seg" role="group" aria-label="กลุ่มตำแหน่ง">${grps.map(([k,l]) => `<button data-g="${k}" aria-pressed="${g === k}">${l}</button>`).join('')}</div></div></div>
     <div class="panel"><div class="tw"><table><thead><tr><th>รหัส</th><th>ตำแหน่ง</th>${MODS.map(m => `<th title="${h(m[1])}">${h(m[1].split(' ')[0])}</th>`).join('')}</tr></thead><tbody>
     ${rows.map(p => `<tr><td class="mono">${h(p.code)}</td><td><b>${h(p.title)}</b><div class="small mut">${h(p.purpose || '')}</div></td>
