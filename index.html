@@ -1084,8 +1084,8 @@ async function showHistory(type, id, title){
 /* ---------- project detail ---------- */
 
 /* ---------- project files (bucket "files", path <company>/<project>/<uuid>.<ext>) ---------- */
-const FILE_KIND = { tor:['TOR / ประกาศ','blue'], bid:['เอกสารเสนอราคา','gold'], contract:['สัญญา','good'], proc:['จัดซื้อ / จ้างช่วง','amber'], other:['อื่น ๆ',''] };
-const FILE_MOD = { tor:'project', bid:'contract', contract:'contract', proc:'procurement', other:'project' };
+const FILE_KIND = { tor:['TOR / ประกาศ','blue'], bid:['เอกสารเสนอราคา','gold'], contract:['สัญญา','good'], guarantee:['หลักประกัน / หนังสือค้ำประกัน','blue'], proc:['จัดซื้อ / จ้างช่วง','amber'], other:['อื่น ๆ',''] };
+const FILE_MOD = { tor:'project', bid:'contract', contract:'contract', guarantee:'contract', proc:'procurement', other:'project' };
 const fsize = n => n == null ? '' : n < 1048576 ? (n / 1024).toFixed(0) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
 const LEGACY_FILES = [{"p": "BES-69-001", "k": "tor", "n": "TOR งานจ้างบริหารอาคารสำนักงบประมาณ (25 หน้า).pdf", "s": "ee51c167f9c9166e42507c945aed88a1160d6b636fc7a572cc1a8f2002751212", "t": "application/pdf", "at": "2026-10-18T09:50:00Z"}, {"p": "BES-69-001", "k": "contract", "n": "หนังสือแจ้งทำสัญญา นร 0701-174 (14 ต.ค. 2569).pdf", "s": "332daea2d42ecb707e67ff5f3aa11a37a6fe904cc4b80b756b1f836ef04a688c", "t": "application/pdf", "at": "2026-10-18T09:50:00Z"}, {"p": "BES-69-001", "k": "proc", "n": "สัญญาจ้างช่วง CSK ST-BB0101-2569 (ร่าง).pdf", "s": "4d14ffcde6ef20318bc363d862b89873285dec6e9a2d7bd9fa99224ae8ac5532", "t": "application/pdf", "at": "2026-10-18T09:50:00Z"}, {"p": "BES-69-001", "k": "other", "n": "BES Project Budget.png", "s": "94806b7320535baf680ec909b69709d6799d3976ba0221a10849a495cfa69135", "t": "image/png", "at": "2026-10-18T09:50:00Z"}, {"p": "BES-69-001", "k": "proc", "n": "PR จ้างช่วง CSK BES-69-001 (ฉบับแก้ไข).pdf", "s": "37c776bec7acd0eb2b2c940f148919d146d7524a4219665d4e70a1e81438019e", "t": "application/pdf", "at": "2026-10-19T13:36:48.315000Z"}, {"p": "BES-69-002", "k": "tor", "n": "TOR รฟฟท. สายสีแดง 12 สถานี (44 หน้า).pdf", "s": "f72d515b0c93d03ce8e349d2497effad338795724a8b9c69813f9b171a6b3f50", "t": "application/pdf", "at": "2026-10-19T13:40:55.532000Z"}, {"p": "BES-69-002", "k": "tor", "n": "ประกาศ รฟฟท. สายสีแดง e-bidding (23 ธ.ค. 68).pdf", "s": "91506c8e3ef82dfaed0e8463c7d0e72a4e6c68da342374a19efb7e1b50ae1390", "t": "application/pdf", "at": "2026-10-19T13:40:55.532000Z"}, {"p": "BES-69-002", "k": "contract", "n": "สัญญา รฟฟท.จ.690001 สายสีแดง.pdf", "s": "d1d8d50e707cf784fafef8959d61a4056c80daa8d8b05f0c8d5171a8872f4d26", "t": "application/pdf", "at": "2026-10-19T13:44:36.759000Z"}, {"p": "BES-69-002", "k": "other", "n": "BES-69-002 Project Budget.png", "s": "2295a923d24f0cd75ec32189c66ea74aba5a44aea97851d803a645641ccde1bb", "t": "image/png", "at": "2026-10-19T13:46:40.262000Z"}, {"p": "EVF-69-001", "k": "tor", "n": "ร่างประกาศ กฟน. เช่ารถโดยสาร 36 คัน (e-GP 69049110866).pdf", "s": "1487aaa7add5939f550b024fb958114dc699450d79f48d1b9aeaed081b79d01c", "t": "application/pdf", "at": "2026-10-18T09:50:00Z"}, {"p": "EVF-69-001", "k": "bid", "n": "ใบเสนอราคา e-bidding 14 ต.ค. 2569 (เลขที่ 6910160011458).pdf", "s": "ab7cfaf1cb93eac336d62a7a4029a5934b38ca86222d9e7a375fad205a8b073e", "t": "application/pdf", "at": "2026-10-18T09:50:00Z"}, {"p": "EVF-69-001", "k": "other", "n": "Project Cash Flow Farizon P6M EV Van.png", "s": "f40938b72f285f2e97bb6636d2f30f537569a3f6e75e5c605bde1e1edcef8297", "t": "image/png", "at": "2026-10-18T09:50:00Z"}, {"p": "EVF-69-001", "k": "proc", "n": "QT202610160001 มาพรพาณิชย์ FARIZON P6M 29 คัน.pdf", "s": "a286ffbc2eafd50ca7d6bd39cd2f0c43815415b0dab7527d873c1b5c0838fa3a", "t": "application/pdf", "at": "2026-10-18T19:06:04.645000Z"}];
 
@@ -1106,10 +1106,10 @@ async function openFile(f){
   window.open(data.signedUrl, '_blank', 'noopener');
 }
 const upKinds = () => Object.keys(FILE_KIND).filter(k => S.isOwner || can(FILE_MOD[k] || 'project', 'c') || (k === 'tor' && (can('contract','c') || can('sysadmin','c'))));   // p1_25: TOR = ทีมประมูล BN01–03 + ผู้ดูแลระบบ SY01
-function dlgUpload(pid, after){
+function dlgUpload(pid, after, kind0){
   const K = upKinds(); if (!K.length) return toast('ตำแหน่งของคุณดูได้อย่างเดียว แนบไฟล์ไม่ได้', true);
   dialog('แนบไฟล์', `
-    <div class="field"><label for="up-k">ประเภทเอกสาร</label><select id="up-k" class="inp">${Object.entries(FILE_KIND).filter(([k]) => K.includes(k)).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('')}</select></div>
+    <div class="field"><label for="up-k">ประเภทเอกสาร</label><select id="up-k" class="inp">${Object.entries(FILE_KIND).filter(([k]) => K.includes(k)).sort(([a], [b]) => (b === kind0) - (a === kind0)).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('')}</select></div>
     <div class="field"><label for="up-f">ไฟล์ (เลือกได้หลายไฟล์ หรือ .zip ทั้งก้อน · ไม่เกิน 50 MB ต่อไฟล์)</label><input id="up-f" class="inp" type="file" multiple required></div>
     <p class="small faint" style="margin:0">ห้ามแนบเอกสารที่มีเลขบัตรประชาชนหรือเลขบัญชีธนาคารของพนักงาน</p>`, 'อัปโหลด', async d => {
     let files = [...d.querySelector('#up-f').files]; const kind = d.querySelector('#up-k').value;
@@ -1344,7 +1344,7 @@ async function pageProjectDetail(){
         ${con.consortium_ref ? `<p class="small mut" style="margin:10px 0 0">กิจการค้าร่วม: ${h(con.consortium_ref)}</p>` : ''}` : '<div class="empty" style="padding:8px">ยังไม่มีสัญญา</div>'}
     </div></div>
 
-    <div class="panel"><div class="hd"><h3>หลักประกัน</h3></div><div class="tw"><table><thead><tr><th>ประเภท</th><th class="num">จำนวนเงิน</th><th>สถานะ</th><th>กำหนด</th></tr></thead><tbody>
+    <div class="panel"><div class="hd"><h3>หลักประกัน</h3>${upKinds().includes('guarantee') ? '<button class="btn sm" id="b-upg" style="margin-left:auto">+ แนบหนังสือค้ำประกัน</button>' : ''}</div><div class="tw"><table><thead><tr><th>ประเภท</th><th class="num">จำนวนเงิน</th><th>สถานะ</th><th>กำหนด</th></tr></thead><tbody>
       ${guar.sort((a,b) => Object.keys(GUAR_KIND).indexOf(a.kind) - Object.keys(GUAR_KIND).indexOf(b.kind)).map(g => `<tr><td>${h(GUAR_KIND[g.kind] || g.kind)}</td><td class="num">${money(g.amount)}</td>
         <td>${canCE ? `<select class="inp" style="width:auto;padding:4px 8px" data-guar="${g.id}">${Object.entries(GUAR_ST).map(([k, v]) => `<option value="${k}" ${k === g.status ? 'selected' : ''}>${v[0]}</option>`).join('')}</select>` : chip(GUAR_ST, g.status)}</td>
         <td>${g.due_date ? thDate(g.due_date) + ' ' + (['not_requested','requested','unknown'].includes(g.status) ? dueChip(g.due_date) : '') : '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">—</td></tr>'}
@@ -1385,6 +1385,7 @@ async function pageProjectDetail(){
   mountThread($('#pj-thr'), 'project:' + pid);
   $('#b-back').onclick = () => { (S.dv ||= {}).proj = S.dv.projFrom || 'list'; goto('proj'); };
   const bu = $('#b-upl'); if (bu) bu.onclick = () => dlgUpload(pid, pageProjectDetail);
+  const bg = $('#b-upg'); if (bg) bg.onclick = () => dlgUpload(pid, pageProjectDetail, 'guarantee');
   const lg = $('#b-legacy'); if (lg) lg.onclick = () => dlgLegacyImport(pageProjectDetail);
   document.querySelectorAll('[data-fopen]').forEach(b => b.onclick = () => openFile(F.data.find(f => f.id === b.dataset.fopen)));
   document.querySelectorAll('[data-fdel]').forEach(b => b.onclick = async () => {
