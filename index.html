@@ -431,6 +431,12 @@ table.cards td .gates{justify-content:flex-end}
 .ivq{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0;background:var(--surface)}.ivq-h{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ivq-t{margin:6px 0;font-size:15px;line-height:1.55}
 .ivq textarea{width:100%;margin-top:4px}.ivg summary{cursor:pointer;color:var(--mut)}.ivpick{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin:6px 0}.ivpk{display:block;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px}
 @media (max-width:760px){ .ivdlg{width:100%;max-width:100%;margin:0;border-radius:0;max-height:100dvh} .ivq .btn,.ivdlg .gates .btn{min-height:44px;flex:1 1 auto} .ivq-rv{flex-direction:column} .ivq select.inp{width:100%!important} }
+dialog.ph-wide{width:min(760px,calc(100% - 24px))}
+.ph-list{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface2);max-height:360px;overflow:auto}
+#ph-dlg{max-height:none}.ph-item{padding:8px 0;border-bottom:1px dashed var(--line)}.ph-item:last-child{border-bottom:0}
+.ph-h{margin-bottom:4px;line-height:1.45}.ph-sum{font-size:13px;line-height:1.6;margin:2px 0 6px}
+.ph-rows{display:flex;flex-direction:column;gap:6px}.ph-r{border:1px solid var(--line);border-radius:8px;padding:6px 9px;background:var(--surface)}
+.ph-r1,.ph-r2{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.ph-r1 .chip{margin-left:auto}.ph-r2{justify-content:space-between;margin:2px 0}.ph-r .chip{font-size:11px;padding:1px 7px}
 </style>
 </head>
 <body>
@@ -2025,7 +2031,7 @@ async function procPR(){
       o.push(`<button class="btn sm ghost" data-dec="${x.id}" data-a="return">ตีกลับ</button><button class="btn sm ghost" data-dec="${x.id}" data-a="reject">ไม่อนุมัติ</button>`);
     }
     if (x.status === 'approved' && !(x.purchase_orders || []).length && (S.isOwner || can('procurement','c'))) o.push(`<button class="btn sm accent" data-mkpo="${x.id}">ออก PO</button>`);
-    o.push(`<button class="btn sm ghost" data-hist="${x.id}" data-no="${h(x.no)}">ประวัติ</button>`, thrBtn('pr:' + x.id, 'PR ' + x.no));
+    o.push(`<button class="btn sm ghost" data-phist="${x.id}">ประวัติซื้อ</button>`, `<button class="btn sm ghost" data-hist="${x.id}" data-no="${h(x.no)}">ประวัติ</button>`, thrBtn('pr:' + x.id, 'PR ' + x.no));
     return o.join(' ');
   };
   await threadIndex().catch(() => {});
@@ -2045,6 +2051,7 @@ async function procPR(){
   document.querySelectorAll('[data-hist]').forEach(b => b.onclick = () => showHistory('pr', b.dataset.hist, b.dataset.no));
   bindThrBtns(pageProc);
   document.querySelectorAll('[data-mkpo]').forEach(b => b.onclick = () => dlgNewPO(data.find(x => x.id === b.dataset.mkpo)));
+  document.querySelectorAll('[data-phist]').forEach(b => b.onclick = () => dlgProcHist('pr', data.find(x => x.id === b.dataset.phist)));
 }
 
 async function procPO(){
@@ -2068,7 +2075,7 @@ async function procPO(){
     if (x.status === 'approved' && (mine || S.isOwner || can('procurement','e'))) o.push(`<button class="btn sm" data-pos="${x.id}" data-st="issued">ส่งผู้ขายแล้ว</button>`);
     if (x.status === 'issued' && canGR) o.push(`<button class="btn sm primary" data-gr="${x.id}">รับของ / ตรวจรับ</button>`);
     if (['issued','received'].includes(x.status) && canPayC) o.push(`<button class="btn sm" data-paypo="${x.id}">บันทึกจ่าย</button>`);
-    o.push(`<button class="btn sm ghost" data-hist="${x.id}" data-no="${h(x.no)}">ประวัติ</button>`, thrBtn('po:' + x.id, 'PO ' + x.no));
+    o.push(`<button class="btn sm ghost" data-phist="${x.id}">ประวัติซื้อ</button>`, `<button class="btn sm ghost" data-hist="${x.id}" data-no="${h(x.no)}">ประวัติ</button>`, thrBtn('po:' + x.id, 'PO ' + x.no));
     return o.join(' ');
   };
   await threadIndex().catch(() => {});
@@ -2086,12 +2093,123 @@ async function procPO(){
   document.querySelectorAll('[data-paypo]').forEach(b => b.onclick = () => dlgPayment({ source:'po', source_id:b.dataset.paypo }, pageProc));
   bindThrBtns(pageProc);
   document.querySelectorAll('[data-hist]').forEach(b => b.onclick = () => showHistory('po', b.dataset.hist, b.dataset.no));
+  document.querySelectorAll('[data-phist]').forEach(b => b.onclick = () => dlgProcHist('po', data.find(x => x.id === b.dataset.phist)));
 }
 
 async function nextNo(table, prefix){
   const { data } = await sb.from(table).select('no').eq('company_id', S.cid).like('no', prefix + '%');
   const n = Math.max(0, ...(data || []).map(r => parseInt(r.no.slice(prefix.length), 10) || 0)) + 1;
   return prefix + String(n).padStart(3, '0');
+}
+
+/* ---------- ประวัติกิจกรรมจัดซื้อ: PR/PO ที่เคยขอ/สั่งรายการเดียวกัน (ใช้ตรวจประกอบการขอซื้อ/สั่งซื้อ) ---------- */
+const PH_UNITS = /^\d+(\.\d+)?(v|vac|vdc|w|kw|hp|btu|mm|cm|m|a|ma|ton|l|kg|g|mm2|sqmm|hz|bar|psi|in|inch|ft)$/;
+const phNorm = s => String(s || '').toLowerCase().replace(/\([^)]*\d{6,}[^)]*\)/g, ' ').replace(/[\s.,;:·•'"`*_+=|\\()[\]{}<>!?]+/g, '');
+const phCodes = s => new Set((String(s || '').toLowerCase().match(/[a-z0-9][a-z0-9\-\/.]*[a-z0-9]/g) || [])
+  .filter(t => !PH_UNITS.test(t)).map(t => [t, t.replace(/[-\/.]/g, '')])
+  .filter(([o, t]) => t.length >= 4 && /\d/.test(t) && (/[a-z]/.test(t) || (/[-\/]/.test(o) && t.length >= 6))).map(([, t]) => t));
+const phGrams = s => { const n = phNorm(s), g = new Set(); for (let i = 0; i < n.length - 2; i++) g.add(n.slice(i, i + 3)); if (!g.size && n) g.add(n); return g; };
+function phScore(a, b){
+  if (!a.n || !b.n) return 0;
+  if (a.n === b.n) return 1;
+  let k = 0; for (const g of a.g) if (b.g.has(g)) k++;
+  let dice = a.g.size + b.g.size ? 2 * k / (a.g.size + b.g.size) : 0;
+  const mn = Math.min(a.g.size, b.g.size);
+  if (mn >= 6 && k / mn >= 0.92) dice = Math.max(dice, 0.8);   // ข้อความสั้นอยู่ในข้อความยาวเกือบทั้งหมด (พิมพ์ย่อ)
+  let code = false; for (const c of a.c) if (b.c.has(c)) { code = true; break; }
+  if (code) return Math.max(0.9, dice);
+  if (a.c.size && b.c.size) return Math.min(dice, 0.55);   // รุ่น/รหัสต่างกัน → ไม่นับเป็นตัวเดียวกัน
+  return dice;
+}
+const phKey = s => ({ n: phNorm(s), g: phGrams(s), c: phCodes(s) });
+const PH_EXACT = 0.75, PH_NEAR = 0.5;
+
+/* โหลดประวัติทั้งบริษัท (PR + PO) เป็นแถวละ 1 รายการ — PO ที่ออกจาก PR นับรวมกับ PR นั้น ไม่นับซ้ำ */
+async function phLoad(force){
+  if (!force && S.phCache && Date.now() - S.phCache.at < 60000) return S.phCache.rows;
+  const [R, O] = await Promise.all([
+    sb.from('purchase_requests').select('id,no,project_id,pr_date,items,status,vendor_hint,projects(code)').eq('company_id', S.cid),
+    sb.from('purchase_orders').select('id,no,pr_id,project_id,po_date,items,status,amount,vendor_id,vendors(name_th),projects(code)').eq('company_id', S.cid)]);
+  if (R.error) throw R.error; if (O.error) throw O.error;
+  const po = O.data || [], rows = [];
+  const poOf = id => po.filter(o => o.pr_id === id && !['cancelled','rejected'].includes(o.status));
+  for (const r of R.data || []) {
+    if (['cancelled','rejected'].includes(r.status)) continue;
+    const os = poOf(r.id), o = os[0];
+    (r.items || []).forEach(it => it?.desc && rows.push({ prId:r.id, poId:o?.id || null, prNo:r.no, poNo:os.map(x => x.no).join(', '), date:o?.po_date || r.pr_date, proj:r.projects?.code || '',
+      vendor:o?.vendors?.name_th || r.vendor_hint || '', vendorId:o?.vendor_id || null, st:o ? ['po', o.status] : ['pr', r.status], desc:it.desc, qty:+it.qty || 0, unit:it.unit || '', price:+it.price || 0, k:phKey(it.desc) }));
+  }
+  for (const o of po) {
+    if (o.pr_id || ['cancelled','rejected'].includes(o.status)) continue;
+    (o.items || []).forEach(it => it?.desc && rows.push({ prId:null, poId:o.id, prNo:'', poNo:o.no, date:o.po_date, proj:o.projects?.code || '', vendor:o.vendors?.name_th || '', vendorId:o.vendor_id,
+      st:['po', o.status], desc:it.desc, qty:+it.qty || 0, unit:it.unit || '', price:+it.price || 0, k:phKey(it.desc) }));
+  }
+  S.phCache = { at: Date.now(), rows, po };
+  return rows;
+}
+
+/* items = [{desc, qty, unit, price}] · skip = { prId, poId } เอกสารตัวเองไม่นับ · vendorId = ผู้ขายที่เลือก (หน้า PO) */
+function phHTML(rows, items, skip = {}, vendorId){
+  const its = (items || []).filter(i => i && String(i.desc || '').trim().length >= 3);
+  if (!its.length) return '<div class="small faint">พิมพ์รายการแล้วระบบจะค้นประวัติ PR/PO ที่เคยขอหรือสั่งรายการเดียวกันให้</div>';
+  const own = r => (skip.prId && r.prId === skip.prId) || (skip.poId && r.poId === skip.poId);
+  const pct = (a, b) => b ? (a - b) / b * 100 : null;
+  const diffChip = (p, ref, label) => { const d = pct(p, ref); if (d == null || !p) return '';
+    const cls = d > 10 ? 'crit' : d > 2 ? 'amber' : d < -2 ? 'good' : '';
+    return `<span class="chip ${cls}" title="เทียบราคา/หน่วยครั้งนี้กับ${label}">${d > 0 ? '+' : ''}${d.toFixed(1)}% เทียบ${label}</span>`; };
+  const out = its.map(it => {
+    const k = phKey(it.desc);
+    const m = rows.filter(r => !own(r)).map(r => ({ ...r, s: phScore(k, r.k) })).filter(r => r.s >= PH_NEAR)
+      .sort((a, b) => (b.s >= PH_EXACT) - (a.s >= PH_EXACT) || String(b.date || '').localeCompare(String(a.date || '')));
+    const base = m.filter(r => r.s >= PH_EXACT);
+    const head = `<div class="ph-h"><b>${h(it.desc)}</b>${it.qty || it.price ? `<span class="small mut"> · ครั้งนี้ ${Number(it.qty || 0).toLocaleString('th-TH')} ${h(it.unit || '')}${it.price ? ` @ ${money(it.price)}` : ''}</span>` : ''}</div>`;
+    if (!m.length) return `<div class="ph-item">${head}<div class="small faint">ไม่พบประวัติ — เป็นรายการที่ยังไม่เคยขอ/สั่งในระบบ</div></div>`;
+    let sum = '';
+    if (base.length) {
+      const pr = base.filter(r => r.price > 0).map(r => r.price), last = base.find(r => r.price > 0);
+      const units = [...new Set(base.map(r => r.unit).filter(Boolean))], projs = new Set(base.map(r => r.proj)), docs = new Set(base.map(r => r.prId || r.poId));
+      const avg = pr.length ? pr.reduce((a, b) => a + b, 0) / pr.length : 0;
+      sum = `<div class="ph-sum">เคยขอ/สั่ง <b>${docs.size}</b> ครั้ง · ${projs.size} โครงการ · รวม ${base.reduce((a, r) => a + r.qty, 0).toLocaleString('th-TH')} ${h(units.join('/'))}
+        ${pr.length ? `<br>ราคา/หน่วย ต่ำสุด ${money(Math.min(...pr))} · เฉลี่ย ${money(avg)} · สูงสุด ${money(Math.max(...pr))}${last ? ` · ล่าสุด ${money(last.price)} (${thDate(last.date)}${last.vendor ? ' · ' + h(last.vendor) : ''})` : ''}` : ''}
+        ${it.price && pr.length ? `<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">${diffChip(+it.price, last?.price, 'ครั้งล่าสุด')}${diffChip(+it.price, avg, 'ค่าเฉลี่ย')}</div>` : ''}
+        ${units.length > 1 || (it.unit && units.length && !units.includes(it.unit)) ? '<div class="small" style="color:var(--gold)">หน่วยไม่ตรงกัน — เทียบราคาด้วยความระวัง</div>' : ''}</div>`;
+    } else sum = `<div class="ph-sum">ไม่พบรายการเดียวกัน · มีรายการใกล้เคียง ${m.length} รายการ (ไม่นำมาคิดสถิติราคา)</div>`;
+    const show = m.slice(0, 8);
+    const tbl = `<div class="ph-rows">${show.map(r => `<div class="ph-r">
+        <div class="ph-r1"><span class="small mut nw">${thDate(r.date)}</span><span class="mono small">${h((r.prNo || '').split('/').pop())}${r.poNo ? (r.prNo ? ' → ' : '') + h(r.poNo.split(', ').map(x => x.split('/').pop()).join(', ')) : ''}</span>${r.st[0] === 'po' ? chip(PO_ST, r.st[1]) : chip(PR_ST, r.st[1])}</div>
+        <div class="ph-r2"><span class="small">${h(r.desc)} <span class="chip ${r.s >= PH_EXACT ? 'good' : ''}">${r.s >= PH_EXACT ? 'ตรงรายการ' : 'ใกล้เคียง'}</span></span><b class="nw small">${r.qty.toLocaleString('th-TH')} ${h(r.unit)} @ ${r.price ? money(r.price) : '—'}</b></div>
+        <div class="small faint">${h(r.proj)}${r.vendor ? ' · ' + h(r.vendor) : ''}</div></div>`).join('')}</div>
+      ${m.length > show.length ? `<div class="small faint">+ อีก ${m.length - show.length} รายการ</div>` : ''}`;
+    return `<div class="ph-item">${head}${sum}${tbl}</div>`;
+  }).join('');
+  let ven = '';
+  if (vendorId && S.phCache) {
+    const vp = (S.phCache.po || []).filter(o => o.vendor_id === vendorId && o.id !== skip.poId && !['cancelled','rejected'].includes(o.status));
+    const vn = vp[0]?.vendors?.name_th || '';
+    ven = `<div class="ph-item"><div class="ph-h"><b>ผู้ขายที่เลือก${vn ? ' · ' + h(vn) : ''}</b></div><div class="ph-sum">${vp.length ? `เคยออก PO <b>${vp.length}</b> ใบ · รวม ${money(vp.reduce((a, o) => a + Number(o.amount || 0), 0))} บาท (ก่อน VAT) · ล่าสุด ${thDate(vp.map(o => o.po_date).filter(Boolean).sort().pop())} · ${new Set(vp.map(o => o.project_id)).size} โครงการ` : 'ยังไม่เคยออก PO ให้ผู้ขายรายนี้'}</div></div>`;
+  }
+  return out + ven;
+}
+
+/* กล่องในหน้าต่าง PR/PO: render(items, skip, vendorId, now) เรียกซ้ำได้ (หน่วงเวลาให้พิมพ์จบก่อน) */
+function phBox(el){
+  let t = null, seq = 0;
+  const run = async (items, skip, vendorId) => {
+    const my = ++seq;
+    try { const rows = await phLoad(); if (my !== seq) return; el.innerHTML = phHTML(rows, items, skip, vendorId); }
+    catch (e) { console.error(e); el.innerHTML = '<div class="small faint">โหลดประวัติไม่สำเร็จ</div>'; }
+  };
+  el.innerHTML = '<div class="small faint">กำลังค้นประวัติ…</div>';
+  return { render: (items, skip, vendorId, now) => { clearTimeout(t); if (now) run(items, skip, vendorId); else t = setTimeout(() => run(items, skip, vendorId), 350); } };
+}
+const PH_SEC = id => `<div class="field ph-box"><label>ประวัติกิจกรรมจัดซื้อ <span class="small faint" style="font-weight:400">— PR/PO ที่เคยขอ/สั่งรายการเดียวกัน</span></label><div id="${id}" class="ph-list"></div></div>`;
+
+/* ปุ่ม "ประวัติซื้อ" ในรายการ PR/PO — ให้ผู้ตรวจ/ผู้อนุมัติเปิดดูประกอบ */
+function dlgProcHist(kind, doc){
+  if (!doc) return;
+  const d = dialog(`ประวัติกิจกรรมจัดซื้อ · ${doc.no}`, `<div class="small mut" style="margin:6px 0 10px">${h(doc.projects?.code || '')} · ${kind === 'po' ? 'PO' : 'PR'} ${h(doc.no)} — เทียบกับ PR/PO ทั้งบริษัทที่ไม่ถูกยกเลิก</div><div id="ph-dlg"></div>`, 'ปิด', async () => {});
+  d.classList.add('ph-wide'); d.querySelector('button[value=cancel]')?.remove();
+  phBox($('#ph-dlg', d)).render(doc.items || [], kind === 'po' ? { poId: doc.id, prId: doc.pr_id } : { prId: doc.id }, kind === 'po' ? doc.vendor_id : null, true);
 }
 
 async function dlgNewPR(pid, after){
@@ -2101,6 +2219,7 @@ async function dlgNewPR(pid, after){
     <div class="field"><label for="pr-p">โครงการ</label><select id="pr-p" class="inp" required>${projects.map(p => `<option value="${p.id}" ${p.id === pid ? 'selected' : ''}>${h(p.code)} — ${h(p.name.slice(0, 60))}</option>`).join('')}</select></div>
     <div class="field"><label for="pr-l">รหัสงบ</label><select id="pr-l" class="inp" required></select><div class="small mut" id="pr-av"></div></div>
     <div class="field"><label>รายการ</label><div id="pr-items"></div><button type="button" class="btn sm ghost" id="pr-add">+ เพิ่มรายการ</button></div>
+    ${PH_SEC('pr-hist')}
     <div class="row"><div class="field"><label for="pr-need">ต้องใช้วันที่</label><input id="pr-need" class="inp" type="date"></div>
       <div class="field"><label for="pr-dept">หน่วยงาน</label><input id="pr-dept" class="inp"></div></div>
     <div class="row"><div class="field"><label for="pr-v">ผู้ขายที่แนะนำ</label><input id="pr-v" class="inp"></div>
@@ -2121,12 +2240,15 @@ async function dlgNewPR(pid, after){
         status: $('#pr-send', dd).checked ? 'submitted' : 'draft', requested_by:S.user.id, requester_name:S.user.user_metadata?.full_name || S.user.email };
       const { error } = await sb.from('purchase_requests').insert(row);
       if (error) { fail(error); return false; }
-      toast(`บันทึก ${no} แล้ว`); after && after();
+      S.phCache = null; toast(`บันทึก ${no} แล้ว`); after && after();
     });
+  d.classList.add('ph-wide');
+  const ph = phBox($('#pr-hist', d));
+  const histUpd = () => ph.render([...d.querySelectorAll('.pr-it')].map(r => ({ desc: r.querySelector('[data-f=d]').value.trim(), qty: +r.querySelector('[data-f=q]').value || 0, unit: r.querySelector('[data-f=u]').value.trim(), price: +r.querySelector('[data-f=p]').value || 0 })));
   let lines = [];
   const addItem = () => { const r = document.createElement('div'); r.className = 'pr-it row'; r.style.marginBottom = '6px';
     r.innerHTML = `<input class="inp" data-f="d" placeholder="รายการ" style="flex:3;min-width:160px"><input class="inp" data-f="q" type="number" step="any" value="1" style="flex:1;min-width:60px" aria-label="จำนวน"><input class="inp" data-f="u" placeholder="หน่วย" style="flex:1;min-width:60px"><input class="inp" data-f="p" type="number" step="any" placeholder="ราคา/หน่วย" style="flex:1.4;min-width:90px">`;
-    $('#pr-items', d).appendChild(r); r.querySelectorAll('input').forEach(i => i.oninput = sum); };
+    $('#pr-items', d).appendChild(r); r.querySelectorAll('input').forEach(i => i.oninput = () => { sum(); histUpd(); }); };
   const sum = () => {
     const amt = [...d.querySelectorAll('.pr-it')].reduce((a, r) => a + (+r.querySelector('[data-f=q]').value || 0) * (+r.querySelector('[data-f=p]').value || 0), 0);
     const vat = amt * 0.07, cut = amt + ($('#pr-vat', d).checked ? vat : 0);
@@ -2141,7 +2263,7 @@ async function dlgNewPR(pid, after){
     sum();
   };
   $('#pr-add', d).onclick = addItem; $('#pr-p', d).onchange = loadLines; $('#pr-l', d).onchange = sum; $('#pr-vat', d).onchange = sum;
-  addItem(); loadLines();
+  addItem(); loadLines(); histUpd();
 }
 
 async function dlgNewPO(pr){
@@ -2153,17 +2275,21 @@ async function dlgNewPO(pr){
     <div class="field"><label for="po-t">เงื่อนไขการชำระ</label><input id="po-t" class="inp"></div>
     <div class="field"><label for="po-d">กำหนดส่งมอบ</label><input id="po-d" class="inp"></div>
     <div class="field"><label for="po-ref">เลขที่อ้างอิง (PO ใน TRCloud / ใบเสนอราคา)</label><input id="po-ref" class="inp" placeholder="เช่น PO26070023 · QT OOQ6907000190"></div>
-    <label class="small" style="display:flex;gap:8px;align-items:center;margin:4px 0 8px"><input type="checkbox" id="po-send" checked> ส่งขออนุมัติทันที</label>`, 'บันทึก PO', async dd => {
+    <label class="small" style="display:flex;gap:8px;align-items:center;margin:4px 0 8px"><input type="checkbox" id="po-send" checked> ส่งขออนุมัติทันที</label>
+    ${PH_SEC('po-hist')}`, 'บันทึก PO', async dd => {
       const no = await nextNo('purchase_orders', pr.projects.code + '/PO-');
       const { error } = await sb.from('purchase_orders').insert({ company_id:S.cid, project_id:pr.project_id, pr_id:pr.id, no, vendor_id:$('#po-v', dd).value, items:pr.items,
         amount:+$('#po-a', dd).value, vat_amount:+$('#po-vat', dd).value || 0, terms:$('#po-t', dd).value.trim() || null, delivery:$('#po-d', dd).value.trim() || null, ref_no:$('#po-ref', dd).value.trim() || null,
         status: $('#po-send', dd).checked ? 'submitted' : 'draft', created_by:S.user.id });
       if (error) { fail(error); return false; }
-      toast(`บันทึก ${no} แล้ว`); S.procTab = 'po'; pageProc();
+      S.phCache = null; toast(`บันทึก ${no} แล้ว`); S.procTab = 'po'; pageProc();
     });
+  d.classList.add('ph-wide');
+  const ph = phBox($('#po-hist', d)), histUpd = () => ph.render(pr.items || [], { prId: pr.id }, $('#po-v', d)?.value || null, true);
+  histUpd();
   if (!vendors?.length) { $('#po-v', d).outerHTML = '<div class="msg warn small">ยังไม่มีผู้ขายในทะเบียน</div>'; return; }
   const fill = () => { const v = vendors.find(x => x.id === $('#po-v', d).value); $('#po-vat', d).value = v?.vat_registered ? (Math.round(+$('#po-a', d).value * 7) / 100).toFixed(2) : '0'; if (v?.pay_terms) $('#po-t', d).value = v.pay_terms; };
-  $('#po-v', d).onchange = fill; $('#po-a', d).oninput = fill; fill();
+  $('#po-v', d).onchange = () => { fill(); histUpd(); }; $('#po-a', d).oninput = fill; fill(); histUpd();
 }
 
 /* ---------- vendors ---------- */
