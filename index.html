@@ -298,6 +298,7 @@ table.cards td .gates{justify-content:flex-end}
 .pb-cat{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:10px 0}
 .pb-h{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:4px}
 .pb-t{width:100%} .pb-t td{padding:5px 4px;border-bottom:1px solid var(--line)} .pb-t tr:last-child td{border:0}
+.cv-up{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px;margin:0 0 12px;border:1px dashed var(--line,#ccc);border-radius:10px}.ai-fill{outline:2px solid var(--gold);outline-offset:1px}
 .pb-r{display:inline-flex;align-items:center;margin-left:4px;cursor:pointer} .pb-r input{position:absolute;opacity:0;pointer-events:none}
 .pb-r span{min-width:30px;padding:3px 8px;border:1px solid var(--line);border-radius:7px;text-align:center;font-size:12.5px;font-weight:600}
 .pb-r input:checked+span{background:var(--pri);color:var(--pri-ink);border-color:var(--pri)} .pb-r input:focus-visible+span{outline:2px solid var(--budget)}
@@ -3881,6 +3882,57 @@ function printHRF(doc){
   w.document.close();
 }
 
+/* ใบสมัคร PDF → AI เติมฟอร์ม 01-02 (edge function hr-cv-extract · ไม่เก็บไฟล์ · ไม่ดึงข้อมูลต้องห้าม) */
+let PDFJS = null;
+async function loadPdfJs(){
+  if (PDFJS) return PDFJS;
+  await new Promise((ok, bad) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'; sc.onload = ok; sc.onerror = () => bad(new Error('โหลดตัวอ่าน PDF ไม่ได้ — ตรวจอินเทอร์เน็ต')); document.head.appendChild(sc); });
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  return PDFJS = window.pdfjsLib;
+}
+async function cvRead(file){
+  const lib = await loadPdfJs(), pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+  let text = ''; const images = [];
+  for (let i = 1; i <= Math.min(pdf.numPages, 6); i++) {
+    const pg = await pdf.getPage(i), tc = await pg.getTextContent();
+    text += `\n--- หน้า ${i} ---\n` + tc.items.map(t => t.str + (t.hasEOL ? '\n' : ' ')).join('');
+    if (i <= 4) { const v0 = pg.getViewport({ scale:1 }), v = pg.getViewport({ scale: Math.min(2, 1100 / v0.width) }), c = document.createElement('canvas');
+      c.width = v.width; c.height = v.height; const cx = c.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, c.width, c.height);
+      await pg.render({ canvasContext: cx, viewport: v }).promise; images.push(c.toDataURL('image/jpeg', 0.72).split(',')[1]); }
+  }
+  return { text: text.slice(0, 30000), images, pages: pdf.numPages };
+}
+async function cvFill(file, d){
+  const msg = $('#cv-msg', d), say = (t, cls = 'mut') => { msg.className = 'small ' + cls; msg.textContent = t; };
+  if (!/\.pdf$/i.test(file.name) && file.type !== 'application/pdf') return say('รองรับเฉพาะไฟล์ PDF', 'err');
+  if (file.size > 25e6) return say('ไฟล์ใหญ่เกิน 25 MB', 'err');
+  try {
+    say('กำลังอ่านไฟล์ในเครื่อง…'); const r = await cvRead(file);
+    say(`ส่ง ${r.images.length} หน้าแรกให้ AI อ่าน… (ประมาณ 10–30 วินาที)`);
+    const { data, error } = await sb.functions.invoke('hr-cv-extract', { body:{ company_id:S.cid, text:r.text, images:r.images } });
+    let err = error?.message || data?.error; if (error?.context?.json) { try { err = (await error.context.json()).error || err; } catch(e){} }
+    if (err || !data?.data) return say('อ่านไม่สำเร็จ: ' + (err || 'ไม่มีผล') + ' — กรอกเองได้ตามปกติ', 'err');
+    const n = cvApply(data.data, d);
+    say(`AI เติมให้ ${n} ช่อง (กรอบสีเหลือง) จากไฟล์ ${r.pages} หน้า · ตรวจและแก้ก่อนกดบันทึก${data.data.injection_detected ? ' · ⚠ พบข้อความแปลกในไฟล์ที่พยายามสั่งระบบ ตรวจละเอียดเป็นพิเศษ' : ''}`, data.data.injection_detected ? 'err' : 'ok');
+  } catch (e) { say('อ่านไม่สำเร็จ: ' + (e.message || e) + ' — กรอกเองได้ตามปกติ', 'err'); }
+}
+function cvApply(x, d){
+  let n = 0; const mark = el => { el.classList.add('ai-fill'); el.addEventListener('input', () => el.classList.remove('ai-fill'), { once:true }); n++; };
+  const set = (id, v) => { const el = $(id, d); if (el && !el.value && v !== '' && v != null) { el.value = v; mark(el); } };
+  set('#hf-pos', x.position); set('#hf-fn', x.full_name); set('#hf-nn', x.nickname); set('#hf-en', x.name_en); set('#hf-ph', x.phone); set('#hf-em', x.email); set('#hf-ln', x.line);
+  set('#hf-cur', x.current_salary); set('#hf-exs', x.expected_salary); set('#hf-av', x.available_date); set('#hf-eng', x.english);
+  set('#hf-cert', [x.certs, x.skills ? 'ทักษะ: ' + x.skills : ''].filter(Boolean).join(' · '));
+  [['#hf-car', x.car], ['#hf-moto', x.moto]].forEach(([id, v]) => { const el = $(id, d); if (el && v && !el.checked) { el.checked = true; mark(el); } });
+  const rows = (attr, list, fill) => { const rowEls = () => [...d.querySelectorAll(`[${attr}][data-f]`)].reduce((m, el) => ((m[el.getAttribute(attr)] ||= el.closest('.row')), m), {});
+    let R = Object.values(rowEls()); const empty = r => [...r.querySelectorAll('input,select')].every(el => !el.value);
+    list.forEach(item => { let r = R.find(empty); if (!r) { const last = R.at(-1); if (!last) return; r = last.cloneNode(true); const k = String(R.length); r.querySelectorAll(`[${attr}]`).forEach(el => { el.setAttribute(attr, k); el.value = ''; el.classList.remove('ai-fill'); }); last.after(r); R = Object.values(rowEls()); }
+      fill(r, item); });
+  };
+  const put = (r, f, v) => { const el = r.querySelector(`[data-f="${f}"]`); if (el && v) { el.value = v; mark(el); } };
+  rows('data-edu', x.education || [], (r, e) => { put(r, 'lv', e.lv); put(r, 'inst', e.inst); put(r, 'major', e.major); put(r, 'year', e.year); });
+  rows('data-exp', x.experience || [], (r, e) => { put(r, 'emp', e.emp); put(r, 'pos', e.pos); put(r, 'yrs', [e.yrs, e.period ? `(${e.period})` : ''].filter(Boolean).join(' ')); put(r, 'why', e.why); });
+  return n;
+}
 /* hiring flow: 01-02 application → 01-03 interview (approve pass ⇒ DB drafts 01-04 contract) → 01-04 approve ⇒ DB registers staff */
 const IV_ITEMS = [['1. บุคลิกภาพภายนอก', ['บุคลิกภาพ การแต่งกาย','การตรงต่อเวลา']], ['2. การสื่อสาร และทัศนคติ', ['ทัศนคติต่อตนเอง ผู้อื่น และบริษัท','ปฏิภาณ ไหวพริบ ในการตอบคำถาม','การสื่อสาร ความมีมนุษยสัมพันธ์']],
   ['3. ความรู้ และความสามารถ', ['ความวิริยะ อุตสาหะ และสู้งาน','ความเป็นผู้นำ ความคิดสร้างสรรค์','การใช้โปรแกรมคอมพิวเตอร์','การใช้ภาษาอังกฤษ']], ['4. ประสบการณ์', ['ความเหมาะสมด้านประสบการณ์ในการทำงาน']]];
@@ -3893,7 +3945,9 @@ function hireBody(form, d0, dis){
   if (form === 'FM-HR-01-02') {
     const reqs = docs.filter(x => x.form === 'FM-HR-01-01' && x.status === 'approved');
     const edu = D.edu || [{}, {}], exp = D.exp || [{}, {}, {}];
-    return `<div class="row"><div class="field"><label for="hf-req">อ้างอิงใบขออัตรากำลัง</label><select id="hf-req" class="inp" ${dis}><option value="">—</option>${reqs.map(r => `<option value="${r.id}" ${r.id === D.req_id ? 'selected' : ''}>${h(r.no)} · ${h(r.data?.position || '')}</option>`).join('')}</select></div>${inp('hf-pos', 'สมัครตำแหน่ง', D.position, 'required')}</div>
+    const nApp = id => docs.filter(x => x.form === 'FM-HR-01-02' && x.data?.req_id === id && !['rejected','cancelled'].includes(x.status) && x.id !== d0.id).length;
+    return `${dis ? '' : `<div class="cv-up"><label class="btn sm" style="cursor:pointer">📄 อัปโหลดใบสมัคร / Resume (PDF)<input type="file" accept="application/pdf,.pdf" id="cv-file" hidden></label><span id="cv-msg" class="small mut">AI อ่านไฟล์แล้วเติมช่องที่ยังว่างให้ (กรอบสีเหลือง) · HR ตรวจก่อนบันทึก · ไม่เก็บไฟล์ในระบบ · ไม่ดึงเลขบัตร วันเกิด ที่อยู่ สุขภาพ ศาสนา</span></div>`}
+      <div class="row"><div class="field"><label for="hf-req">อ้างอิงใบขออัตรากำลัง <span class="small faint">(1 ตำแหน่งรับใบสมัครได้หลายใบ)</span></label><select id="hf-req" class="inp" ${dis}><option value="">—</option>${reqs.map(r => `<option value="${r.id}" ${r.id === D.req_id ? 'selected' : ''}>${h(r.no)} · ${h(r.data?.position || '')} · สมัครแล้ว ${nApp(r.id)} คน</option>`).join('')}</select></div>${inp('hf-pos', 'สมัครตำแหน่ง', D.position, 'required')}</div>
       <div class="row">${inp('hf-cur', 'เงินเดือนปัจจุบัน (บาท)', D.current_salary, 'type="number" min="0"')}${inp('hf-exs', 'เงินเดือนที่คาดหวัง (บาท)', D.expected_salary, 'type="number" min="0"')}${inp('hf-av', 'วันที่เริ่มงานได้', D.available_date, 'type="date"')}</div>
       <div class="row">${inp('hf-fn', 'ชื่อ-สกุล (มีคำนำหน้า)', D.full_name, 'required')}${inp('hf-nn', 'ชื่อเล่น', D.nickname)}${inp('hf-en', 'ชื่อ-สกุล ภาษาอังกฤษ', D.name_en)}</div>
       <div class="row">${inp('hf-ph', 'เบอร์ติดต่อ', D.phone)}${inp('hf-em', 'อีเมล', D.email, 'type="email"')}${inp('hf-ln', 'LINE ID', D.line)}</div>
@@ -3962,6 +4016,7 @@ function hireCollect(form, dd){
   return null;
 }
 function hireWire(form, d){
+  if (form === 'FM-HR-01-02' && $('#cv-file', d)) $('#cv-file', d).onchange = e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) cvFill(f, d); };
   if (form === 'FM-HR-01-03') {
     const sum = () => { let t = 0; IV_ITEMS.forEach(([, items], ci) => { let s = 0; items.forEach((_, i) => { const r = d.querySelector(`[name="iv-${ci}.${i}"]:checked`); if (r) s += +r.value; }); d.querySelector(`[data-ivs="${ci}"]`).textContent = s; t += s; });
       const g = ivGrade(t); $('#iv-tot', d).innerHTML = `รวม <b>${t}</b> / 45 คะแนน → <b>${g[1]}</b>`; $('#iv-tot', d).className = 'msg ' + (g[0] === 'pass' ? 'ok' : g[0] === 'wait' ? 'warn' : 'err'); };
