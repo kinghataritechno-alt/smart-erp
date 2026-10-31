@@ -1518,7 +1518,7 @@ const cnt = v => Number(v || 0).toLocaleString('th-TH');
 const pctOf = (a, b) => b ? (a / b * 100).toFixed(a / b >= 0.1 ? 0 : 1) + '%' : '—';
 const dvIs = (key, def = 'dash') => ((S.dv ||= {})[key] || def) === 'dash';
 const dvSeg = (key, listLabel, def = 'dash') => { const cur = (S.dv ||= {})[key] || def;
-  return `<div class="seg" role="group" aria-label="มุมมอง"><button data-dv="${key}:dash" aria-pressed="${cur === 'dash'}">${ICON.dash}<span>Dashboard</span></button><button data-dv="${key}:list" aria-pressed="${cur === 'list'}">${h(listLabel)}</button></div>`; };
+  return `<div class="seg" role="group" aria-label="มุมมอง"><button data-dv="${key}:dash" aria-pressed="${cur === 'dash'}">${ICON.dash}<span>Dashboard</span></button><button data-dv="${key}:list" aria-pressed="${cur === 'list'}">${h(listLabel)}</button>${key === 'pay' ? `<button data-dv="pay:pi" aria-pressed="${cur === 'pi'}">แบบบันทึกการทำ Payroll</button>` : ''}</div>`; };
 const bindDv = fn => document.querySelectorAll('[data-dv]').forEach(b => b.onclick = () => { const [k, v] = b.dataset.dv.split(':'); (S.dv ||= {})[k] = v; Promise.resolve(fn()).then(() => aiHint(S.page)).catch(() => {}); });
 const countBy = (arr, f) => { const m = new Map(); for (const x of arr) { const k = f(x); m.set(k, (m.get(k) || 0) + 1); } return [...m].sort((a, b) => b[1] - a[1]); };
 const sumBy = (arr, f, v) => { const m = new Map(); for (const x of arr) { const k = f(x); m.set(k, (m.get(k) || 0) + Number(v(x) || 0)); } return [...m].sort((a, b) => b[1] - a[1]); };
@@ -4233,10 +4233,11 @@ const PAY_SUM_KEYS = ['รายได้เพิ่ม', 'คิดภงด']
 const PAY_PERIOD = p => { const [y, m] = String(p).split('-'); return new Date(2000, (+m || 1) - 1, 1).toLocaleDateString('th-TH', { month:'long' }) + ' ' + y; };
 const int = n => n == null ? '—' : Number(n).toLocaleString('th-TH', { maximumFractionDigits: 0 });
 async function pagePayroll(){
+  if ((S.dv ||= {}).pay === 'pi') return pagePayInput();
   if (dvIs('pay')) return dashPay();
   const el = $('#page');
   el.innerHTML = `<div class="ph"><div><h1>เงินเดือน (Payroll)</h1><p class="mut small" style="margin:4px 0 0">เห็นเฉพาะเจ้าของ / BN15 / BN17 · บังคับที่ฐานข้อมูล · ไม่มีเลขบัญชีหรือเลขบัตรในระบบ</p></div>
-    <div class="act">${dvSeg('pay','รายชื่อ / รายคน')}<select id="py-run" class="inp" style="width:auto"></select><button class="btn" id="py-csv">ดาวน์โหลด CSV</button></div></div>
+    <div class="act">${dvSeg('pay','รายชื่อ / รายคน')}<select id="py-run" class="inp" style="width:auto"></select><button class="btn" id="py-csv">ดาวน์โหลด CSV</button><button class="btn primary" id="py-bank">ไฟล์โอนธนาคาร (SCB)</button></div></div>
     <div class="stats" id="py-stats"></div>
     <div class="py-grid">
     <div class="panel"><div class="hd"><h3>สรุปตามหน่วยงาน</h3><span class="small mut" style="margin-left:auto">คลิกแถวเพื่อกรองรายชื่อ</span></div><div class="tw" id="py-dept"><div class="empty">กำลังโหลด…</div></div></div>
@@ -4282,6 +4283,7 @@ async function pagePayroll(){
   $('#py-q').oninput = e => { S.pyQ = e.target.value; draw(); };
   $('#py-d').onchange = e => { S.pyDept = e.target.value; drawDept(); draw(); };
   $('#py-s').onchange = e => { S.pyS = e.target.value; draw(); };
+  $('#py-bank').onclick = () => dlgBankFile(run);
   $('#py-csv').onclick = () => {
     const rows = filt(), esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
     const csv = '﻿' + [['รหัส','ชื่อ-สกุล','ตำแหน่ง','หน่วยงาน','วันทำงาน','มาทำงาน','รายได้','หัก','สุทธิ','สถานะ'].map(esc).join(','),
@@ -4304,6 +4306,387 @@ function dlgPayLine(x, run){
       <div class="field"><label>รายการหัก</label>${tbl(ded, x.total_deduct, 'รวมหัก')}</div></div>
     <div class="msg" style="margin-top:10px">จ่ายสุทธิ <b class="mono">${money(x.net)}</b> บาท</div>
     ${taxBase != null ? `<p class="small faint" style="margin:8px 0 0">ฐานคำนวณภาษี (คิดภงด) ${money(taxBase)} — เป็นฐานภาษี ไม่ใช่รายการหัก จึงไม่นับรวมในยอดหัก</p>` : ''}`, 'ปิด', () => true).querySelector('button[value=cancel]').remove();
+}
+
+/* ---------- ไฟล์โอนเงินเดือนธนาคาร (SCB) — ไม่เก็บเลขบัญชีในระบบ ----------
+   ยอดโอน = payroll_lines.net ของงวดที่อนุมัติแล้ว · เลขบัญชีมาจากไฟล์ที่เจ้าหน้าที่แนบจากเครื่องตัวเอง (เช่นไฟล์ SCB เดือนก่อน)
+   จับคู่ด้วยรหัสพนักงานในเบราว์เซอร์ → ดาวน์โหลด .xlsx ทันที · เลขบัญชีไม่ถูกส่งขึ้นเซิร์ฟเวอร์และไม่ถูกบันทึก */
+const BANK_NAME = s => String(s || '').replace(/\s*\(.*?\)\s*/g, ' ').replace(/^(นางสาว|นาง|นาย|น\.ส\.|ว่าที่\s*ร\.?\s*[ตทอ]\.?\s*(หญิง)?|Mr\.?|Mrs\.?|Ms\.?|Miss)\s*/i, '').replace(/\s+/g, ' ').trim();
+async function bankReadAccounts(f){
+  if (!window.XLSX) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+  const wb = XLSX.read(await f.arrayBuffer(), { type:'array', raw:true });
+  const isAcct = t => /credit\s*account|เลขที่?บัญชี|account\s*no/i.test(t), isCode = t => /employee\s*code|รหัสพนักงาน|emp.*code/i.test(t), isName = t => /beneficiary\s*name|ชื่อ/i.test(t);
+  for (const n of wb.SheetNames) {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[n], { header:1, raw:false, defval:null, blankrows:false });
+    const hi = rows.findIndex(r => (r || []).some(c => isAcct(String(c ?? ''))) && (r || []).some(c => isCode(String(c ?? ''))));
+    if (hi < 0) continue;
+    const H = rows[hi].map(c => String(c ?? '').trim()), ia = H.findIndex(isAcct), ic = H.findIndex(isCode), inm = H.findIndex(isName);
+    const M = new Map(), dup = [];
+    for (const r of rows.slice(hi + 1)) {
+      const code = String(r[ic] ?? '').trim(), acct = String(r[ia] ?? '').replace(/[^0-9]/g, '');
+      if (!code) continue;
+      if (M.has(code) && M.get(code).acct !== acct) dup.push(code);
+      M.set(code, { acct, name: inm >= 0 ? String(r[inm] ?? '').trim() : '' });
+    }
+    return { M, dup, sheet:n };
+  }
+  throw new Error('ไม่พบคอลัมน์ "เลขบัญชี (Credit Account)" คู่กับ "รหัสพนักงาน (Employee Code)" ในไฟล์ที่แนบ');
+}
+
+async function dlgBankFile(run){
+  const { data:L, error } = await sb.from('payroll_lines').select('employee_code,full_name,dept,net,status').eq('run_id', run.id).order('employee_code');
+  if (error) return fail(error);
+  const okRun = run.status === 'approved';
+  const d = dialog(`ไฟล์โอนเงินเดือน SCB · งวด ${PAY_PERIOD(run.period)}`, `
+    ${okRun ? '' : '<div class="msg err small" style="margin-bottom:8px">งวดนี้ยังไม่อนุมัติ — ดูตัวอย่างได้ แต่ดาวน์โหลดไฟล์ส่งธนาคารได้เฉพาะงวดที่อนุมัติแล้ว</div>'}
+    <p class="small mut" style="margin:0 0 8px">ยอดโอน = จ่ายสุทธิรายคนของงวด (${L.length} คน · ${money(run.total_net)} บาท) · แนบไฟล์ที่มีเลขบัญชีจากเครื่องของคุณ เช่นไฟล์ SCB เดือนก่อน (ต้องมีคอลัมน์ Credit Account + Employee Code)</p>
+    <div class="msg small" style="margin-bottom:8px">🔒 เลขบัญชีอ่านในเครื่องนี้เท่านั้น ไม่ส่งขึ้นเซิร์ฟเวอร์และไม่บันทึกในระบบ</div>
+    <div class="field"><label for="bk-f">ไฟล์เลขบัญชี (.xlsx / .csv)</label><input id="bk-f" type="file" class="inp" accept=".xlsx,.xls,.csv" required></div>
+    <div id="bk-r"></div>`, 'ดาวน์โหลดไฟล์ SCB', async dd => {
+      if (!dd._out) { toast('แนบไฟล์เลขบัญชีก่อน', true); return false; }
+      if (!okRun) { toast('งวดยังไม่อนุมัติ', true); return false; }
+      if (dd._out.block.length) { toast('แก้รายการที่ต้องแก้ก่อนดาวน์โหลด', true); return false; }
+      if (dd._out.miss.length && !confirm(`${dd._out.miss.length} คนไม่มีเลขบัญชีในไฟล์ที่แนบ จะไม่อยู่ในไฟล์ SCB นี้ (โอนผ่านธนาคารอื่น/จ่ายวิธีอื่น) — ดาวน์โหลดต่อ?`)) return false;
+      bankWrite(run, dd._out.rows); return true;
+    });
+  $('#bk-f', d).onchange = async e => {
+    const f = e.target.files[0]; d._out = null; if (!f) return;
+    try {
+      const A = await bankReadAccounts(f), rows = [], miss = [], block = [], zero = [];
+      for (const x of L) {
+        const amt = Math.round(Number(x.net || 0) * 100) / 100, a = A.M.get(x.employee_code);
+        if (amt < 0) { block.push(`${x.employee_code} ${x.full_name}: ยอดสุทธิติดลบ ${money(amt)} — แก้ยอดในงวด`); continue; }
+        if (amt === 0) { zero.push(x); continue; }
+        if (!a || !a.acct || /^0+$/.test(a.acct)) { miss.push(x); continue; }
+        if (a.acct.length !== 10) block.push(`${x.employee_code} ${x.full_name}: เลขบัญชีไม่ใช่ 10 หลัก (${a.acct.length} หลัก)`);
+        if (A.dup.includes(x.employee_code)) block.push(`${x.employee_code} ${x.full_name}: มีเลขบัญชีมากกว่า 1 เลขในไฟล์ที่แนบ`);
+        rows.push({ acct:a.acct, code:x.employee_code, name:a.name || BANK_NAME(x.full_name), amt, dept:x.dept, out:x.status === 'Out' });
+      }
+      const ac = {}; for (const r of rows) (ac[r.acct] ||= []).push(r.code);
+      for (const [k, v] of Object.entries(ac)) if (v.length > 1) block.push(`เลขบัญชีเดียวกันใช้กับหลายรหัส: ${v.join(', ')}`);
+      const tot = rows.reduce((s, r) => s + r.amt, 0), mtot = miss.reduce((s, x) => s + Number(x.net || 0), 0);
+      const unused = [...A.M.keys()].filter(k => !L.some(x => x.employee_code === k)).length;
+      const outs = rows.filter(r => r.out);
+      d._out = { rows, miss, block };
+      $('#bk-r', d).innerHTML = `<div class="stats" style="margin:8px 0">
+          <div class="stat"><small>อยู่ในไฟล์ SCB</small><b>${rows.length} คน</b><div class="small faint">${money(tot)} บาท</div></div>
+          <div class="stat"><small>ไม่มีบัญชีในไฟล์แนบ</small><b>${miss.length} คน</b><div class="small faint">${money(mtot)} บาท</div></div>
+          <div class="stat"><small>รวมตรวจกับยอดงวด</small><b style="${Math.abs(tot + mtot - Number(run.total_net)) < 0.01 ? 'color:var(--good)' : 'color:var(--crit)'}">${Math.abs(tot + mtot - Number(run.total_net)) < 0.01 ? 'ตรง' : 'ไม่ตรง'}</b><div class="small faint">${money(tot + mtot)} / ${money(run.total_net)}</div></div></div>
+        ${block.length ? `<div class="msg err small">ต้องแก้ก่อนดาวน์โหลด:<br>${block.map(h).join('<br>')}</div>` : '<div class="msg small">✅ เลขบัญชี 10 หลักครบ · ไม่มีบัญชีซ้ำ · ไม่มียอด 0</div>'}
+        ${zero.length ? `<p class="small" style="margin:8px 0 0">ยอดสุทธิ 0 บาท ไม่โอน ${zero.length} คน: ${zero.map(x => h(x.employee_code)).join(', ')}</p>` : ''}
+        ${outs.length ? `<p class="small" style="margin:8px 0 0">ออกระหว่างงวดแต่ยังได้รับโอน ${outs.length} คน: ${outs.map(r => h(r.code)).join(', ')} — ตรวจว่าเป็นยอดค้างจ่าย</p>` : ''}
+        ${miss.length ? `<details style="margin-top:8px"><summary class="small">ไม่มีบัญชีในไฟล์แนบ ${miss.length} คน (ไม่อยู่ในไฟล์นี้)</summary><div class="small mut" style="max-height:160px;overflow:auto">${miss.map(x => `${h(x.employee_code)} ${h(x.full_name)} · ${h(x.dept || '')} · ${money(x.net)}`).join('<br>')}</div></details>` : ''}
+        ${unused ? `<p class="small faint" style="margin:6px 0 0">ในไฟล์แนบมี ${unused} รหัสที่ไม่อยู่ในงวดนี้ — ไม่นำมาใช้</p>` : ''}`;
+    } catch(err){ fail(err); $('#bk-r', d).innerHTML = ''; }
+  };
+}
+
+function bankWrite(run, rows){
+  const [y, m] = String(run.period).split('-'), mon = new Date(2000, +m - 1, 1).toLocaleDateString('th-TH', { month:'long' });
+  const aoa = [[`รายงานสรุปเงินเดือนที่ต้องจ่ายประจำเดือน${mon} ${+y - 543} (SCB)`], ['Credit Sequence Number', 'Credit Account', 'Employee Code', 'Beneficiary Name', 'Credit Amount', 'Beneficiary Charge'],
+    ...rows.map((r, i) => [String(i + 1).padStart(6, '0'), r.acct, r.code, r.name, r.amt, 'Sender charge'])];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  for (let i = 0; i < rows.length; i++) { const R = i + 3;
+    for (const c of ['A', 'B', 'C']) { const k = c + R; ws[k].t = 's'; ws[k].z = '@'; }
+    ws['E' + R].z = '#,##0.00'; }
+  ws['!cols'] = [{ wch:22 }, { wch:16 }, { wch:14 }, { wch:30 }, { wch:16 }, { wch:18 }];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  XLSX.writeFile(wb, `scb_${m}_${y.slice(2)}.xlsx`);
+  toast(`สร้างไฟล์ SCB ${rows.length} รายการ แล้ว — ตรวจยอดรวมก่อนอัปโหลดเข้าธนาคาร`);
+}
+
+/* ---------- แบบบันทึกการทำ Payroll (Payroll Input) — นำเข้ารายงานตารางเวลาทำงาน (.xlsx) ต่อหน่วยงานต่องวด ----------
+   ตาราง payroll_inputs / payroll_input_lines (p1_30) · สิทธิ์เดียวกับเงินเดือน (owner / BN15 / BN17)
+   กฎตรวจ PI01–PI12 อยู่ในฐานข้อมูล private.pi_issues · ส่งตรวจ = ตรวจซ้ำอัตโนมัติ · ผู้จัดทำตรวจของตัวเองไม่ได้ */
+const PI_ST = { draft:['ร่าง',''], submitted:['รอตรวจ','gold'], returned:['ส่งกลับแก้ไข','crit'], checked:['ตรวจแล้ว','good'] };
+const PI_LV = { high:['สูง','crit'], medium:['ปานกลาง','amber'], info:['แจ้งให้ทราบ','blue'] };
+const PI_RULE = { PI01:'ไม่อยู่ในทะเบียน', PI02:'ลาออกแล้วยังมีเวลาเข้างาน', PI03:'หน่วยงานไม่ตรงทะเบียน', PI04:'อยู่ในทะเบียนแต่ไม่มีเวลา', PI05:'ขาดงาน', PI06:'ลาไม่รับค่าจ้าง',
+  PI07:'ทำงานวันหยุดไม่มีค่าวันหยุด', PI08:'OT เกิน 36 ชม./สัปดาห์', PI09:'สายสะสม > 60 นาที', PI10:'ข้อมูลไม่ครบงวด', PI11:'จำนวนคนต่างจากงวดก่อน', PI12:'สแกนไม่ครบคู่' };
+const PI_DAY_MIN = 480;   /* ลา/ขาด 08:00 = 1 วัน */
+const hm = m => { m = Math.round(Number(m) || 0); return m ? `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}` : '—'; };
+const piNum = v => { const n = Number(v || 0); return n ? n.toLocaleString('th-TH', { maximumFractionDigits: 2 }) : '—'; };
+const piDays = (a, b) => Math.round((new Date(b + 'T00:00:00Z') - new Date(a + 'T00:00:00Z')) / 864e5) + 1;
+const piDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'2-digit' }) : '—';
+const piMe = () => S.session?.user?.id;
+
+/* แปลงไฟล์ "รายงานตารางเวลาการทำงาน" → สรุปรายคน */
+function piParse(rows, file){
+  const hi = rows.findIndex(r => (r || []).some(c => String(c ?? '').trim() === 'รหัสพนักงาน'));
+  if (hi < 0) throw new Error('ไม่พบหัวคอลัมน์ "รหัสพนักงาน" — ใช้ไฟล์รายงานตารางเวลาการทำงานจากระบบลงเวลา');
+  const H = rows[hi].map(c => String(c ?? '').trim()), col = n => H.indexOf(n);
+  const need = ['รหัสพนักงาน', 'ชื่อ-นามสกุล', 'วันที่', 'สถานะ'];
+  const miss = need.filter(n => col(n) < 0); if (miss.length) throw new Error('ไฟล์ไม่มีคอลัมน์: ' + miss.join(', '));
+  const C = Object.fromEntries(['รหัสพนักงาน','ชื่อ-นามสกุล','แผนก','หน่วยงาน','ตำแหน่ง','ประเภทพนักงาน','วันที่','สถานะ','กะการทำงาน','รวมเวลาทำงาน','วันทำงาน','มาทำงาน',
+    'สาย','กลับก่อน','ค่าทำงานในวันหยุด','ค่าล่วงเวลา','ค่าล่วงเวลาในวันหยุด','ลางาน','ลางาน (ประเภทการลา)','ลางาน #2','ลางาน #2 (ประเภทการลา)','ขาดงาน','หมายเหตุ'].map(n => [n, col(n)]));
+  const g = (r, n) => C[n] >= 0 ? r[C[n]] : null, s = v => v == null ? '' : String(v).trim();
+  const tmin = v => { v = s(v); if (!v) return 0; const m = v.match(/^(-?\d+):(\d{2})/); if (m) return (+m[1]) * 60 + (+m[2]) * (m[1].startsWith('-') ? -1 : 1);
+    const n = Number(v); return isFinite(n) ? (n > 0 && n < 1 ? Math.round(n * 1440) : n) : 0; };          /* "HH:MM" หรือเศษวันของ Excel หรือจำนวนนาที */
+  const lmin = v => { v = s(v); return /:/.test(v) || (Number(v) > 0 && Number(v) < 1) ? tmin(v) : Number(v || 0); };   /* สาย/กลับก่อน = นาที */
+  const tclk = v => { v = s(v); if (!v) return ''; if (/^\d{1,2}:\d{2}/.test(v)) return v.slice(0, 5); const n = Number(v); if (isFinite(n) && n >= 0 && n < 1) { const m = Math.round(n * 1440); return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; } return v; };
+  const dt = v => { if (v instanceof Date) return new Date(v.getTime() - v.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+    if (typeof v === 'number') return new Date(Math.round((v - 25569) * 864e5)).toISOString().slice(0, 10);
+    const m = s(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (!m) return null; let y = +m[3]; if (y > 2400) y -= 543;
+    return `${y}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`; };
+  const wk = d => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() - (x.getUTCDay() + 6) % 7); return x.toISOString().slice(0, 10); };
+  const P = new Map(), depts = new Map(); let dmin = null, dmax = null, bad = 0;
+  for (const r of rows.slice(hi + 1)) {
+    const code = s(g(r, 'รหัสพนักงาน')); if (!code || !/\d/.test(code)) continue;
+    const d = dt(g(r, 'วันที่')); if (!d) { bad++; continue; }
+    if (!dmin || d < dmin) dmin = d; if (!dmax || d > dmax) dmax = d;
+    const dp = s(g(r, 'แผนก')) || s(g(r, 'หน่วยงาน')); if (dp) depts.set(dp, (depts.get(dp) || 0) + 1);
+    const x = P.get(code) || { employee_code:code, full_name:s(g(r, 'ชื่อ-นามสกุล')), position:s(g(r, 'ตำแหน่ง')), emp_type:s(g(r, 'ประเภทพนักงาน')),
+      days_total:0, work_days:0, came:0, day_off:0, holiday:0, holiday_worked:0, work_min:0, late_count:0, late_min:0, early_count:0, early_min:0,
+      ot_min:0, hol_pay_min:0, hol_ot_min:0, leave:{}, leave_days:0, unpaid_days:0, absent_days:0, missing_scan:0, shifts:{}, daily:[], _wk:{}, _dates:new Set(), _notes:[] };
+    P.set(code, x);
+    if (x._dates.has(d)) continue; x._dates.add(d);
+    const st = s(g(r, 'สถานะ')), work = st === 'วันทำงาน', came = Number(g(r, 'มาทำงาน') || 0) > 0;
+    const shift = s(g(r, 'กะการทำงาน')), wmin = tmin(g(r, 'รวมเวลาทำงาน'));
+    const late = lmin(g(r, 'สาย')), early = lmin(g(r, 'กลับก่อน')), ot = tmin(g(r, 'ค่าล่วงเวลา')), hp = tmin(g(r, 'ค่าทำงานในวันหยุด')), hot = tmin(g(r, 'ค่าล่วงเวลาในวันหยุด'));
+    const ab = tmin(g(r, 'ขาดงาน'));
+    x.days_total++; x.work_days += Number(g(r, 'วันทำงาน') || 0); if (came) x.came++;
+    if (/นักขัต/.test(st)) x.holiday++; else if (!work) x.day_off++;
+    if (!work && came) x.holiday_worked++;
+    if (shift) x.shifts[shift] = (x.shifts[shift] || 0) + 1;
+    x.work_min += wmin; if (late > 0) { x.late_count++; x.late_min += late; } if (early > 0) { x.early_count++; x.early_min += early; }
+    x.ot_min += ot; x.hol_pay_min += hp; x.hol_ot_min += hot; x._wk[wk(d)] = (x._wk[wk(d)] || 0) + ot + hot;
+    const lv = [];
+    for (const [a, b] of [['ลางาน', 'ลางาน (ประเภทการลา)'], ['ลางาน #2', 'ลางาน #2 (ประเภทการลา)']]) {
+      const m = tmin(g(r, a)); if (!m) continue; const t = s(g(r, b)) || 'ลา (ไม่ระบุประเภท)', dd = m / PI_DAY_MIN;
+      x.leave[t] = +((x.leave[t] || 0) + dd).toFixed(3); x.leave_days += dd; if (/ไม่รับค่าจ้าง/.test(t)) x.unpaid_days += dd; lv.push(t);
+    }
+    if (ab) x.absent_days += ab / PI_DAY_MIN;
+    const sc = []; let miss = 0;
+    for (let i = 1; i <= 6; i++) { const a = tclk(r[H.indexOf('IN ' + i)]), b = tclk(r[H.indexOf('OUT ' + i)]); if (a || b) sc.push(`${a || '?'}-${b || '?'}`); if (!!a !== !!b) miss = 1; }
+    x.missing_scan += miss;
+    const nt = s(g(r, 'หมายเหตุ')); if (nt) x._notes.push(`${d.slice(8)}/${d.slice(5, 7)} ${nt}`);
+    /* รายวัน: [วันที่, สถานะ W/O/H, กะ, สแกน, นาทีทำงาน, สาย, OT, OTวันหยุด+ค่าวันหยุด, ลา, ขาด(นาที)] */
+    x.daily.push([d, work ? 'W' : /นักขัต/.test(st) ? 'H' : 'O', shift, sc.join(' '), wmin, late, ot, hot + hp, lv.join(', '), ab]);
+  }
+  const lines = [...P.values()].map(x => { const { _wk, _dates, _notes, ...y } = x;
+    y.ot_week_max_min = Math.max(0, ...Object.values(_wk)); y.daily.sort((a, b) => a[0] < b[0] ? -1 : 1);
+    for (const k of ['leave_days', 'unpaid_days', 'absent_days', 'work_days']) y[k] = +y[k].toFixed(3);
+    y.note = _notes.length ? _notes.join(' · ').slice(0, 500) : null; return y; }).sort((a, b) => a.employee_code.localeCompare(b.employee_code));
+  if (!lines.length) throw new Error('ไม่พบรายการเวลาทำงานในไฟล์');
+  const dept = [...depts].sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+  const ym = dmax.split('-'), period = `${+ym[0] + 543}-${ym[1]}`;
+  return { dept, depts:[...depts.keys()], date_from:dmin, date_to:dmax, period, source_file:file, lines, bad };
+}
+const piTotals = L => { const t = {}; for (const k of ['work_days','came','day_off','holiday','holiday_worked','work_min','late_count','late_min','ot_min','hol_pay_min','hol_ot_min','leave_days','unpaid_days','absent_days','missing_scan'])
+  t[k] = +L.reduce((a, x) => a + Number(x[k] || 0), 0).toFixed(3); return t; };
+
+async function piReadFile(f){
+  if (!window.XLSX) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+  const wb = XLSX.read(await f.arrayBuffer(), { type:'array' });
+  const ws = wb.Sheets[wb.SheetNames.find(n => { const r = XLSX.utils.sheet_to_json(wb.Sheets[n], { header:1, raw:false, blankrows:false }); return r.slice(0, 10).some(x => (x || []).includes('รหัสพนักงาน')); }) || wb.SheetNames[0]];
+  return piParse(XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:null, blankrows:false }), f.name);
+}
+
+function piPickFile(replace){
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.xlsx,.xls,.csv';
+  inp.onchange = async () => { const f = inp.files[0]; if (!f) return;
+    try { toast('กำลังอ่านไฟล์…'); dlgPiImport(await piReadFile(f), replace); } catch(e){ fail(e); } };
+  inp.click();
+}
+
+function dlgPiImport(R, replace){
+  const T = piTotals(R.lines), staff = S.staff || [], codes = new Set(staff.map(s => s.employee_code));
+  const unk = staff.length ? R.lines.filter(l => !codes.has(l.employee_code)) : [];
+  const d = dialog(replace ? `นำเข้าไฟล์ใหม่แทน ${replace.doc_no}` : 'นำเข้าไฟล์เวลาทำงาน → แบบบันทึกการทำ Payroll', `
+    <p class="small mut" style="margin:0 0 10px">ไฟล์ <b>${h(R.source_file)}</b> · ${R.lines.length} คน · ${piDays(R.date_from, R.date_to)} วัน (${piDate(R.date_from)} – ${piDate(R.date_to)})${R.bad ? ` · <span style="color:var(--crit)">ข้าม ${R.bad} แถวที่อ่านวันที่ไม่ได้</span>` : ''}</p>
+    <div class="row"><div class="field"><label for="pi-dept">หน่วยงาน</label><input id="pi-dept" class="inp" required value="${h(replace?.dept || R.dept)}" ${replace ? 'disabled' : ''} list="pi-depts">
+      <datalist id="pi-depts">${R.depts.map(x => `<option>${h(x)}</option>`).join('')}</datalist></div>
+      <div class="field" style="max-width:150px"><label for="pi-per">งวดเงินเดือน (พ.ศ.-เดือน)</label><input id="pi-per" class="inp mono" required pattern="[0-9]{4}-[0-9]{2}" value="${h(replace?.period || R.period)}" ${replace ? 'disabled' : ''}></div></div>
+    ${R.depts.length > 1 ? `<div class="msg small" style="margin:0 0 8px">ไฟล์มีหลายแผนก: ${R.depts.map(h).join(', ')} — บันทึกรวมเป็นหน่วยงานเดียวตามที่ระบุ</div>` : ''}
+    <div class="stats" style="margin:6px 0">
+      <div class="stat"><small>มาทำงาน / วันทำงาน</small><b>${piNum(T.came)} / ${piNum(T.work_days)}</b></div>
+      <div class="stat"><small>OT (ชม.)</small><b>${hm(T.ot_min + T.hol_ot_min)}</b></div>
+      <div class="stat"><small>ลา / ลาไม่รับค่าจ้าง</small><b>${piNum(T.leave_days)} / ${piNum(T.unpaid_days)}</b></div>
+      <div class="stat"><small>ขาดงาน (วัน)</small><b>${piNum(T.absent_days)}</b></div></div>
+    ${unk.length ? `<div class="msg err small">ไม่พบในทะเบียน ${unk.length} คน: ${unk.map(l => h(l.employee_code + ' ' + l.full_name)).join(', ')}</div>` : ''}
+    <p class="small faint" style="margin:8px 0 0">บันทึกเป็น <b>ร่าง</b> · ตรวจรายคน แล้วกด "ส่งตรวจ" — Agent ตรวจกฎ PI01–PI12 อัตโนมัติ · ไม่มีตัวเลขค่าจ้างในแบบบันทึกนี้</p>`,
+    replace ? 'บันทึกแทนที่' : 'บันทึกร่าง', async dd => {
+      const dept = replace?.dept || $('#pi-dept', dd).value.trim(), period = replace?.period || $('#pi-per', dd).value.trim();
+      const head = { date_from:R.date_from, date_to:R.date_to, source_file:R.source_file, headcount:R.lines.length, totals:T, issues:[] };
+      let id = replace?.id;
+      if (id) {
+        if (!confirm(`แทนที่รายคนทั้งหมดของ ${replace.doc_no} ด้วยไฟล์นี้?`)) return false;
+        let q = await sb.from('payroll_input_lines').delete().eq('input_id', id); if (q.error) throw q.error;
+        q = await sb.from('payroll_inputs').update(head).eq('id', id); if (q.error) throw q.error;
+      } else {
+        const ex = await sb.from('payroll_inputs').select('id,doc_no,status').eq('company_id', S.cid).eq('period', period).eq('dept', dept).maybeSingle();
+        if (ex.error) throw ex.error;
+        if (ex.data) { if (!['draft', 'returned'].includes(ex.data.status)) throw new Error(`มีแบบบันทึก ${ex.data.doc_no} ของงวด/หน่วยงานนี้แล้ว (${PI_ST[ex.data.status][0]}) — ให้ผู้ตรวจส่งกลับก่อนจึงนำเข้าใหม่ได้`);
+          if (!confirm(`มี ${ex.data.doc_no} ของงวด ${period} หน่วยงานนี้อยู่แล้ว (ร่าง) — แทนที่ด้วยไฟล์นี้?`)) return false;
+          id = ex.data.id; let q = await sb.from('payroll_input_lines').delete().eq('input_id', id); if (q.error) throw q.error;
+          q = await sb.from('payroll_inputs').update(head).eq('id', id); if (q.error) throw q.error; }
+        else { const q = await sb.from('payroll_inputs').insert({ company_id:S.cid, period, dept, ...head }).select('id').single(); if (q.error) throw q.error; id = q.data.id; }
+      }
+      for (let i = 0; i < R.lines.length; i += 100) {
+        const q = await sb.from('payroll_input_lines').insert(R.lines.slice(i, i + 100).map(l => ({ ...l, company_id:S.cid, input_id:id }))); if (q.error) throw q.error; }
+      await sb.rpc('payroll_input_check', { p_id:id });
+      toast('บันทึกแบบบันทึกการทำ Payroll แล้ว'); S.piId = id; pagePayInput();
+    });
+  return d;
+}
+
+async function pagePayInput(){
+  const el = $('#page');
+  el.innerHTML = `<div class="ph"><div><h1>แบบบันทึกการทำ Payroll</h1><p class="mut small" style="margin:4px 0 0">นำเข้ารายงานตารางเวลาทำงาน → สรุปวันทำงาน สาย OT ลา ขาด รายคน → Agent ตรวจ → ผู้ตรวจยืนยัน · ใช้เป็น Payroll Input ก่อนตัดรอบวันที่ 25</p></div>
+    <div class="act">${dvSeg('pay', 'รายชื่อ / รายคน')}<button class="btn primary" id="pi-imp">นำเข้าไฟล์เวลาทำงาน</button></div></div><div id="pi-b"><div class="empty">กำลังโหลด…</div></div>`;
+  bindDv(pagePayroll); $('#pi-imp').onclick = () => piPickFile();
+  if (!S.staff) { const q = await sb.from('staff').select('id,employee_code,full_name,dept,status').eq('company_id', S.cid); if (!q.error) S.staff = q.data; }
+  if (S.piId) return piDetail(S.piId);
+  const { data, error } = await sb.from('payroll_inputs').select('id,doc_no,period,dept,date_from,date_to,status,headcount,totals,issues,prepared_name,checked_name,updated_at,source_file').eq('company_id', S.cid).order('period', { ascending:false }).order('dept');
+  if (error) return fail(error);
+  if (!data.length) { $('#pi-b').innerHTML = '<div class="panel"><div class="empty">ยังไม่มีแบบบันทึก — กด "นำเข้าไฟล์เวลาทำงาน" แล้วเลือกไฟล์รายงานตารางเวลาการทำงาน (.xlsx) ของหน่วยงาน</div></div>'; return; }
+  const per = [...new Set(data.map(x => x.period))], cur = per.includes(S.piPer) ? S.piPer : per[0]; S.piPer = cur;
+  const rows = data.filter(x => x.period === cur), ic = (x, lv) => (x.issues || []).filter(i => i.level === lv).length;
+  const by = k => rows.filter(x => x.status === k).length;
+  $('#pi-b').innerHTML = `<div class="stats">
+      <div class="stat"><small>หน่วยงานที่นำเข้า (งวด ${h(PAY_PERIOD(cur))})</small><b>${rows.length}</b></div>
+      <div class="stat"><small>พนักงานรวม</small><b>${cnt(rows.reduce((a, x) => a + x.headcount, 0))}</b></div>
+      <div class="stat"><small>ร่าง / รอตรวจ / ตรวจแล้ว</small><b>${by('draft') + by('returned')} / ${by('submitted')} / ${by('checked')}</b></div>
+      <div class="stat"><small>รายการตรวจระดับสูง</small><b style="${rows.some(x => ic(x, 'high')) ? 'color:var(--crit)' : ''}">${rows.reduce((a, x) => a + ic(x, 'high'), 0)}</b></div></div>
+    <div class="panel"><div class="hd" style="gap:8px;flex-wrap:wrap"><h3>แบบบันทึก</h3><select id="pi-per" class="inp" style="width:auto;margin-left:auto">${per.map(p => `<option value="${h(p)}" ${p === cur ? 'selected' : ''}>งวด ${h(PAY_PERIOD(p))}</option>`).join('')}</select></div>
+    <div class="tw"><table><thead><tr><th>เลขที่</th><th>หน่วยงาน</th><th>ช่วงตัดรอบ</th><th class="num">คน</th><th class="num">มา/วันทำงาน</th><th class="num">OT ชม.</th><th class="num">ลา/ขาด</th><th>ตรวจ</th><th>สถานะ</th></tr></thead><tbody>
+    ${rows.map(x => { const t = x.totals || {}; return `<tr class="clk" data-pi="${x.id}"><td class="mono">${h(x.doc_no || '')}</td><td><b>${h(x.dept)}</b><div class="small faint">${h(x.prepared_name || '')}</div></td>
+      <td class="small">${piDate(x.date_from)} – ${piDate(x.date_to)}</td><td class="num">${x.headcount}</td><td class="num small">${piNum(t.came)}/${piNum(t.work_days)}</td>
+      <td class="num mono small">${hm((t.ot_min || 0) + (t.hol_ot_min || 0))}</td><td class="num small">${piNum(t.leave_days)} / ${piNum(t.absent_days)}</td>
+      <td>${ic(x, 'high') ? `<span class="chip crit">สูง ${ic(x, 'high')}</span> ` : ''}${ic(x, 'medium') ? `<span class="chip amber">${ic(x, 'medium')}</span>` : ''}${!(x.issues || []).length ? '<span class="chip good">ผ่าน</span>' : ''}</td>
+      <td>${chip(PI_ST, x.status)}</td></tr>`; }).join('')}</tbody></table></div></div>`;
+  $('#pi-per').onchange = e => { S.piPer = e.target.value; pagePayInput(); };
+  document.querySelectorAll('[data-pi]').forEach(r => r.onclick = () => { S.piId = r.dataset.pi; pagePayInput(); });
+}
+
+async function piDetail(id){
+  const [H, L] = await Promise.all([sb.from('payroll_inputs').select('*').eq('id', id).maybeSingle(),
+    sb.from('payroll_input_lines').select('*').eq('input_id', id).order('employee_code')]);
+  if (H.error || L.error) return fail(H.error || L.error);
+  const x = H.data; if (!x) { S.piId = null; return pagePayInput(); }
+  const lines = L.data, me = piMe(), edit = ['draft', 'returned'].includes(x.status), mine = x.prepared_by === me, t = x.totals || {};
+  const iss = x.issues || [], lvN = lv => iss.filter(i => i.level === lv).length;
+  const byEmp = {}; for (const i of iss) if (i.emp) (byEmp[i.emp] ||= []).push(i);
+  const leaveTypes = [...new Set(lines.flatMap(l => Object.keys(l.leave || {})))];
+  const steps = [['draft', 'จัดทำ / นำเข้า'], ['submitted', 'ส่งตรวจ + Agent ตรวจ'], ['checked', 'ผู้ตรวจยืนยัน']], si = { draft:0, returned:0, submitted:1, checked:2 }[x.status];
+  $('#pi-b').innerHTML = `
+    <div class="panel"><div class="hd" style="flex-wrap:wrap;gap:8px"><button class="btn" id="pi-back">← รายการ</button>
+      <h3 style="margin:0">${h(x.doc_no)} · ${h(x.dept)}</h3>${chip(PI_ST, x.status)}
+      <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
+        ${edit ? `<button class="btn" id="pi-re">นำเข้าไฟล์ใหม่ (แทนที่)</button><button class="btn" id="pi-chk">ตรวจ (Agent)</button><button class="btn primary" id="pi-sub">ส่งตรวจ</button>` : ''}
+        ${x.status === 'submitted' && (!mine || S.isOwner) ? `<button class="btn" id="pi-ret">ส่งกลับ</button><button class="btn primary" id="pi-ok">ยืนยันตรวจแล้ว</button>` : ''}
+        ${x.status === 'submitted' && mine ? `<button class="btn" id="pi-wd">ถอนกลับเป็นร่าง</button>` : ''}
+        ${x.status === 'checked' && S.isOwner ? `<button class="btn" id="pi-ret">เปิดแก้ (ส่งกลับ)</button>` : ''}
+        <button class="btn" id="pi-csv">CSV</button><button class="btn" id="pi-prt">พิมพ์แบบบันทึก</button>
+        ${edit ? `<button class="btn" id="pi-del" style="color:var(--crit)">ลบ</button>` : ''}</div></div>
+      <div class="bd" style="padding:12px 16px">
+        <div class="small mut">งวดเงินเดือน <b>${h(PAY_PERIOD(x.period))}</b> · ตัดรอบ ${piDate(x.date_from)} – ${piDate(x.date_to)} (${piDays(x.date_from, x.date_to)} วัน) · ไฟล์ ${h(x.source_file || '—')}</div>
+        <div class="small mut">ผู้จัดทำ ${h(x.prepared_name || '—')}${x.submitted_at ? ` · ส่งตรวจ ${new Date(x.submitted_at).toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' })}` : ''}${x.checked_name ? ` · ผู้ตรวจ <b>${h(x.checked_name)}</b> ${new Date(x.checked_at).toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' })}` : ''}</div>
+        <div style="display:flex;gap:6px;margin:10px 0 0;flex-wrap:wrap">${steps.map(([k, l], i) => `<span class="chip ${i < si || x.status === 'checked' ? 'good' : i === si ? 'gold' : ''}">${i + 1}. ${l}</span>`).join('<span class="faint">→</span>')}</div>
+        ${x.status === 'returned' && x.return_reason ? `<div class="msg err small" style="margin-top:10px">ส่งกลับ: ${h(x.return_reason)}</div>` : ''}
+        ${x.note ? `<div class="msg small" style="margin-top:10px">หมายเหตุผู้ตรวจ: ${h(x.note)}</div>` : ''}</div></div>
+    <div class="stats">
+      <div class="stat"><small>พนักงาน</small><b>${x.headcount}</b></div>
+      <div class="stat"><small>มาทำงาน / วันทำงาน</small><b>${piNum(t.came)} / ${piNum(t.work_days)}</b><div class="small faint">ทำงานวันหยุด ${piNum(t.holiday_worked)} วัน</div></div>
+      <div class="stat"><small>OT / OT วันหยุด (ชม.)</small><b>${hm(t.ot_min)} / ${hm(t.hol_ot_min)}</b><div class="small faint">ค่าทำงานวันหยุด ${hm(t.hol_pay_min)}</div></div>
+      <div class="stat"><small>สาย</small><b>${piNum(t.late_count)} ครั้ง</b><div class="small faint">${piNum(t.late_min)} นาที</div></div>
+      <div class="stat"><small>ลา / ลาไม่รับค่าจ้าง / ขาด (วัน)</small><b>${piNum(t.leave_days)} / ${piNum(t.unpaid_days)} / ${piNum(t.absent_days)}</b></div></div>
+    <div class="panel"><div class="hd"><h3>ผลตรวจ Agent HR</h3><span class="small mut" style="margin-left:auto">${x.checked_issues_at ? 'ตรวจล่าสุด ' + new Date(x.checked_issues_at).toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' }) : ''}</span></div>
+      <div class="bd" style="padding:10px 16px">${iss.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${['high', 'medium', 'info'].filter(lvN).map(lv => `<span class="chip ${PI_LV[lv][1]}">${PI_LV[lv][0]} ${lvN(lv)}</span>`).join('')}</div>
+        <div class="tw"><table><tbody>${[...iss].sort((a, b) => ['high', 'medium', 'info'].indexOf(a.level) - ['high', 'medium', 'info'].indexOf(b.level)).map(i => `<tr><td>${chip(PI_LV, i.level)}</td><td class="mono small">${h(i.code)}</td>
+          <td class="small"><b>${h(PI_RULE[i.code] || '')}</b>${i.emp ? ` · <span class="mono">${h(i.emp)}</span> ${h(i.name || '')}` : ''}<div class="mut">${h(i.msg)}</div></td></tr>`).join('')}</tbody></table></div>`
+        : '<div class="msg small">✅ ไม่พบรายการที่ต้องแก้ — พร้อมส่งตรวจ / ทำเงินเดือน</div>'}</div></div>
+    <div class="panel"><div class="hd" style="flex-wrap:wrap;gap:8px"><h3>สรุปเวลาทำงานรายคน</h3><input id="pi-q" class="inp" placeholder="ค้นหา ชื่อ / รหัส" style="max-width:220px;margin-left:auto" value="${h(S.piQ || '')}"></div>
+      <div class="tw" id="pi-t"></div></div>`;
+  const draw = () => { const q = (S.piQ || '').toLowerCase(), R = lines.filter(l => !q || [l.employee_code, l.full_name, l.position].join(' ').toLowerCase().includes(q));
+    $('#pi-t').innerHTML = `<table><thead><tr><th>รหัส</th><th>ชื่อ-สกุล / ตำแหน่ง</th><th class="num">วันทำงาน</th><th class="num">มาทำงาน</th><th class="num">หยุด/นักขัตฯ</th><th class="num">ทำงานวันหยุด</th>
+      <th class="num">สาย ครั้ง/นาที</th><th class="num">OT ชม.</th><th class="num">OT วันหยุด</th><th>ลา (วัน)</th><th class="num">ขาด</th><th>ตรวจ</th></tr></thead><tbody>
+      ${R.map(l => { const e = byEmp[l.employee_code] || []; return `<tr class="clk" data-pil="${l.id}"><td class="mono">${h(l.employee_code)}</td><td><b>${h(l.full_name || '')}</b><div class="small mut">${h(l.position || '')}${l.staff_id ? '' : ' · <span style="color:var(--crit)">ไม่อยู่ในทะเบียน</span>'}</div>${l.note ? `<div class="small faint">${h(l.note)}</div>` : ''}</td>
+        <td class="num">${piNum(l.work_days)}</td><td class="num"><b>${piNum(l.came)}</b></td><td class="num small">${l.day_off}/${l.holiday}</td><td class="num">${l.holiday_worked || '—'}</td>
+        <td class="num small">${l.late_count ? `${l.late_count}/${l.late_min}` : '—'}</td><td class="num mono">${hm(l.ot_min)}</td><td class="num mono">${hm(l.hol_ot_min + l.hol_pay_min)}</td>
+        <td class="small">${Object.entries(l.leave || {}).map(([k, v]) => `${h(k)} ${piNum(v)}`).join('<br>') || '—'}</td><td class="num">${l.absent_days ? `<b style="color:var(--crit)">${piNum(l.absent_days)}</b>` : '—'}</td>
+        <td>${e.map(i => `<span class="chip ${PI_LV[i.level][1]}" title="${h(i.msg)}">${h(i.code)}</span>`).join(' ')}</td></tr>`; }).join('')}
+      <tr style="font-weight:700;background:var(--surface2)"><td></td><td>รวม ${R.length} คน</td><td class="num">${piNum(piTotals(R).work_days)}</td><td class="num">${piNum(piTotals(R).came)}</td><td></td><td class="num">${piNum(piTotals(R).holiday_worked)}</td>
+        <td class="num small">${piTotals(R).late_count}/${piTotals(R).late_min}</td><td class="num mono">${hm(piTotals(R).ot_min)}</td><td class="num mono">${hm(piTotals(R).hol_ot_min + piTotals(R).hol_pay_min)}</td><td class="small">${leaveTypes.map(k => `${h(k)} ${piNum(R.reduce((a, l) => a + Number((l.leave || {})[k] || 0), 0))}`).join('<br>') || '—'}</td><td class="num">${piNum(piTotals(R).absent_days)}</td><td></td></tr></tbody></table>`;
+    document.querySelectorAll('[data-pil]').forEach(r => r.onclick = () => dlgPiLine(lines.find(l => l.id === r.dataset.pil), x, edit, byEmp)); };
+  draw();
+  $('#pi-q').oninput = e => { S.piQ = e.target.value; draw(); };
+  $('#pi-back').onclick = () => { S.piId = null; pagePayInput(); };
+  const upd = async (patch, msg) => { const q = await sb.from('payroll_inputs').update(patch).eq('id', id); if (q.error) return fail(q.error); toast(msg); piDetail(id); };
+  $('#pi-re') && ($('#pi-re').onclick = () => piPickFile(x));
+  $('#pi-chk') && ($('#pi-chk').onclick = async () => { const q = await sb.rpc('payroll_input_check', { p_id:id }); if (q.error) return fail(q.error); toast(`Agent ตรวจแล้ว ${q.data.length} รายการ`); piDetail(id); });
+  $('#pi-sub') && ($('#pi-sub').onclick = () => confirm('ส่งแบบบันทึกให้ผู้ตรวจ? (Agent จะตรวจซ้ำอัตโนมัติ และแก้ไขไม่ได้จนกว่าจะถูกส่งกลับ)') && upd({ status:'submitted' }, 'ส่งตรวจแล้ว'));
+  $('#pi-wd') && ($('#pi-wd').onclick = () => confirm('ถอนกลับเป็นร่าง?') && upd({ status:'draft' }, 'ถอนกลับเป็นร่างแล้ว'));
+  $('#pi-ret') && ($('#pi-ret').onclick = () => { const r = prompt('เหตุผลที่ส่งกลับ (อย่างน้อย 5 ตัวอักษร)'); if (r) upd({ status:'returned', return_reason:r }, 'ส่งกลับแล้ว'); });
+  $('#pi-ok') && ($('#pi-ok').onclick = () => dialog('ยืนยันตรวจแบบบันทึกการทำ Payroll', `
+      ${lvN('high') ? `<div class="msg err small" style="margin-bottom:8px">มีรายการตรวจระดับสูง ${lvN('high')} รายการ — ต้องระบุหมายเหตุว่าดำเนินการอย่างไร</div>` : ''}
+      <div class="field"><label for="pi-note">หมายเหตุผู้ตรวจ</label><textarea id="pi-note" class="inp" rows="3" ${lvN('high') ? 'required minlength="5"' : ''}>${h(x.note || '')}</textarea></div>
+      <p class="small faint" style="margin:6px 0 0">ยืนยันว่าข้อมูลเวลาทำงานงวดนี้ใช้ทำเงินเดือนได้ · การอนุมัติจ่ายเงินเดือนยังทำที่งวดเงินเดือนตามเดิม</p>`, 'ยืนยันตรวจแล้ว', async dd => {
+      const q = await sb.from('payroll_inputs').update({ status:'checked', note:$('#pi-note', dd).value.trim() || null }).eq('id', id); if (q.error) throw q.error; toast('ยืนยันตรวจแล้ว'); piDetail(id); }));
+  $('#pi-del') && ($('#pi-del').onclick = async () => { if (!confirm(`ลบ ${x.doc_no}?`)) return; const q = await sb.from('payroll_inputs').delete().eq('id', id); if (q.error) return fail(q.error); toast('ลบแล้ว'); S.piId = null; pagePayInput(); });
+  $('#pi-csv').onclick = () => { const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const head = ['รหัส','ชื่อ-สกุล','ตำแหน่ง','วันทำงาน','มาทำงาน','วันหยุดพนักงาน','วันหยุดนักขัตฤกษ์','ทำงานวันหยุด','สาย(ครั้ง)','สาย(นาที)','OT(ชม.)','OTวันหยุด(ชม.)','ค่าทำงานวันหยุด(ชม.)', ...leaveTypes.map(k => 'ลา:' + k), 'ลาไม่รับค่าจ้าง(วัน)','ขาดงาน(วัน)','สแกนไม่ครบ','ผลตรวจ','หมายเหตุ'];
+    const csv = '﻿' + [head.map(esc).join(','), ...lines.map(l => [l.employee_code, l.full_name, l.position, l.work_days, l.came, l.day_off, l.holiday, l.holiday_worked, l.late_count, l.late_min,
+      (l.ot_min / 60).toFixed(2), (l.hol_ot_min / 60).toFixed(2), (l.hol_pay_min / 60).toFixed(2), ...leaveTypes.map(k => (l.leave || {})[k] || 0), l.unpaid_days, l.absent_days, l.missing_scan,
+      (byEmp[l.employee_code] || []).map(i => i.code).join(' '), l.note].map(esc).join(','))].join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8' })); a.download = `${x.doc_no}_${x.dept.replace(/[^\wก-๙]+/g, '-')}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); };
+  $('#pi-prt').onclick = () => printPI(x, lines);
+}
+
+function dlgPiLine(l, x, edit, byEmp){
+  const ST = { W:'ทำงาน', O:'หยุด', H:'นักขัตฯ' }, e = byEmp[l.employee_code] || [];
+  const d = dialog(`${l.employee_code} · ${l.full_name || ''}`, `
+    <p class="small mut" style="margin:0 0 8px">${h(l.position || '')} · ${h(x.dept)} · ${piDate(x.date_from)} – ${piDate(x.date_to)} · กะ ${Object.entries(l.shifts || {}).map(([k, v]) => `${h(k)} (${v})`).join(', ') || '—'}</p>
+    ${e.length ? `<div class="msg err small" style="margin-bottom:8px">${e.map(i => `<b>${h(i.code)}</b> ${h(i.msg)}`).join('<br>')}</div>` : ''}
+    <div class="tw" style="max-height:52vh;overflow:auto"><table><thead><tr><th>วันที่</th><th>สถานะ</th><th>กะ</th><th>เข้า-ออก</th><th class="num">ชม.</th><th class="num">สาย</th><th class="num">OT</th><th>ลา/ขาด</th></tr></thead><tbody>
+    ${(l.daily || []).map(r => `<tr ${r[1] !== 'W' ? 'style="background:var(--surface2)"' : ''}><td class="small mono">${r[0].slice(8)}/${r[0].slice(5, 7)}</td><td class="small">${ST[r[1]] || r[1]}</td><td class="small mono">${h(r[2] || '')}</td><td class="small mono">${h(r[3] || '—')}</td>
+      <td class="num mono small">${hm(r[4])}</td><td class="num small">${r[5] || ''}</td><td class="num mono small">${r[6] || r[7] ? hm((r[6] || 0) + (r[7] || 0)) : ''}</td><td class="small">${h(r[8] || '')}${r[9] ? ' <b style="color:var(--crit)">ขาดงาน</b>' : ''}</td></tr>`).join('')}</tbody></table></div>
+    <div class="field" style="margin-top:10px"><label for="pil-note">หมายเหตุ (สำหรับทำเงินเดือน)</label><textarea id="pil-note" class="inp" rows="2" ${edit ? '' : 'disabled'}>${h(l.note || '')}</textarea></div>`,
+    edit ? 'บันทึกหมายเหตุ' : 'ปิด', async dd => { if (!edit) return true;
+      const q = await sb.from('payroll_input_lines').update({ note:$('#pil-note', dd).value.trim() || null }).eq('id', l.id); if (q.error) throw q.error; toast('บันทึกแล้ว'); piDetail(x.id); });
+  if (!edit) d.querySelector('button[value=cancel]').remove();
+}
+
+function printPI(x, lines){
+  const w = window.open('', '_blank'); if (!w) return toast('เบราว์เซอร์บล็อกหน้าต่างใหม่ — อนุญาต pop-up แล้วลองอีกครั้ง', true);
+  const t = x.totals || {}, iss = x.issues || [], leaveTypes = [...new Set(lines.flatMap(l => Object.keys(l.leave || {})))];
+  const byEmp = {}; for (const i of iss) if (i.emp) (byEmp[i.emp] ||= []).push(i.code);
+  const dts = v => v ? new Date(v).toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' }) : '';
+  const n = v => Number(v || 0) ? Number(v).toLocaleString('th-TH', { maximumFractionDigits: 2 }) : '-';
+  const lv = l => Object.entries(l.leave || {}).map(([k, v]) => `${h(k.replace(/\(.*\)/, '').replace('ลา', ''))} ${n(v)}`).join(', ') || '-';
+  const offIss = iss.filter(i => !i.emp);
+  w.document.write(`<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${h(x.doc_no)} แบบบันทึกการทำ Payroll</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>@page{size:A4 landscape;margin:9mm}*{box-sizing:border-box}body{font-family:Sarabun,sans-serif;font-size:11.5px;color:#000;margin:0}
+  .pg{width:279mm;margin:0 auto;padding:4mm}.hd{width:100%;border-collapse:collapse;border:1.4px solid #000}.hd td{border:1px solid #000;padding:2px 6px}.hd .lg{width:120px;text-align:center}.hd .lg img{max-width:105px;max-height:56px}
+  .hd .tt{text-align:center;font-size:17px;font-weight:700}.hd .k{width:110px;font-size:11px}.hd .v{width:130px;font-size:11px}
+  .meta{display:flex;flex-wrap:wrap;gap:4px 22px;margin:7px 0 6px;font-size:12px}.meta b{color:#0a2a66}
+  table.t{width:100%;border-collapse:collapse;font-size:10.8px}table.t th,table.t td{border:1px solid #000;padding:2px 4px;vertical-align:top}table.t th{background:#eef1f5;font-weight:600;text-align:center}
+  .num{text-align:right;white-space:nowrap}.c{text-align:center}.tot td{font-weight:700;background:#f6f6f6}tr{page-break-inside:avoid}
+  .iss{margin:6px 0;font-size:10.8px}.sg{display:flex;justify-content:space-between;gap:18px;margin-top:16px;page-break-inside:avoid}.sg>div{flex:1;text-align:center;font-size:11.5px}
+  .sg .l{border-bottom:1px dotted #000;height:26px;margin:0 18px 3px;color:#0a2a66;display:flex;align-items:flex-end;justify-content:center}
+  .ft{margin-top:8px;font-size:10px;color:#444;border-top:1px solid #000;padding-top:3px}
+  @media screen{body{background:#eee;padding:0 0 20px}.pg{background:#fff;margin-top:16px;width:min(279mm,100%);overflow-x:auto}}
+  .pbar{position:sticky;top:0;z-index:9;display:flex;gap:8px;justify-content:center;padding:10px;background:#1f2937}.pbar button{font:600 15px Sarabun,sans-serif;padding:10px 18px;border-radius:10px;border:0;cursor:pointer;background:#fff;color:#111}.pbar button:first-child{background:#E8542E;color:#fff}@media print{.pbar{display:none!important}}</style></head>
+  <body><div class="pbar"><button onclick="if(window.opener){window.close()}else{history.length>1?history.back():location.href=location.origin}">✕ ปิด กลับเข้าโปรแกรม</button><button onclick="print()">🖨 พิมพ์ / บันทึก PDF</button></div><div class="pg">
+  <table class="hd"><tr><td class="lg" rowspan="3"><img src="${RQ_LOGO}" alt="SMART TERMINAL"></td><td class="tt" rowspan="3">แบบบันทึกการทำ Payroll<div style="font-size:12.5px;font-weight:600">บันทึกเวลาทำงานประจำงวด (Payroll Input)</div></td>
+    <td class="k">เลขที่ :</td><td class="v"><b>${h(x.doc_no)}</b></td></tr><tr><td class="k">งวดเงินเดือน :</td><td class="v">${h(PAY_PERIOD(x.period))}</td></tr><tr><td class="k">สถานะ :</td><td class="v">${h(PI_ST[x.status][0])}</td></tr></table>
+  <div class="meta"><span>หน่วยงาน <b>${h(x.dept)}</b></span><span>ช่วงตัดรอบ <b>${dts(x.date_from)} – ${dts(x.date_to)}</b> (${piDays(x.date_from, x.date_to)} วัน)</span><span>จำนวนพนักงาน <b>${x.headcount}</b> คน</span><span>ที่มาข้อมูล <b>${h(x.source_file || '-')}</b></span></div>
+  <table class="t"><thead><tr><th rowspan="2">ที่</th><th rowspan="2">รหัส</th><th rowspan="2">ชื่อ-สกุล</th><th rowspan="2">ตำแหน่ง</th><th colspan="2">วัน</th><th colspan="2">วันหยุด</th><th colspan="2">มาสาย</th><th colspan="3">ล่วงเวลา / วันหยุด (ชม.)</th><th rowspan="2" style="width:120px">ลา (วัน)</th><th rowspan="2">ลาไม่รับ<br>ค่าจ้าง</th><th rowspan="2">ขาด<br>(วัน)</th><th rowspan="2">ผลตรวจ / หมายเหตุ</th></tr>
+    <tr><th>ทำงาน</th><th>มา</th><th>หยุด/นักขัตฯ</th><th>มาทำ</th><th>ครั้ง</th><th>นาที</th><th>OT</th><th>OT วันหยุด</th><th>ค่าวันหยุด</th></tr></thead><tbody>
+  ${lines.map((l, i) => `<tr><td class="c">${i + 1}</td><td class="c">${h(l.employee_code)}</td><td>${h(l.full_name || '')}</td><td>${h(l.position || '')}</td><td class="num">${n(l.work_days)}</td><td class="num">${n(l.came)}</td>
+    <td class="c">${l.day_off}/${l.holiday}</td><td class="num">${n(l.holiday_worked)}</td><td class="num">${n(l.late_count)}</td><td class="num">${n(l.late_min)}</td><td class="num">${l.ot_min ? hm(l.ot_min) : '-'}</td><td class="num">${l.hol_ot_min ? hm(l.hol_ot_min) : '-'}</td><td class="num">${l.hol_pay_min ? hm(l.hol_pay_min) : '-'}</td>
+    <td>${lv(l)}</td><td class="num">${n(l.unpaid_days)}</td><td class="num">${n(l.absent_days)}</td><td>${(byEmp[l.employee_code] || []).join(' ')}${l.note ? ((byEmp[l.employee_code] || []).length ? ' · ' : '') + h(l.note) : ''}</td></tr>`).join('')}
+  <tr class="tot"><td colspan="4" class="c">รวม ${lines.length} คน</td><td class="num">${n(t.work_days)}</td><td class="num">${n(t.came)}</td><td class="c">${n(t.day_off)}/${n(t.holiday)}</td><td class="num">${n(t.holiday_worked)}</td><td class="num">${n(t.late_count)}</td><td class="num">${n(t.late_min)}</td>
+    <td class="num">${t.ot_min ? hm(t.ot_min) : '-'}</td><td class="num">${t.hol_ot_min ? hm(t.hol_ot_min) : '-'}</td><td class="num">${t.hol_pay_min ? hm(t.hol_pay_min) : '-'}</td><td>${leaveTypes.map(k => `${h(k)} ${n(lines.reduce((a, l) => a + Number((l.leave || {})[k] || 0), 0))}`).join(', ') || '-'}</td><td class="num">${n(t.unpaid_days)}</td><td class="num">${n(t.absent_days)}</td><td></td></tr></tbody></table>
+  <div class="iss"><b>ผลตรวจ Agent HR</b> (${x.checked_issues_at ? dts(x.checked_issues_at) : '-'}): ${iss.length ? Object.entries(iss.reduce((m, i) => (m[i.code] = (m[i.code] || 0) + 1, m), {})).map(([k, v]) => `${k} ${h(PI_RULE[k] || '')} ${v}`).join(' · ') : 'ไม่พบรายการที่ต้องแก้'}
+    ${offIss.map(i => `<br>${h(i.code)}: ${h(i.msg)}`).join('')}
+    ${x.note ? `<br><b>หมายเหตุผู้ตรวจ:</b> ${h(x.note)}` : ''}</div>
+  <div class="sg"><div><div class="l">${h(x.prepared_name || '')}</div>ผู้จัดทำ (เจ้าหน้าที่เงินเดือน)<br>วันที่ ${dts(x.submitted_at) || '................'}</div>
+    <div><div class="l">${h(x.checked_name || '')}</div>ผู้ตรวจสอบ (ผู้จัดการฝ่ายบุคคล)<br>วันที่ ${dts(x.checked_at) || '................'}</div>
+    <div><div class="l"></div>ผู้อนุมัติ<br>วันที่ ................</div></div>
+  <div class="ft">ลา/ขาด 8 ชม. = 1 วัน · OT วันหยุด = ค่าล่วงเวลาในวันหยุด · ค่าวันหยุด = ค่าทำงานในวันหยุด · ผลตรวจ PI01–PI12 ตามกฎ Agent HR ในระบบ · แบบบันทึกนี้ไม่มีตัวเลขค่าจ้าง และไม่ใช่การอนุมัติจ่ายเงินเดือน · พิมพ์จาก Smart Office Platform ${new Date().toLocaleString('th-TH', { dateStyle:'medium', timeStyle:'short' })}</div>
+  </div></body></html>`);
+  w.document.close();
 }
 
 function dlgStaff(s){
