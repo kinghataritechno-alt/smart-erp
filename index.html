@@ -426,6 +426,17 @@ table.cards td .gates{justify-content:flex-end}
   .panel>.hd .inp{max-width:none!important;flex:1 1 140px}
   .page{padding:18px 16px 50px}
 }
+.ivdlg{width:min(900px,calc(100% - 24px))}
+.ivhead{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px 14px;margin:6px 0}.ivhead>div{display:flex;flex-direction:column;gap:2px}.ivhead small{color:var(--mut);font-size:12px}
+.ivq{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0;background:var(--surface)}.ivq-h{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ivq-t{margin:6px 0;font-size:15px;line-height:1.55}
+.ivq textarea{width:100%;margin-top:4px}.ivg summary{cursor:pointer;color:var(--mut)}.ivpick{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin:6px 0}.ivpk{display:block;padding:5px 0;border-bottom:1px solid var(--line);font-size:13px}
+@media (max-width:760px){ .ivdlg{width:100%;max-width:100%;margin:0;border-radius:0;max-height:100dvh} .ivq .btn,.ivdlg .gates .btn{min-height:44px;flex:1 1 auto} .ivq-rv{flex-direction:column} .ivq select.inp{width:100%!important} }
+dialog.ph-wide{width:min(760px,calc(100% - 24px))}
+.ph-list{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface2);max-height:360px;overflow:auto}
+#ph-dlg{max-height:none}.ph-item{padding:8px 0;border-bottom:1px dashed var(--line)}.ph-item:last-child{border-bottom:0}
+.ph-h{margin-bottom:4px;line-height:1.45}.ph-sum{font-size:13px;line-height:1.6;margin:2px 0 6px}
+.ph-rows{display:flex;flex-direction:column;gap:6px}.ph-r{border:1px solid var(--line);border-radius:8px;padding:6px 9px;background:var(--surface)}
+.ph-r1,.ph-r2{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.ph-r1 .chip{margin-left:auto}.ph-r2{justify-content:space-between;margin:2px 0}.ph-r .chip{font-size:11px;padding:1px 7px}
 </style>
 </head>
 <body>
@@ -1079,8 +1090,8 @@ async function showHistory(type, id, title){
 /* ---------- project detail ---------- */
 
 /* ---------- project files (bucket "files", path <company>/<project>/<uuid>.<ext>) ---------- */
-const FILE_KIND = { tor:['TOR / ประกาศ','blue'], bid:['เอกสารเสนอราคา','gold'], contract:['สัญญา','good'], proc:['จัดซื้อ / จ้างช่วง','amber'], other:['อื่น ๆ',''] };
-const FILE_MOD = { tor:'project', bid:'contract', contract:'contract', proc:'procurement', other:'project' };
+const FILE_KIND = { tor:['TOR / ประกาศ','blue'], bid:['เอกสารเสนอราคา','gold'], contract:['สัญญา','good'], guarantee:['หลักประกัน / หนังสือค้ำประกัน','blue'], proc:['จัดซื้อ / จ้างช่วง','amber'], other:['อื่น ๆ',''] };
+const FILE_MOD = { tor:'project', bid:'contract', contract:'contract', guarantee:'contract', proc:'procurement', other:'project' };
 const fsize = n => n == null ? '' : n < 1048576 ? (n / 1024).toFixed(0) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
 const LEGACY_FILES = [{"p": "BES-69-001", "k": "tor", "n": "TOR งานจ้างบริหารอาคารสำนักงบประมาณ (25 หน้า).pdf", "s": "ee51c167f9c9166e42507c945aed88a1160d6b636fc7a572cc1a8f2002751212", "t": "application/pdf", "at": "2026-10-18T09:50:00Z"}, {"p": "BES-69-001", "k": "contract", "n": "หนังสือแจ้งทำสัญญา นร 0701-174 (14 ต.ค. 2569).pdf", "s": "332daea2d42ecb707e67ff5f3aa11a37a6fe904cc4b80b756b1f836ef04a688c", "t": "application/pdf", "at": "2026-10-18T09:50:00Z"}, {"p": "BES-69-001", "k": "proc", "n": "สัญญาจ้างช่วง CSK ST-BB0101-2569 (ร่าง).pdf", "s": "4d14ffcde6ef20318bc363d862b89873285dec6e9a2d7bd9fa99224ae8ac5532", "t": "application/pdf", "at": "2026-10-18T09:50:00Z"}, {"p": "BES-69-001", "k": "other", "n": "BES Project Budget.png", "s": "94806b7320535baf680ec909b69709d6799d3976ba0221a10849a495cfa69135", "t": "image/png", "at": "2026-10-18T09:50:00Z"}, {"p": "BES-69-001", "k": "proc", "n": "PR จ้างช่วง CSK BES-69-001 (ฉบับแก้ไข).pdf", "s": "37c776bec7acd0eb2b2c940f148919d146d7524a4219665d4e70a1e81438019e", "t": "application/pdf", "at": "2026-10-19T13:36:48.315000Z"}, {"p": "BES-69-002", "k": "tor", "n": "TOR รฟฟท. สายสีแดง 12 สถานี (44 หน้า).pdf", "s": "f72d515b0c93d03ce8e349d2497effad338795724a8b9c69813f9b171a6b3f50", "t": "application/pdf", "at": "2026-10-19T13:40:55.532000Z"}, {"p": "BES-69-002", "k": "tor", "n": "ประกาศ รฟฟท. สายสีแดง e-bidding (23 ธ.ค. 68).pdf", "s": "91506c8e3ef82dfaed0e8463c7d0e72a4e6c68da342374a19efb7e1b50ae1390", "t": "application/pdf", "at": "2026-10-19T13:40:55.532000Z"}, {"p": "BES-69-002", "k": "contract", "n": "สัญญา รฟฟท.จ.690001 สายสีแดง.pdf", "s": "d1d8d50e707cf784fafef8959d61a4056c80daa8d8b05f0c8d5171a8872f4d26", "t": "application/pdf", "at": "2026-10-19T13:44:36.759000Z"}, {"p": "BES-69-002", "k": "other", "n": "BES-69-002 Project Budget.png", "s": "2295a923d24f0cd75ec32189c66ea74aba5a44aea97851d803a645641ccde1bb", "t": "image/png", "at": "2026-10-19T13:46:40.262000Z"}, {"p": "EVF-69-001", "k": "tor", "n": "ร่างประกาศ กฟน. เช่ารถโดยสาร 36 คัน (e-GP 69049110866).pdf", "s": "1487aaa7add5939f550b024fb958114dc699450d79f48d1b9aeaed081b79d01c", "t": "application/pdf", "at": "2026-10-18T09:50:00Z"}, {"p": "EVF-69-001", "k": "bid", "n": "ใบเสนอราคา e-bidding 14 ต.ค. 2569 (เลขที่ 6910160011458).pdf", "s": "ab7cfaf1cb93eac336d62a7a4029a5934b38ca86222d9e7a375fad205a8b073e", "t": "application/pdf", "at": "2026-10-18T09:50:00Z"}, {"p": "EVF-69-001", "k": "other", "n": "Project Cash Flow Farizon P6M EV Van.png", "s": "f40938b72f285f2e97bb6636d2f30f537569a3f6e75e5c605bde1e1edcef8297", "t": "image/png", "at": "2026-10-18T09:50:00Z"}, {"p": "EVF-69-001", "k": "proc", "n": "QT202610160001 มาพรพาณิชย์ FARIZON P6M 29 คัน.pdf", "s": "a286ffbc2eafd50ca7d6bd39cd2f0c43815415b0dab7527d873c1b5c0838fa3a", "t": "application/pdf", "at": "2026-10-18T19:06:04.645000Z"}];
 
@@ -1096,13 +1107,21 @@ async function putFile({ pid, kind, name, blob, type, at }){
   if (error) { await sb.storage.from('files').remove([path]); throw error; }
 }
 async function openFile(f){
-  const { data, error } = await sb.storage.from('files').createSignedUrl(f.storage_path, 120);
-  if (error) return fail(error);
-  window.open(data.signedUrl, '_blank', 'noopener');
+  if (!f) return toast('ไม่พบไฟล์', true);
+  // open the tab synchronously inside the click — Safari/iPad blocks window.open() that happens after an await
+  const w = window.open('', '_blank');
+  if (w) { try { w.opener = null; w.document.write('<p style="font:16px sans-serif;padding:24px">กำลังเปิดไฟล์…</p>'); } catch(e){} }
+  const { data, error } = await sb.storage.from('files').createSignedUrl(f.storage_path, 300);
+  if (error) { if (w) w.close(); return fail(error); }
+  if (w && !w.closed) { w.location.href = data.signedUrl; return; }
+  const d = dialog('เปิดไฟล์', `<p class="small">เบราว์เซอร์บล็อกการเปิดหน้าต่างใหม่ — กดลิงก์นี้เพื่อเปิดไฟล์ (ใช้ได้ 5 นาที)</p><p><a class="btn primary" href="${h(data.signedUrl)}" target="_blank" rel="noopener">เปิด ${h(f.name)}</a></p>`, 'ปิด', async () => true);
+  d.querySelector('button[value=cancel]')?.remove();
 }
-function dlgUpload(pid, after){
+const upKinds = () => Object.keys(FILE_KIND).filter(k => S.isOwner || can(FILE_MOD[k] || 'project', 'c') || (k === 'tor' && (can('contract','c') || can('sysadmin','c'))));   // p1_25: TOR = ทีมประมูล BN01–03 + ผู้ดูแลระบบ SY01
+function dlgUpload(pid, after, kind0){
+  const K = upKinds(); if (!K.length) return toast('ตำแหน่งของคุณดูได้อย่างเดียว แนบไฟล์ไม่ได้', true);
   dialog('แนบไฟล์', `
-    <div class="field"><label for="up-k">ประเภทเอกสาร</label><select id="up-k" class="inp">${Object.entries(FILE_KIND).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('')}</select></div>
+    <div class="field"><label for="up-k">ประเภทเอกสาร</label><select id="up-k" class="inp">${Object.entries(FILE_KIND).filter(([k]) => K.includes(k)).sort(([a], [b]) => (b === kind0) - (a === kind0)).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join('')}</select></div>
     <div class="field"><label for="up-f">ไฟล์ (เลือกได้หลายไฟล์ หรือ .zip ทั้งก้อน · ไม่เกิน 50 MB ต่อไฟล์)</label><input id="up-f" class="inp" type="file" multiple required></div>
     <p class="small faint" style="margin:0">ห้ามแนบเอกสารที่มีเลขบัตรประชาชนหรือเลขบัญชีธนาคารของพนักงาน</p>`, 'อัปโหลด', async d => {
     let files = [...d.querySelector('#up-f').files]; const kind = d.querySelector('#up-k').value;
@@ -1122,8 +1141,10 @@ function dlgUpload(pid, after){
       files = out; toast(`แตก zip ได้ ${files.length} ไฟล์ กำลังอัปโหลด…`);
     }
     const big = files.find(f => f.size > 50 * 1048576); if (big) { toast(`${big.name} ใหญ่เกิน 50 MB`, true); return false; }
-    for (const f of files) await putFile({ pid, kind, name:f.name, blob:f, type:f.type });
-    toast(`แนบแล้ว ${files.length} ไฟล์`); after();
+    let ok = 0; const bad = [];
+    for (const f of files) { try { await putFile({ pid, kind, name:f.name, blob:f, type:f.type }); ok++; } catch(e) { bad.push(f.name + ': ' + (/row-level security/.test(errText(e)) ? 'ไม่มีสิทธิ์แนบไฟล์ประเภทนี้ในโครงการนี้' : errText(e))); } }
+    if (bad.length) toast(`แนบได้ ${ok}/${files.length} ไฟล์ · ไม่สำเร็จ: ${bad.slice(0, 3).join(' · ')}${bad.length > 3 ? ' …' : ''}`, true); else toast(`แนบแล้ว ${ok} ไฟล์`);
+    if (ok) after(); if (bad.length) return false;
   });
 }
 function loadScript(src){ return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('โหลดไลบรารีไม่สำเร็จ: ' + src)); document.head.appendChild(s); }); }
@@ -1274,6 +1295,74 @@ async function pageThreads(){
   $('#th-f').onchange = draw; $('#th-q').oninput = draw; draw();
 }
 
+const CON_ST = { draft:['ร่าง / รอลงนาม','gold'], signed:['ลงนามแล้ว','blue'], active:['ดำเนินงาน','good'], closed:['ปิดสัญญา',''], terminated:['บอกเลิก','crit'] };
+function dlgContract(p, con){
+  const c = con || { status:'draft', value:p.win_price || p.bid_price || null };
+  const f = (id, l, v, t = 'text', x = '') => `<div class="field"><label for="${id}">${l}</label><input id="${id}" class="inp" type="${t}" value="${h(v ?? '')}" ${x}></div>`;
+  dialog(con ? `สัญญา · ${p.code}` : `สร้างสัญญา · ${p.code}`, `
+    <div class="row">${f('ct-no', 'เลขที่สัญญา', c.contract_no)}${f('ct-ctl', 'เลขคุมสัญญา (e-GP)', c.control_no)}</div>
+    <div class="row">${f('ct-sd', 'วันลงนาม', c.signed_date, 'date')}${f('ct-dl', 'ต้องลงนามภายใน', c.sign_deadline, 'date')}
+      <div class="field"><label for="ct-st">สถานะ</label><select id="ct-st" class="inp">${Object.entries(CON_ST).map(([k, v]) => `<option value="${k}" ${k === c.status ? 'selected' : ''}>${v[0]}</option>`).join('')}</select></div></div>
+    <div class="row">${f('ct-v', 'มูลค่า (รวม VAT)', c.value, 'number', 'min="0" step="0.01"')}${f('ct-vp', 'มูลค่าก่อน VAT', c.value_pre_vat, 'number', 'min="0" step="0.01"')}</div>
+    <div class="row">${f('ct-s', 'เริ่มสัญญา', c.start_date, 'date')}${f('ct-e', 'สิ้นสุดสัญญา', c.end_date, 'date')}</div>
+    ${f('ct-cr', 'กิจการค้าร่วม (ถ้ามี)', c.consortium_ref)}
+    <p class="small faint">ใส่วันลงนามแล้วสถานะ "ร่าง" จะเปลี่ยนเป็น "ลงนามแล้ว" ให้อัตโนมัติ · แนบไฟล์สัญญาที่ลงนามด้วยปุ่ม "+ แนบไฟล์" ประเภท "สัญญา"</p>`, 'บันทึก', async d => {
+      const v = id => $(id, d).value.trim(), n = id => v(id) === '' ? null : +v(id);
+      let st = v('#ct-st'); if (st === 'draft' && v('#ct-sd')) st = 'signed';
+      const row = { contract_no:v('#ct-no') || null, control_no:v('#ct-ctl') || null, signed_date:v('#ct-sd') || null, sign_deadline:v('#ct-dl') || null, status:st,
+        value:n('#ct-v'), value_pre_vat:n('#ct-vp'), start_date:v('#ct-s') || null, end_date:v('#ct-e') || null, consortium_ref:v('#ct-cr') || null };
+      if (row.start_date && row.end_date && row.end_date < row.start_date) { toast('วันสิ้นสุดต้องไม่ก่อนวันเริ่ม', true); return false; }
+      if (['signed','active'].includes(st) && !row.contract_no) { toast('ใส่เลขที่สัญญาก่อนบันทึกว่าลงนามแล้ว', true); return false; }
+      const { error } = con ? await sb.from('contracts').update(row).eq('id', con.id) : await sb.from('contracts').insert({ ...row, company_id:p.company_id, project_id:p.id });
+      if (error) { fail(error); return false; }
+      toast('บันทึกสัญญาแล้ว'); pageProjectDetail();
+    });
+}
+function dlgGuarantee(p, g, used){
+  const k0 = g?.kind || Object.keys(GUAR_KIND).find(k => !used.includes(k)) || 'contract';
+  const c = g || { kind:k0, status:'issued', required:true };
+  const f = (id, l, v, t = 'text', x = '') => `<div class="field"><label for="${id}">${l}</label><input id="${id}" class="inp" type="${t}" value="${h(v ?? '')}" ${x}></div>`;
+  dialog(g ? `หลักประกัน · ${p.code}` : `เพิ่มหลักประกัน · ${p.code}`, `
+    <div class="row"><div class="field"><label for="gu-k">ประเภท</label><select id="gu-k" class="inp" ${g ? 'disabled' : ''}>${Object.entries(GUAR_KIND).filter(([k]) => g ? k === g.kind : !used.includes(k)).map(([k, v]) => `<option value="${k}" ${k === c.kind ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+      <div class="field"><label for="gu-st">สถานะ</label><select id="gu-st" class="inp">${Object.entries(GUAR_ST).map(([k, v]) => `<option value="${k}" ${k === c.status ? 'selected' : ''}>${v[0]}</option>`).join('')}</select></div></div>
+    <div class="row">${f('gu-a', 'จำนวนเงิน (บาท)', c.amount, 'number', 'min="0" step="0.01"')}${f('gu-r', 'เลขที่หนังสือค้ำประกัน', c.ref_no)}</div>
+    ${f('gu-i', 'ผู้ออก (ธนาคาร / สาขา)', c.issuer)}
+    <div class="row">${f('gu-d', 'ต้องยื่นภายใน', c.due_date, 'date')}${f('gu-is', 'วันที่ออก', c.issued_at, 'date')}${f('gu-ex', 'วันหมดอายุ', c.expires_at, 'date')}</div>
+    <div class="row">${f('gu-rq', 'วันที่ขอธนาคาร', c.requested_at, 'date')}${f('gu-rt', 'วันที่ได้คืน', c.returned_at, 'date')}</div>
+    ${f('gu-n', 'หมายเหตุ', c.note)}
+    <p class="small faint">แนบสำเนาหนังสือค้ำประกันด้วยปุ่ม "+ แนบหนังสือค้ำประกัน"</p>`, 'บันทึก', async d => {
+      const v = id => $(id, d).value.trim(), dt = id => v(id) || null;
+      const row = { status:v('#gu-st'), amount:v('#gu-a') === '' ? null : +v('#gu-a'), ref_no:v('#gu-r') || null, issuer:v('#gu-i') || null,
+        due_date:dt('#gu-d'), issued_at:dt('#gu-is'), expires_at:dt('#gu-ex'), requested_at:dt('#gu-rq'), returned_at:dt('#gu-rt'), note:v('#gu-n') || null };
+      if (row.amount != null && row.amount < 0) { toast('จำนวนเงินต้องไม่ติดลบ', true); return false; }
+      if (row.issued_at && row.expires_at && row.expires_at < row.issued_at) { toast('วันหมดอายุต้องไม่ก่อนวันที่ออก', true); return false; }
+      if (['issued','submitted'].includes(row.status) && !row.issued_at) row.issued_at = todayStr();
+      if (row.status === 'returned' && !row.returned_at) row.returned_at = todayStr();
+      const { error } = g ? await sb.from('guarantees').update(row).eq('id', g.id)
+        : await sb.from('guarantees').insert({ ...row, kind:v('#gu-k'), required:true, company_id:p.company_id, project_id:p.id });
+      if (error) { fail(error); return false; }
+      toast('บันทึกหลักประกันแล้ว'); pageProjectDetail();
+    });
+}
+function dlgProjectInfo(p){
+  const f = (id, l, v, t = 'text', x = '') => `<div class="field"><label for="${id}">${l}</label><input id="${id}" class="inp" type="${t}" value="${h(v ?? '')}" ${x}></div>`, num = 'min="0" step="0.01"';
+  dialog(`ข้อมูลโครงการ · ${p.code}`, `
+    ${f('pi-nm', 'ชื่อโครงการ', p.name)}
+    <div class="row">${f('pi-pm', 'วิธีจัดซื้อจัดจ้าง', p.procurement_method)}${f('pi-eg', 'เลขที่โครงการ e-GP', p.egp_no)}</div>
+    <div class="row">${f('pi-bl', 'วงเงินงบประมาณ', p.budget_limit, 'number', num)}${f('pi-rp', 'ราคากลาง', p.ref_price, 'number', num)}${f('pi-bp', 'ราคาเสนอ', p.bid_price, 'number', num)}</div>
+    <div class="row">${f('pi-wp', 'ราคาที่ได้ (ส่วน SMART)', p.win_price, 'number', num)}${f('pi-wt', 'ราคาทั้งสัญญา (ถ้าร่วมค้า)', p.win_price_total, 'number', num)}</div>
+    <div class="row">${f('pi-ad', 'วันประกาศ', p.announce_date, 'date')}${f('pi-sd', 'วันยื่นซอง', p.submit_date, 'date')}${f('pi-aw', 'วันประกาศผู้ชนะ', p.award_date, 'date')}</div>
+    <p class="small faint">ผลการประมูลและ Gate อนุมัติแยกตามขั้นตอนอนุมัติ — หน้านี้แก้เฉพาะข้อมูลโครงการ</p>`, 'บันทึก', async d => {
+      const v = id => $(id, d).value.trim(), n = id => v(id) === '' ? null : +v(id), dt = id => v(id) || null;
+      if (!v('#pi-nm')) { toast('ใส่ชื่อโครงการ', true); return false; }
+      const row = { name:v('#pi-nm'), procurement_method:v('#pi-pm') || null, egp_no:v('#pi-eg') || null, budget_limit:n('#pi-bl'), ref_price:n('#pi-rp'), bid_price:n('#pi-bp'),
+        win_price:n('#pi-wp'), win_price_total:n('#pi-wt'), announce_date:dt('#pi-ad'), submit_date:dt('#pi-sd'), award_date:dt('#pi-aw') };
+      if (['budget_limit','ref_price','bid_price','win_price','win_price_total'].some(k => row[k] != null && row[k] < 0)) { toast('จำนวนเงินต้องไม่ติดลบ', true); return false; }
+      const { error } = await sb.from('projects').update(row).eq('id', p.id);
+      if (error) { fail(error); return false; }
+      toast('บันทึกข้อมูลโครงการแล้ว'); pageProjectDetail();
+    });
+}
 async function pageProjectDetail(){
   const el = $('#page'); const pid = S.pid;
   el.innerHTML = '<div class="empty">กำลังโหลด…</div>';
@@ -1304,7 +1393,7 @@ async function pageProjectDetail(){
     <div class="ph"><div><button class="btn sm ghost" id="b-back" style="margin:0 0 6px -10px">← โครงการทั้งหมด</button>
       <h1><span class="mono">${h(p.code)}</span> ${h(p.name)}</h1>
       <p class="mut small" style="margin:4px 0 0">${h(p.clients?.name || '')} · ${h(p.business_units?.code || '')} · ${h(p.procurement_method || '')}${p.egp_no ? ' · e-GP ' + h(p.egp_no) : ''}${p.renamed_from ? ' · รหัสเดิม ' + h(p.renamed_from) : ''}</p></div>
-      <div class="act"><span class="chip ${r[1]}">${h(r[0])}</span></div></div>
+      <div class="act">${canCE ? '<button class="btn sm" id="b-pinfo">แก้ไขข้อมูลโครงการ</button>' : ''}<span class="chip ${r[1]}">${h(r[0])}</span></div></div>
     <div class="stats">
       <div class="stat"><small>ราคากลาง</small><b>${money(p.ref_price)}</b></div>
       <div class="stat"><small>ราคาเสนอ</small><b>${money(p.bid_price)}</b></div>
@@ -1314,7 +1403,7 @@ async function pageProjectDetail(){
 
     <div class="pj-grid"><div class="pj-files">
     <div class="panel"><div class="hd"><h3>เอกสารโครงการ</h3><span class="small mut" style="margin-left:8px">${(F.data || []).length} ไฟล์</span>
-      <span style="margin-left:auto;display:flex;gap:6px">${S.isOwner && LEGACY_FILES.some(x => x.p === p.code) && (F.data || []).length < LEGACY_FILES.filter(x => x.p === p.code).length ? '<button class="btn sm" id="b-legacy">นำเข้าไฟล์ระบบเดิม</button>' : ''}<button class="btn sm accent" id="b-upl">+ แนบไฟล์</button></span></div>
+      <span style="margin-left:auto;display:flex;gap:6px">${S.isOwner && LEGACY_FILES.some(x => x.p === p.code) && (F.data || []).length < LEGACY_FILES.filter(x => x.p === p.code).length ? '<button class="btn sm" id="b-legacy">นำเข้าไฟล์ระบบเดิม</button>' : ''}${upKinds().length ? '<button class="btn sm accent" id="b-upl">+ แนบไฟล์</button>' : '<span class="small faint" title="ตำแหน่งของคุณมีสิทธิ์ดูอย่างเดียวในโมดูลโครงการ/สัญญา/จัดซื้อ">ดูได้อย่างเดียว</span>'}</span></div>
       ${(F.data || []).length ? `<div class="tw"><table><thead><tr><th>ประเภท</th><th>ชื่อไฟล์</th><th class="num">ขนาด</th><th>วันที่</th><th></th></tr></thead><tbody>
       ${F.data.map(f => `<tr><td>${chip(FILE_KIND, f.kind)}</td><td>${h(f.name)}</td><td class="num small">${fsize(f.size)}</td><td class="small">${thDate(f.uploaded_at)}</td>
         <td style="white-space:nowrap"><button class="btn sm" data-fopen="${f.id}">เปิด</button>${S.isOwner ? ` <button class="btn sm ghost" data-fdel="${f.id}">ลบ</button>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<div class="bd"><div class="empty" style="padding:8px">ยังไม่มีไฟล์</div></div>'}
@@ -1326,7 +1415,7 @@ async function pageProjectDetail(){
       ${(G.data || []).map(g => `<tr><td class="mono">${g.gate}</td><td>${h(GATES[g.gate])}</td><td>${g.status === 'pending' ? '<span class="small faint">ยังไม่ส่ง</span>' : chip(GATE_ST, g.status)}</td><td class="small">${g.decided_at ? new Date(g.decided_at).toLocaleDateString('th-TH', { dateStyle:'medium' }) : '—'}</td><td class="small">${h(g.note || '')}</td><td style="white-space:nowrap">${gateBtns(g)}</td></tr>`).join('')}
       </tbody></table></div></div>
 
-    <div class="panel"><div class="hd"><h3>สัญญา</h3>${con?.status === 'draft' && con?.sign_deadline ? `<span style="margin-left:auto">${dueChip(con.sign_deadline)}</span>` : ''}</div><div class="bd">
+    <div class="panel"><div class="hd"><h3>สัญญา</h3>${con ? chip(CON_ST, con.status) : ''}<span style="margin-left:auto;display:flex;gap:6px;align-items:center">${con?.status === 'draft' && con?.sign_deadline ? dueChip(con.sign_deadline) : ''}${canCE ? `<button class="btn sm" id="b-con">${con ? 'แก้ไข / บันทึกการลงนาม' : '+ สร้างสัญญา'}</button>` : ''}</span></div><div class="bd">
       ${con ? `<div class="stats" style="margin:0">
         <div class="stat"><small>เลขที่สัญญา</small><b style="font-size:17px">${h(con.contract_no || 'ยังไม่ลงนาม')}</b>${con.control_no ? `<small>เลขคุม ${h(con.control_no)}</small>` : ''}</div>
         <div class="stat"><small>${con.signed_date ? 'ลงนามเมื่อ' : 'ต้องลงนามภายใน'}</small><b style="font-size:17px">${thDate(con.signed_date || con.sign_deadline)}</b></div>
@@ -1335,10 +1424,12 @@ async function pageProjectDetail(){
         ${con.consortium_ref ? `<p class="small mut" style="margin:10px 0 0">กิจการค้าร่วม: ${h(con.consortium_ref)}</p>` : ''}` : '<div class="empty" style="padding:8px">ยังไม่มีสัญญา</div>'}
     </div></div>
 
-    <div class="panel"><div class="hd"><h3>หลักประกัน</h3></div><div class="tw"><table><thead><tr><th>ประเภท</th><th class="num">จำนวนเงิน</th><th>สถานะ</th><th>กำหนด</th></tr></thead><tbody>
+    <div class="panel"><div class="hd"><h3>หลักประกัน</h3><span style="margin-left:auto;display:flex;gap:6px">${canCE && guar.length < Object.keys(GUAR_KIND).length ? '<button class="btn sm" id="b-addg">+ เพิ่มหลักประกัน</button>' : ''}${upKinds().includes('guarantee') ? '<button class="btn sm" id="b-upg">+ แนบหนังสือค้ำประกัน</button>' : ''}</span></div><div class="tw"><table><thead><tr><th>ประเภท</th><th class="num">จำนวนเงิน</th><th>เลขที่ / ผู้ออก</th><th>สถานะ</th><th>กำหนด / หมดอายุ</th><th></th></tr></thead><tbody>
       ${guar.sort((a,b) => Object.keys(GUAR_KIND).indexOf(a.kind) - Object.keys(GUAR_KIND).indexOf(b.kind)).map(g => `<tr><td>${h(GUAR_KIND[g.kind] || g.kind)}</td><td class="num">${money(g.amount)}</td>
+        <td class="small">${g.ref_no ? `<span class="mono">${h(g.ref_no)}</span>` : '<span class="faint">—</span>'}${g.issuer ? `<br><span class="mut">${h(g.issuer)}</span>` : ''}</td>
         <td>${canCE ? `<select class="inp" style="width:auto;padding:4px 8px" data-guar="${g.id}">${Object.entries(GUAR_ST).map(([k, v]) => `<option value="${k}" ${k === g.status ? 'selected' : ''}>${v[0]}</option>`).join('')}</select>` : chip(GUAR_ST, g.status)}</td>
-        <td>${g.due_date ? thDate(g.due_date) + ' ' + (['not_requested','requested','unknown'].includes(g.status) ? dueChip(g.due_date) : '') : '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">—</td></tr>'}
+        <td class="small">${g.due_date ? thDate(g.due_date) + ' ' + (['not_requested','requested','unknown'].includes(g.status) ? dueChip(g.due_date) : '') : '—'}${g.expires_at ? `<br><span class="mut">หมดอายุ ${thDate(g.expires_at)}</span>${['issued','submitted'].includes(g.status) ? ' ' + dueChip(g.expires_at) : ''}` : ''}</td>
+        <td>${canCE ? `<button class="btn sm ghost" data-gedit="${g.id}">แก้ไข</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">—</td></tr>'}
     </tbody></table></div></div>
 
     <div class="panel"><div class="hd"><h3>งวดงาน</h3>${d.instNote ? `<span class="small gold" style="margin-left:auto;color:var(--gold)">${h(d.instNote)}</span>` : ''}</div><div class="tw"><table><thead><tr><th>งวด</th><th>รายละเอียด</th><th>ครบกำหนด</th><th class="num">จำนวนเงิน</th><th>สถานะ</th></tr></thead><tbody>
@@ -1375,7 +1466,12 @@ async function pageProjectDetail(){
     </div></div>`;
   mountThread($('#pj-thr'), 'project:' + pid);
   $('#b-back').onclick = () => { (S.dv ||= {}).proj = S.dv.projFrom || 'list'; goto('proj'); };
-  $('#b-upl').onclick = () => dlgUpload(pid, pageProjectDetail);
+  const bu = $('#b-upl'); if (bu) bu.onclick = () => dlgUpload(pid, pageProjectDetail);
+  const bc = $('#b-con'); if (bc) bc.onclick = () => dlgContract(p, con);
+  const bg = $('#b-upg'); if (bg) bg.onclick = () => dlgUpload(pid, pageProjectDetail, 'guarantee');
+  const bpi = $('#b-pinfo'); if (bpi) bpi.onclick = () => dlgProjectInfo(p);
+  const bag = $('#b-addg'); if (bag) bag.onclick = () => dlgGuarantee(p, null, guar.map(x => x.kind));
+  document.querySelectorAll('[data-gedit]').forEach(b => b.onclick = () => dlgGuarantee(p, guar.find(x => x.id === b.dataset.gedit), []));
   const lg = $('#b-legacy'); if (lg) lg.onclick = () => dlgLegacyImport(pageProjectDetail);
   document.querySelectorAll('[data-fopen]').forEach(b => b.onclick = () => openFile(F.data.find(f => f.id === b.dataset.fopen)));
   document.querySelectorAll('[data-fdel]').forEach(b => b.onclick = async () => {
@@ -1395,11 +1491,9 @@ async function pageProjectDetail(){
   const bl = document.querySelector('[data-block]'); if (bl) bl.onclick = () => decide('budget', bl.dataset.block, 'approve', pageProjectDetail);
   document.querySelectorAll('[data-guar]').forEach(s => s.onchange = async () => {
     const st = s.value, patch = { status: st }, today = todayStr();
-    if (st === 'paid') { if (!(S.isOwner || can('finance','c'))) { toast('การรับเงินต้องบันทึกโดยฝ่ายการเงิน (เมนูบัญชีการเงิน)', true); return pageProjectDetail(); }
-      return dlgPayment({ source:'installment', source_id:s.dataset.inst }, pageProjectDetail).then(() => { const dd = document.querySelector('dialog:last-of-type'); dd && dd.addEventListener('close', () => pageProjectDetail()); }); }
     if (st === 'requested') patch.requested_at = today; if (st === 'issued') patch.issued_at = today; if (st === 'returned') patch.returned_at = today;
     const { error } = await sb.from('guarantees').update(patch).eq('id', s.dataset.guar);
-    if (error) { fail(error); return pageProjectDetail(); } toast('บันทึกสถานะหลักประกันแล้ว');
+    if (error) { fail(error); return pageProjectDetail(); } toast('บันทึกสถานะหลักประกันแล้ว'); pageProjectDetail();
   });
   document.querySelectorAll('[data-inst]').forEach(s => s.onchange = async () => {
     const st = s.value, patch = { status: st }, today = todayStr();
@@ -1937,7 +2031,7 @@ async function procPR(){
       o.push(`<button class="btn sm ghost" data-dec="${x.id}" data-a="return">ตีกลับ</button><button class="btn sm ghost" data-dec="${x.id}" data-a="reject">ไม่อนุมัติ</button>`);
     }
     if (x.status === 'approved' && !(x.purchase_orders || []).length && (S.isOwner || can('procurement','c'))) o.push(`<button class="btn sm accent" data-mkpo="${x.id}">ออก PO</button>`);
-    o.push(`<button class="btn sm ghost" data-hist="${x.id}" data-no="${h(x.no)}">ประวัติ</button>`, thrBtn('pr:' + x.id, 'PR ' + x.no));
+    o.push(`<button class="btn sm ghost" data-phist="${x.id}">ประวัติซื้อ</button>`, `<button class="btn sm ghost" data-hist="${x.id}" data-no="${h(x.no)}">ประวัติ</button>`, thrBtn('pr:' + x.id, 'PR ' + x.no));
     return o.join(' ');
   };
   await threadIndex().catch(() => {});
@@ -1957,6 +2051,7 @@ async function procPR(){
   document.querySelectorAll('[data-hist]').forEach(b => b.onclick = () => showHistory('pr', b.dataset.hist, b.dataset.no));
   bindThrBtns(pageProc);
   document.querySelectorAll('[data-mkpo]').forEach(b => b.onclick = () => dlgNewPO(data.find(x => x.id === b.dataset.mkpo)));
+  document.querySelectorAll('[data-phist]').forEach(b => b.onclick = () => dlgProcHist('pr', data.find(x => x.id === b.dataset.phist)));
 }
 
 async function procPO(){
@@ -1980,7 +2075,7 @@ async function procPO(){
     if (x.status === 'approved' && (mine || S.isOwner || can('procurement','e'))) o.push(`<button class="btn sm" data-pos="${x.id}" data-st="issued">ส่งผู้ขายแล้ว</button>`);
     if (x.status === 'issued' && canGR) o.push(`<button class="btn sm primary" data-gr="${x.id}">รับของ / ตรวจรับ</button>`);
     if (['issued','received'].includes(x.status) && canPayC) o.push(`<button class="btn sm" data-paypo="${x.id}">บันทึกจ่าย</button>`);
-    o.push(`<button class="btn sm ghost" data-hist="${x.id}" data-no="${h(x.no)}">ประวัติ</button>`, thrBtn('po:' + x.id, 'PO ' + x.no));
+    o.push(`<button class="btn sm ghost" data-phist="${x.id}">ประวัติซื้อ</button>`, `<button class="btn sm ghost" data-hist="${x.id}" data-no="${h(x.no)}">ประวัติ</button>`, thrBtn('po:' + x.id, 'PO ' + x.no));
     return o.join(' ');
   };
   await threadIndex().catch(() => {});
@@ -1998,12 +2093,123 @@ async function procPO(){
   document.querySelectorAll('[data-paypo]').forEach(b => b.onclick = () => dlgPayment({ source:'po', source_id:b.dataset.paypo }, pageProc));
   bindThrBtns(pageProc);
   document.querySelectorAll('[data-hist]').forEach(b => b.onclick = () => showHistory('po', b.dataset.hist, b.dataset.no));
+  document.querySelectorAll('[data-phist]').forEach(b => b.onclick = () => dlgProcHist('po', data.find(x => x.id === b.dataset.phist)));
 }
 
 async function nextNo(table, prefix){
   const { data } = await sb.from(table).select('no').eq('company_id', S.cid).like('no', prefix + '%');
   const n = Math.max(0, ...(data || []).map(r => parseInt(r.no.slice(prefix.length), 10) || 0)) + 1;
   return prefix + String(n).padStart(3, '0');
+}
+
+/* ---------- ประวัติกิจกรรมจัดซื้อ: PR/PO ที่เคยขอ/สั่งรายการเดียวกัน (ใช้ตรวจประกอบการขอซื้อ/สั่งซื้อ) ---------- */
+const PH_UNITS = /^\d+(\.\d+)?(v|vac|vdc|w|kw|hp|btu|mm|cm|m|a|ma|ton|l|kg|g|mm2|sqmm|hz|bar|psi|in|inch|ft)$/;
+const phNorm = s => String(s || '').toLowerCase().replace(/\([^)]*\d{6,}[^)]*\)/g, ' ').replace(/[\s.,;:·•'"`*_+=|\\()[\]{}<>!?]+/g, '');
+const phCodes = s => new Set((String(s || '').toLowerCase().match(/[a-z0-9][a-z0-9\-\/.]*[a-z0-9]/g) || [])
+  .filter(t => !PH_UNITS.test(t)).map(t => [t, t.replace(/[-\/.]/g, '')])
+  .filter(([o, t]) => t.length >= 4 && /\d/.test(t) && (/[a-z]/.test(t) || (/[-\/]/.test(o) && t.length >= 6))).map(([, t]) => t));
+const phGrams = s => { const n = phNorm(s), g = new Set(); for (let i = 0; i < n.length - 2; i++) g.add(n.slice(i, i + 3)); if (!g.size && n) g.add(n); return g; };
+function phScore(a, b){
+  if (!a.n || !b.n) return 0;
+  if (a.n === b.n) return 1;
+  let k = 0; for (const g of a.g) if (b.g.has(g)) k++;
+  let dice = a.g.size + b.g.size ? 2 * k / (a.g.size + b.g.size) : 0;
+  const mn = Math.min(a.g.size, b.g.size);
+  if (mn >= 6 && k / mn >= 0.92) dice = Math.max(dice, 0.8);   // ข้อความสั้นอยู่ในข้อความยาวเกือบทั้งหมด (พิมพ์ย่อ)
+  let code = false; for (const c of a.c) if (b.c.has(c)) { code = true; break; }
+  if (code) return Math.max(0.9, dice);
+  if (a.c.size && b.c.size) return Math.min(dice, 0.55);   // รุ่น/รหัสต่างกัน → ไม่นับเป็นตัวเดียวกัน
+  return dice;
+}
+const phKey = s => ({ n: phNorm(s), g: phGrams(s), c: phCodes(s) });
+const PH_EXACT = 0.75, PH_NEAR = 0.5;
+
+/* โหลดประวัติทั้งบริษัท (PR + PO) เป็นแถวละ 1 รายการ — PO ที่ออกจาก PR นับรวมกับ PR นั้น ไม่นับซ้ำ */
+async function phLoad(force){
+  if (!force && S.phCache && Date.now() - S.phCache.at < 60000) return S.phCache.rows;
+  const [R, O] = await Promise.all([
+    sb.from('purchase_requests').select('id,no,project_id,pr_date,items,status,vendor_hint,projects(code)').eq('company_id', S.cid),
+    sb.from('purchase_orders').select('id,no,pr_id,project_id,po_date,items,status,amount,vendor_id,vendors(name_th),projects(code)').eq('company_id', S.cid)]);
+  if (R.error) throw R.error; if (O.error) throw O.error;
+  const po = O.data || [], rows = [];
+  const poOf = id => po.filter(o => o.pr_id === id && !['cancelled','rejected'].includes(o.status));
+  for (const r of R.data || []) {
+    if (['cancelled','rejected'].includes(r.status)) continue;
+    const os = poOf(r.id), o = os[0];
+    (r.items || []).forEach(it => it?.desc && rows.push({ prId:r.id, poId:o?.id || null, prNo:r.no, poNo:os.map(x => x.no).join(', '), date:o?.po_date || r.pr_date, proj:r.projects?.code || '',
+      vendor:o?.vendors?.name_th || r.vendor_hint || '', vendorId:o?.vendor_id || null, st:o ? ['po', o.status] : ['pr', r.status], desc:it.desc, qty:+it.qty || 0, unit:it.unit || '', price:+it.price || 0, k:phKey(it.desc) }));
+  }
+  for (const o of po) {
+    if (o.pr_id || ['cancelled','rejected'].includes(o.status)) continue;
+    (o.items || []).forEach(it => it?.desc && rows.push({ prId:null, poId:o.id, prNo:'', poNo:o.no, date:o.po_date, proj:o.projects?.code || '', vendor:o.vendors?.name_th || '', vendorId:o.vendor_id,
+      st:['po', o.status], desc:it.desc, qty:+it.qty || 0, unit:it.unit || '', price:+it.price || 0, k:phKey(it.desc) }));
+  }
+  S.phCache = { at: Date.now(), rows, po };
+  return rows;
+}
+
+/* items = [{desc, qty, unit, price}] · skip = { prId, poId } เอกสารตัวเองไม่นับ · vendorId = ผู้ขายที่เลือก (หน้า PO) */
+function phHTML(rows, items, skip = {}, vendorId){
+  const its = (items || []).filter(i => i && String(i.desc || '').trim().length >= 3);
+  if (!its.length) return '<div class="small faint">พิมพ์รายการแล้วระบบจะค้นประวัติ PR/PO ที่เคยขอหรือสั่งรายการเดียวกันให้</div>';
+  const own = r => (skip.prId && r.prId === skip.prId) || (skip.poId && r.poId === skip.poId);
+  const pct = (a, b) => b ? (a - b) / b * 100 : null;
+  const diffChip = (p, ref, label) => { const d = pct(p, ref); if (d == null || !p) return '';
+    const cls = d > 10 ? 'crit' : d > 2 ? 'amber' : d < -2 ? 'good' : '';
+    return `<span class="chip ${cls}" title="เทียบราคา/หน่วยครั้งนี้กับ${label}">${d > 0 ? '+' : ''}${d.toFixed(1)}% เทียบ${label}</span>`; };
+  const out = its.map(it => {
+    const k = phKey(it.desc);
+    const m = rows.filter(r => !own(r)).map(r => ({ ...r, s: phScore(k, r.k) })).filter(r => r.s >= PH_NEAR)
+      .sort((a, b) => (b.s >= PH_EXACT) - (a.s >= PH_EXACT) || String(b.date || '').localeCompare(String(a.date || '')));
+    const base = m.filter(r => r.s >= PH_EXACT);
+    const head = `<div class="ph-h"><b>${h(it.desc)}</b>${it.qty || it.price ? `<span class="small mut"> · ครั้งนี้ ${Number(it.qty || 0).toLocaleString('th-TH')} ${h(it.unit || '')}${it.price ? ` @ ${money(it.price)}` : ''}</span>` : ''}</div>`;
+    if (!m.length) return `<div class="ph-item">${head}<div class="small faint">ไม่พบประวัติ — เป็นรายการที่ยังไม่เคยขอ/สั่งในระบบ</div></div>`;
+    let sum = '';
+    if (base.length) {
+      const pr = base.filter(r => r.price > 0).map(r => r.price), last = base.find(r => r.price > 0);
+      const units = [...new Set(base.map(r => r.unit).filter(Boolean))], projs = new Set(base.map(r => r.proj)), docs = new Set(base.map(r => r.prId || r.poId));
+      const avg = pr.length ? pr.reduce((a, b) => a + b, 0) / pr.length : 0;
+      sum = `<div class="ph-sum">เคยขอ/สั่ง <b>${docs.size}</b> ครั้ง · ${projs.size} โครงการ · รวม ${base.reduce((a, r) => a + r.qty, 0).toLocaleString('th-TH')} ${h(units.join('/'))}
+        ${pr.length ? `<br>ราคา/หน่วย ต่ำสุด ${money(Math.min(...pr))} · เฉลี่ย ${money(avg)} · สูงสุด ${money(Math.max(...pr))}${last ? ` · ล่าสุด ${money(last.price)} (${thDate(last.date)}${last.vendor ? ' · ' + h(last.vendor) : ''})` : ''}` : ''}
+        ${it.price && pr.length ? `<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">${diffChip(+it.price, last?.price, 'ครั้งล่าสุด')}${diffChip(+it.price, avg, 'ค่าเฉลี่ย')}</div>` : ''}
+        ${units.length > 1 || (it.unit && units.length && !units.includes(it.unit)) ? '<div class="small" style="color:var(--gold)">หน่วยไม่ตรงกัน — เทียบราคาด้วยความระวัง</div>' : ''}</div>`;
+    } else sum = `<div class="ph-sum">ไม่พบรายการเดียวกัน · มีรายการใกล้เคียง ${m.length} รายการ (ไม่นำมาคิดสถิติราคา)</div>`;
+    const show = m.slice(0, 8);
+    const tbl = `<div class="ph-rows">${show.map(r => `<div class="ph-r">
+        <div class="ph-r1"><span class="small mut nw">${thDate(r.date)}</span><span class="mono small">${h((r.prNo || '').split('/').pop())}${r.poNo ? (r.prNo ? ' → ' : '') + h(r.poNo.split(', ').map(x => x.split('/').pop()).join(', ')) : ''}</span>${r.st[0] === 'po' ? chip(PO_ST, r.st[1]) : chip(PR_ST, r.st[1])}</div>
+        <div class="ph-r2"><span class="small">${h(r.desc)} <span class="chip ${r.s >= PH_EXACT ? 'good' : ''}">${r.s >= PH_EXACT ? 'ตรงรายการ' : 'ใกล้เคียง'}</span></span><b class="nw small">${r.qty.toLocaleString('th-TH')} ${h(r.unit)} @ ${r.price ? money(r.price) : '—'}</b></div>
+        <div class="small faint">${h(r.proj)}${r.vendor ? ' · ' + h(r.vendor) : ''}</div></div>`).join('')}</div>
+      ${m.length > show.length ? `<div class="small faint">+ อีก ${m.length - show.length} รายการ</div>` : ''}`;
+    return `<div class="ph-item">${head}${sum}${tbl}</div>`;
+  }).join('');
+  let ven = '';
+  if (vendorId && S.phCache) {
+    const vp = (S.phCache.po || []).filter(o => o.vendor_id === vendorId && o.id !== skip.poId && !['cancelled','rejected'].includes(o.status));
+    const vn = vp[0]?.vendors?.name_th || '';
+    ven = `<div class="ph-item"><div class="ph-h"><b>ผู้ขายที่เลือก${vn ? ' · ' + h(vn) : ''}</b></div><div class="ph-sum">${vp.length ? `เคยออก PO <b>${vp.length}</b> ใบ · รวม ${money(vp.reduce((a, o) => a + Number(o.amount || 0), 0))} บาท (ก่อน VAT) · ล่าสุด ${thDate(vp.map(o => o.po_date).filter(Boolean).sort().pop())} · ${new Set(vp.map(o => o.project_id)).size} โครงการ` : 'ยังไม่เคยออก PO ให้ผู้ขายรายนี้'}</div></div>`;
+  }
+  return out + ven;
+}
+
+/* กล่องในหน้าต่าง PR/PO: render(items, skip, vendorId, now) เรียกซ้ำได้ (หน่วงเวลาให้พิมพ์จบก่อน) */
+function phBox(el){
+  let t = null, seq = 0;
+  const run = async (items, skip, vendorId) => {
+    const my = ++seq;
+    try { const rows = await phLoad(); if (my !== seq) return; el.innerHTML = phHTML(rows, items, skip, vendorId); }
+    catch (e) { console.error(e); el.innerHTML = '<div class="small faint">โหลดประวัติไม่สำเร็จ</div>'; }
+  };
+  el.innerHTML = '<div class="small faint">กำลังค้นประวัติ…</div>';
+  return { render: (items, skip, vendorId, now) => { clearTimeout(t); if (now) run(items, skip, vendorId); else t = setTimeout(() => run(items, skip, vendorId), 350); } };
+}
+const PH_SEC = id => `<div class="field ph-box"><label>ประวัติกิจกรรมจัดซื้อ <span class="small faint" style="font-weight:400">— PR/PO ที่เคยขอ/สั่งรายการเดียวกัน</span></label><div id="${id}" class="ph-list"></div></div>`;
+
+/* ปุ่ม "ประวัติซื้อ" ในรายการ PR/PO — ให้ผู้ตรวจ/ผู้อนุมัติเปิดดูประกอบ */
+function dlgProcHist(kind, doc){
+  if (!doc) return;
+  const d = dialog(`ประวัติกิจกรรมจัดซื้อ · ${doc.no}`, `<div class="small mut" style="margin:6px 0 10px">${h(doc.projects?.code || '')} · ${kind === 'po' ? 'PO' : 'PR'} ${h(doc.no)} — เทียบกับ PR/PO ทั้งบริษัทที่ไม่ถูกยกเลิก</div><div id="ph-dlg"></div>`, 'ปิด', async () => {});
+  d.classList.add('ph-wide'); d.querySelector('button[value=cancel]')?.remove();
+  phBox($('#ph-dlg', d)).render(doc.items || [], kind === 'po' ? { poId: doc.id, prId: doc.pr_id } : { prId: doc.id }, kind === 'po' ? doc.vendor_id : null, true);
 }
 
 async function dlgNewPR(pid, after){
@@ -2013,6 +2219,7 @@ async function dlgNewPR(pid, after){
     <div class="field"><label for="pr-p">โครงการ</label><select id="pr-p" class="inp" required>${projects.map(p => `<option value="${p.id}" ${p.id === pid ? 'selected' : ''}>${h(p.code)} — ${h(p.name.slice(0, 60))}</option>`).join('')}</select></div>
     <div class="field"><label for="pr-l">รหัสงบ</label><select id="pr-l" class="inp" required></select><div class="small mut" id="pr-av"></div></div>
     <div class="field"><label>รายการ</label><div id="pr-items"></div><button type="button" class="btn sm ghost" id="pr-add">+ เพิ่มรายการ</button></div>
+    ${PH_SEC('pr-hist')}
     <div class="row"><div class="field"><label for="pr-need">ต้องใช้วันที่</label><input id="pr-need" class="inp" type="date"></div>
       <div class="field"><label for="pr-dept">หน่วยงาน</label><input id="pr-dept" class="inp"></div></div>
     <div class="row"><div class="field"><label for="pr-v">ผู้ขายที่แนะนำ</label><input id="pr-v" class="inp"></div>
@@ -2033,12 +2240,15 @@ async function dlgNewPR(pid, after){
         status: $('#pr-send', dd).checked ? 'submitted' : 'draft', requested_by:S.user.id, requester_name:S.user.user_metadata?.full_name || S.user.email };
       const { error } = await sb.from('purchase_requests').insert(row);
       if (error) { fail(error); return false; }
-      toast(`บันทึก ${no} แล้ว`); after && after();
+      S.phCache = null; toast(`บันทึก ${no} แล้ว`); after && after();
     });
+  d.classList.add('ph-wide');
+  const ph = phBox($('#pr-hist', d));
+  const histUpd = () => ph.render([...d.querySelectorAll('.pr-it')].map(r => ({ desc: r.querySelector('[data-f=d]').value.trim(), qty: +r.querySelector('[data-f=q]').value || 0, unit: r.querySelector('[data-f=u]').value.trim(), price: +r.querySelector('[data-f=p]').value || 0 })));
   let lines = [];
   const addItem = () => { const r = document.createElement('div'); r.className = 'pr-it row'; r.style.marginBottom = '6px';
     r.innerHTML = `<input class="inp" data-f="d" placeholder="รายการ" style="flex:3;min-width:160px"><input class="inp" data-f="q" type="number" step="any" value="1" style="flex:1;min-width:60px" aria-label="จำนวน"><input class="inp" data-f="u" placeholder="หน่วย" style="flex:1;min-width:60px"><input class="inp" data-f="p" type="number" step="any" placeholder="ราคา/หน่วย" style="flex:1.4;min-width:90px">`;
-    $('#pr-items', d).appendChild(r); r.querySelectorAll('input').forEach(i => i.oninput = sum); };
+    $('#pr-items', d).appendChild(r); r.querySelectorAll('input').forEach(i => i.oninput = () => { sum(); histUpd(); }); };
   const sum = () => {
     const amt = [...d.querySelectorAll('.pr-it')].reduce((a, r) => a + (+r.querySelector('[data-f=q]').value || 0) * (+r.querySelector('[data-f=p]').value || 0), 0);
     const vat = amt * 0.07, cut = amt + ($('#pr-vat', d).checked ? vat : 0);
@@ -2053,7 +2263,7 @@ async function dlgNewPR(pid, after){
     sum();
   };
   $('#pr-add', d).onclick = addItem; $('#pr-p', d).onchange = loadLines; $('#pr-l', d).onchange = sum; $('#pr-vat', d).onchange = sum;
-  addItem(); loadLines();
+  addItem(); loadLines(); histUpd();
 }
 
 async function dlgNewPO(pr){
@@ -2065,17 +2275,21 @@ async function dlgNewPO(pr){
     <div class="field"><label for="po-t">เงื่อนไขการชำระ</label><input id="po-t" class="inp"></div>
     <div class="field"><label for="po-d">กำหนดส่งมอบ</label><input id="po-d" class="inp"></div>
     <div class="field"><label for="po-ref">เลขที่อ้างอิง (PO ใน TRCloud / ใบเสนอราคา)</label><input id="po-ref" class="inp" placeholder="เช่น PO26070023 · QT OOQ6907000190"></div>
-    <label class="small" style="display:flex;gap:8px;align-items:center;margin:4px 0 8px"><input type="checkbox" id="po-send" checked> ส่งขออนุมัติทันที</label>`, 'บันทึก PO', async dd => {
+    <label class="small" style="display:flex;gap:8px;align-items:center;margin:4px 0 8px"><input type="checkbox" id="po-send" checked> ส่งขออนุมัติทันที</label>
+    ${PH_SEC('po-hist')}`, 'บันทึก PO', async dd => {
       const no = await nextNo('purchase_orders', pr.projects.code + '/PO-');
       const { error } = await sb.from('purchase_orders').insert({ company_id:S.cid, project_id:pr.project_id, pr_id:pr.id, no, vendor_id:$('#po-v', dd).value, items:pr.items,
         amount:+$('#po-a', dd).value, vat_amount:+$('#po-vat', dd).value || 0, terms:$('#po-t', dd).value.trim() || null, delivery:$('#po-d', dd).value.trim() || null, ref_no:$('#po-ref', dd).value.trim() || null,
         status: $('#po-send', dd).checked ? 'submitted' : 'draft', created_by:S.user.id });
       if (error) { fail(error); return false; }
-      toast(`บันทึก ${no} แล้ว`); S.procTab = 'po'; pageProc();
+      S.phCache = null; toast(`บันทึก ${no} แล้ว`); S.procTab = 'po'; pageProc();
     });
+  d.classList.add('ph-wide');
+  const ph = phBox($('#po-hist', d)), histUpd = () => ph.render(pr.items || [], { prId: pr.id }, $('#po-v', d)?.value || null, true);
+  histUpd();
   if (!vendors?.length) { $('#po-v', d).outerHTML = '<div class="msg warn small">ยังไม่มีผู้ขายในทะเบียน</div>'; return; }
   const fill = () => { const v = vendors.find(x => x.id === $('#po-v', d).value); $('#po-vat', d).value = v?.vat_registered ? (Math.round(+$('#po-a', d).value * 7) / 100).toFixed(2) : '0'; if (v?.pay_terms) $('#po-t', d).value = v.pay_terms; };
-  $('#po-v', d).onchange = fill; $('#po-a', d).oninput = fill; fill();
+  $('#po-v', d).onchange = () => { fill(); histUpd(); }; $('#po-a', d).oninput = fill; fill(); histUpd();
 }
 
 /* ---------- vendors ---------- */
@@ -2705,28 +2919,604 @@ async function hrStaff(){
   S.hrStaff = data || []; S.hrStaffCid = S.cid; return S.hrStaff;
 }
 const staffLabel = s => s ? `${s.employee_code} ${s.full_name}` : '';
+/* ---------- HR-REC-02: Position Master · JD/JS · Question Bank · Recruitment Case · Offer · LINE · Onboarding ---------- */
+const RC_ST = { screen:['คัดกรอง','gold'], interview:['สัมภาษณ์','blue'], offer:['ข้อเสนอจ้าง','amber'], contract:['สัญญาจ้าง','amber'], onboarding:['Onboarding','blue'], closed:['ปิดเคส','good'], cancelled:['ยกเลิก',''] };
+const OF_ST = { draft:['ร่าง',''], submitted:['รออนุมัติ','gold'], reviewed:['ตรวจแล้ว','blue'], approved:['อนุมัติแล้ว รอส่ง','good'], returned:['ตีกลับ','amber'], rejected:['ไม่อนุมัติ','crit'], sent:['ส่งแล้ว รอตอบ','blue'], accepted:['ผู้สมัครตอบรับ','good'], declined:['ผู้สมัครไม่ตกลง','crit'], withdrawn:['ถอนข้อเสนอ',''], expired:['หมดอายุ',''] };
+const POS_ST = { DRAFT:['ร่าง','gold'], SIMULATED:['จำลอง',''], VERIFIED_ACTUAL:['ตรวจยืนยันแล้ว','blue'], APPROVED_ACTUAL:['อนุมัติแล้ว','good'], RETIRED:['ยกเลิก',''] };
+const POS_GRP = { MGT:'ผู้บริหารสายงาน', PMO:'บริหาร/ประสานงานโครงการ', ENG:'วิศวกร', TEC:'ช่างเทคนิค', FAC:'บริการอาคาร', QHS:'คุณภาพ/ความปลอดภัย', SUP:'สนับสนุนสำนักงาน', INT:'ฝึกงาน' };
+const ONB_ST = { open:['ค้าง','gold'], done:['เสร็จ','good'], na:['ไม่เกี่ยว',''] };
+async function hrPositions(force){
+  if (!force && S.hrPos && S.hrPosCid === S.cid) return S.hrPos;
+  const { data } = await sb.from('hr_positions').select('*').eq('company_id', S.cid).order('code');
+  S.hrPos = data || []; S.hrPosCid = S.cid; return S.hrPos;
+}
+const posOf = title => { const t = (title || '').trim(); return (S.hrPos || []).find(p => p.title === t || p.staff_title === t) || null; };
+/* JD markdown → ลักษณะงานโดยย่อ (วัตถุประสงค์ + หน้าที่หลัก 5 ข้อ) + คุณสมบัติขั้นต่ำจาก JS */
+function jdBrief(md, p){
+  const sec = n => { const m = md.match(new RegExp('###\\s*' + n + '\\.[^\\n]*\\n([\\s\\S]*?)(?=\\n###\\s|$)')); return m ? m[1] : ''; };
+  const clean = x => x.replace(/\*\*/g, '').replace(/\s*\(?[A-Z_]*PENDING_VERIFICATION\)?/g, '').replace(/\s+—\s*$/, '').trim();
+  const brief = x => (x || '').replace(/\s*\([^)]*\)/g, '').replace(/\s*\([^)]*$/, '').trim();
+  const purpose = clean(sec(1).split('\n').filter(l => l.trim() && !l.startsWith('|')).join(' '));
+  const duties = sec(3).split('\n').map(l => l.match(/^\s*\d+\.\s+(.*)/)).filter(Boolean).map(m => clean(m[1]));
+  const js = Object.fromEntries(sec(5).split('\n').filter(l => /^\|/.test(l) && !/^\|\s*-/.test(l)).map(l => l.split('|').slice(1, -1).map(c => clean(c))).filter(c => c.length >= 2).map(c => [c[0], c[1]]));
+  const ver = (md.match(/\|\s*Version\s*\|\s*([^|]+)\|/) || [])[1]?.trim() || p.jdjs_version || '';
+  const show = duties.slice(0, 5).map(x => '• ' + x);
+  return { ref: `JD-${p.code}${ver ? ' v' + ver : ''}`, desc: [purpose, ...show, duties.length > 5 ? `(หน้าที่ครบ ${duties.length} ข้อ ตาม JD-${p.code})` : ''].filter(Boolean).join('\n'),
+    edu: brief(js['วุฒิการศึกษา']), exp: brief(js['ประสบการณ์']), skills: [js['ใบอนุญาต / ใบรับรอง'], js['ทักษะเฉพาะ']].map(brief).filter(Boolean).join(' · ') };
+}
+async function hrContent(){
+  if (S.hrContent !== undefined) return S.hrContent;
+  try { const r = await fetch('hr-content.json', { cache:'no-cache' }); if (!r.ok) throw new Error(r.status); S.hrContent = await r.json(); }
+  catch(e){ S.hrContent = null; }
+  return S.hrContent;
+}
+const noContent = () => '<div class="msg warn">ยังไม่พบไฟล์ <b>hr-content.json</b> บนเว็บ (JD/JS · Question Bank · แม่แบบ LINE) — อัปไฟล์นี้ขึ้น repo ไว้ข้าง index.html</div>';
+/* tiny markdown renderer for JD/JS (headings, tables, lists, bold, quotes) */
+function mdLite(md){
+  const inl = t => h(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>');
+  const L = (md || '').split('\n'), out = []; let i = 0;
+  while (i < L.length) {
+    const l = L[i];
+    if (/^\|/.test(l)) { const rows = []; while (i < L.length && /^\|/.test(L[i])) { if (!/^\|\s*-/.test(L[i])) rows.push(L[i].replace(/^\||\|$/g, '').split('|').map(c => c.trim())); i++; }
+      out.push(`<div class="tw"><table>${rows.map((r, k) => `<tr>${r.map(c => k ? `<td class="small">${inl(c)}</td>` : `<th>${inl(c)}</th>`).join('')}</tr>`).join('')}</table></div>`); continue; }
+    if (/^#{2} /.test(l)) out.push(`<h3 style="margin:6px 0 8px">${inl(l.slice(3))}</h3>`);
+    else if (/^#{3,4} /.test(l)) out.push(`<h4 style="margin:14px 0 6px;font-family:var(--head)">${inl(l.replace(/^#+ /, ''))}</h4>`);
+    else if (/^\s*[-*] /.test(l)) { const it = []; while (i < L.length && /^\s*[-*] /.test(L[i])) it.push(L[i++].replace(/^\s*[-*] /, '')); out.push(`<ul style="margin:4px 0 8px;padding-left:20px">${it.map(x => `<li>${inl(x)}</li>`).join('')}</ul>`); continue; }
+    else if (/^\s*\d+\. /.test(l)) { const it = []; while (i < L.length && /^\s*\d+\. /.test(L[i])) it.push(L[i++].replace(/^\s*\d+\. /, '')); out.push(`<ol style="margin:4px 0 8px;padding-left:22px">${it.map(x => `<li>${inl(x)}</li>`).join('')}</ol>`); continue; }
+    else if (/^> /.test(l)) out.push(`<div class="msg warn small" style="margin:6px 0">${inl(l.slice(2))}</div>`);
+    else if (/^-{3,}$/.test(l.trim())) out.push('<hr style="border:0;border-top:1px solid var(--line)">');
+    else if (l.trim()) out.push(`<p style="margin:4px 0">${inl(l)}</p>`);
+    i++;
+  }
+  return out.join('');
+}
+const hrTabs = () => `<div class="seg" role="group" aria-label="ส่วนงานบุคคล">${[['docs','เอกสาร HR'],['cases','เคสสรรหา'],['iv','สัมภาษณ์'],['pos','ตำแหน่ง & JD/JS']].map(([k, l]) => `<button data-hrtab="${k}" aria-pressed="${(S.hrTab || 'docs') === k}">${l}</button>`).join('')}</div>`;
+const bindHrTabs = () => document.querySelectorAll('[data-hrtab]').forEach(b => b.onclick = () => { S.hrTab = b.dataset.hrtab; pageHRF(); });
+
+/* ===== Question Bank card (interviewer scores 0–5 — the Agent never decides) ===== */
+function qbSummary(items, sc){
+  const H = items.filter(q => q.c[0] === 'H' && sc[q.c] != null), Sx = items.filter(q => q.c[0] === 'S' && sc[q.c] != null);
+  const avg = a => a.length ? a.reduce((t, q) => t + Number(sc[q.c]), 0) / a.length : null;
+  const aH = avg(H), aS = avg(Sx), tot = aH == null && aS == null ? null : (aH ?? aS) * 0.6 + (aS ?? aH) * 0.4;
+  const red = items.filter(q => q.s && sc[q.c] != null && Number(sc[q.c]) <= 1).map(q => q.c);
+  const conv = tot == null ? null : tot >= 4 ? 5 : tot >= 2.5 ? 3 : 1;
+  return { asked:H.length + Sx.length, hard:H.length, soft:Sx.length, avgH:aH, avgS:aS, total:tot, conv, red };
+}
+async function dlgQB(doc, prev, onSave, readonly){
+  const C = await hrContent(); if (!C) return toast('ยังไม่มีไฟล์ hr-content.json บนเว็บ', true);
+  const items = C.qb[doc] || []; const sc = { ...(prev?.scores || {}) }, notes = { ...(prev?.notes || {}) };
+  const row = q => `<details class="pb-cat" style="margin:6px 0"><summary style="display:flex;gap:8px;align-items:center;cursor:pointer"><b class="mono" style="min-width:34px">${q.c}</b><span style="flex:1">${h(q.t)}${q.s ? ' <span class="chip crit">ความปลอดภัย</span>' : ''}</span>
+      <select class="inp" data-qs="${q.c}" style="width:auto;min-height:32px;padding:2px 8px" ${readonly ? 'disabled' : ''} onclick="event.stopPropagation()"><option value="">ไม่ถาม</option>${[0,1,2,3,4,5].map(n => `<option ${sc[q.c] == n && sc[q.c] !== '' && sc[q.c] != null ? 'selected' : ''}>${n}</option>`).join('')}</select></summary>
+    <div class="small" style="margin-top:6px"><p style="margin:2px 0"><b>คำถาม:</b> ${h(q.q)}</p><p style="margin:2px 0" class="mut"><b>วัด:</b> ${h(q.m)}</p>
+      <b>แนวคำตอบที่ดี</b><ul style="margin:2px 0 4px;padding-left:18px">${q.g.map(x => `<li>${h(x)}</li>`).join('')}</ul>
+      <div class="msg ok small" style="margin:4px 0"><b>5:</b> ${h(q.r5)}</div><div class="msg warn small" style="margin:4px 0"><b>3:</b> ${h(q.r3)}</div><div class="msg err small" style="margin:4px 0"><b>0–1:</b> ${h(q.r1)}</div>
+      ${q.w ? `<p class="small" style="color:var(--crit);margin:2px 0"><b>สัญญาณเตือน:</b> ${h(q.w)}</p>` : ''}
+      <input class="inp" data-qn="${q.c}" placeholder="บันทึกสั้นของผู้สัมภาษณ์" value="${h(notes[q.c] || '')}" ${readonly ? 'disabled' : ''}></div></details>`;
+  const d = dialog(`การ์ดสัมภาษณ์ · ${doc}`, `<p class="small mut" style="margin:0 0 6px">เลือกถาม Hard 8–10 ข้อ + Soft 6–8 ข้อ · ข้อ "ความปลอดภัย" ถามทุกครั้ง · <b>ผู้สัมภาษณ์เป็นผู้ให้คะแนนและตัดสิน — Agent ไม่ตัดสินรับหรือปฏิเสธ</b></p>
+    <div class="msg info" id="qb-sum"></div>
+    <h4 style="margin:10px 0 4px">Hard Skill</h4>${items.filter(q => q.c[0] === 'H').map(row).join('')}
+    <h4 style="margin:14px 0 4px">Soft Skill</h4>${items.filter(q => q.c[0] === 'S').map(row).join('')}`, readonly ? 'ปิด' : 'ใช้คะแนนนี้', async dd => {
+      if (readonly) return true;
+      const s = qbSummary(items, sc); if (!s.asked) { toast('ยังไม่ได้ให้คะแนนข้อใด', true); return false; }
+      dd.querySelectorAll('[data-qn]').forEach(x => { if (x.value.trim()) notes[x.dataset.qn] = x.value.trim(); else delete notes[x.dataset.qn]; });
+      onSave && onSave({ doc, scores:sc, notes, ...s, at:new Date().toISOString(), by:S.user.user_metadata?.full_name || '' });
+    });
+  d.style.width = 'min(860px,calc(100% - 32px))';
+  if (readonly) d.querySelector('button[value=cancel]')?.remove();
+  const upd = () => { const s = qbSummary(items, sc); const f = v => v == null ? '—' : v.toFixed(2);
+    $('#qb-sum', d).innerHTML = `ถาม ${s.asked} ข้อ (Hard ${s.hard} · Soft ${s.soft}) · เฉลี่ย Hard <b>${f(s.avgH)}</b> · Soft <b>${f(s.avgS)}</b> · รวม (H×0.6 + S×0.4) <b>${f(s.total)}</b>${s.conv ? ` → FM-HR-01-03 หมวดความรู้/ประสบการณ์ = <b>${s.conv}</b>` : ''}${s.red.length ? `<br><b style="color:var(--crit)">ข้อความปลอดภัยได้ 0–1: ${s.red.join(', ')} — ผู้สัมภาษณ์หลักพิจารณาไม่ผ่าน</b>` : ''}`;
+    $('#qb-sum', d).className = 'msg ' + (s.red.length ? 'err' : 'info'); };
+  d.addEventListener('change', e => { const k = e.target.dataset?.qs; if (!k) return; if (e.target.value === '') delete sc[k]; else sc[k] = +e.target.value; upd(); });
+  upd();
+}
+
+/* ===== Positions & JD/JS ===== */
+async function pageHRPos(){
+  const el = $('#page');
+  el.innerHTML = `<div class="ph"><div><h1>งานบุคคล · ตำแหน่ง & JD/JS</h1><p class="mut small" style="margin:4px 0 0">Position Master ST-HR-[กลุ่ม]-[ลำดับ] จากทะเบียนพนักงานจริง · JD/JS ทุกตำแหน่ง · การ์ดคำถามสัมภาษณ์ · สถานะ DRAFT จนกว่าหัวหน้าสายงานตรวจและผู้บริหารอนุมัติ</p></div><div class="act">${hrTabs()}</div></div><div id="hr-b"><div class="empty">กำลังโหลด…</div></div>`;
+  bindHrTabs();
+  const [P, C, ST] = await Promise.all([hrPositions(true), hrContent(), sb.from('staff').select('position_code,status').eq('company_id', S.cid).in('status', ['active','intern'])]);
+  const n = countBy(ST.data || [], s => s.position_code || '—'), cnt0 = Object.fromEntries(n), grp = S.hrPosGrp || '';
+  const list = P.filter(p => !grp || p.grp === grp), canE = S.isOwner || can('hr','e');
+  const ver = P.filter(p => ['VERIFIED_ACTUAL','APPROVED_ACTUAL'].includes(p.status)).length, qbN = P.filter(p => p.qb_doc).length;
+  const people = (ST.data || []).length, mapped = (ST.data || []).filter(s => s.position_code).length;
+  $('#hr-b').innerHTML = `${C ? '' : noContent()}
+    <div class="stats">${stat('ตำแหน่ง', cnt(P.length), `${P.filter(p => !cnt0[p.code]).length} ตำแหน่งยังไม่มีคน`)}${stat('JD/JS ร่างแล้ว', `${C ? P.filter(p => C.jd[p.code]).length : '—'}/${P.length}`, 'DRAFT')}${stat('ตรวจยืนยัน / อนุมัติ', `${ver}/${P.length}`, 'ต้องให้หัวหน้าสายงานตรวจ', ver ? '' : 'gold')}${stat('พนักงานผูกรหัสตำแหน่ง', `${cnt(mapped)}/${cnt(people)}`, `การ์ดคำถาม ${qbN} ตำแหน่ง`)}</div>
+    <div class="bu-cards">${[['', 'ทุกกลุ่ม', P.length], ...Object.entries(POS_GRP).map(([k, l]) => [k, l, P.filter(p => p.grp === k).length])].map(([k, l, c]) => `<button class="bu-card" data-pg="${k}" aria-pressed="${grp === k}"><div class="bu-top"><b>${k || 'ALL'}</b><span class="bu-n">${c}</span></div><div class="bu-nm">${h(l)}</div><div class="bu-v">${cnt(k ? P.filter(p => p.grp === k).reduce((a, p) => a + (cnt0[p.code] || 0), 0) : people)} คน</div></button>`).join('')}</div>
+    <div class="panel"><div class="tw"><table><thead><tr><th>รหัส</th><th>ตำแหน่ง</th><th>คน</th><th>รายงานต่อ</th><th>V3</th><th>JD/JS</th><th>การ์ดคำถาม</th><th>สถานะ</th></tr></thead><tbody>
+      ${list.map(p => `<tr class="clk" data-pos="${p.code}"><td class="mono small">${p.code}</td><td><b>${h(p.title)}</b>${p.note ? `<div class="small" style="color:var(--gold)">${h(p.note)}</div>` : ''}</td><td class="num">${cnt(cnt0[p.code] || 0)}</td>
+        <td class="small mono">${h(p.reports_to || '—')}</td><td class="small">${(p.v3_codes || []).map(x => `<span class="chip">${x}</span>`).join(' ')}</td>
+        <td>${C?.jd[p.code] ? `<span class="chip blue">v${h(p.jdjs_version)}</span>` : '<span class="chip">—</span>'}</td><td>${p.qb_doc ? `<span class="chip amber">${h(p.qb_doc)}</span>` : ''}</td><td>${chip(POS_ST, p.status)}</td></tr>`).join('')}</tbody></table></div></div>
+    <p class="small faint">Owner BN15 · Reviewer หัวหน้าสายงาน · Approver EX02 · พนักงาน ${cnt(people - mapped)} คนยังไม่ผูกรหัส (ชื่อตำแหน่งไม่ตรง Position Master)</p>`;
+  document.querySelectorAll('[data-pg]').forEach(b => b.onclick = () => { S.hrPosGrp = b.dataset.pg; pageHRPos(); });
+  document.querySelectorAll('[data-pos]').forEach(r => r.onclick = () => dlgPos(P.find(p => p.code === r.dataset.pos), C, canE));
+}
+function dlgPos(p, C, canE){
+  const md = C?.jd?.[p.code];
+  const d = dialog(`${p.code} · ${p.title}`, `${md ? mdLite(md) : (C ? '<div class="empty">ยังไม่มี JD/JS</div>' : noContent())}
+    ${canE ? `<div class="pb-cat"><div class="row"><div class="field"><label for="ps-st">สถานะเอกสาร</label><select id="ps-st" class="inp">${Object.entries(POS_ST).filter(([k]) => k !== 'APPROVED_ACTUAL' || S.isOwner).map(([k, v]) => `<option value="${k}" ${p.status === k ? 'selected' : ''}>${v[0]}</option>`).join('')}</select></div>
+      <div class="field"><label for="ps-rv">ผู้ตรวจ (Reviewer)</label><input id="ps-rv" class="inp" value="${h(p.reviewer || '')}" placeholder="ชื่อ/ตำแหน่งหัวหน้าสายงาน"></div><div class="field"><label for="ps-nt">หมายเหตุ</label><input id="ps-nt" class="inp" value="${h(p.note || '')}"></div></div>
+      <p class="small faint">"อนุมัติแล้ว" ตั้งได้เฉพาะผู้บริหาร · ทุกการเปลี่ยนบันทึกใน Audit Log</p></div>` : ''}
+    ${p.qb_doc ? `<button type="button" class="btn" id="ps-qb">เปิดการ์ดคำถามสัมภาษณ์ ${h(p.qb_doc)}</button>` : ''}`, canE ? 'บันทึก' : 'ปิด', async dd => {
+      if (!canE) return true;
+      const row = { status:$('#ps-st', dd).value, reviewer:$('#ps-rv', dd).value.trim() || null, note:$('#ps-nt', dd).value.trim() || null };
+      const { error } = await sb.from('hr_positions').update(row).eq('code', p.code); if (error) { fail(error); return false; }
+      toast('บันทึกแล้ว'); S.hrPos = null; pageHRPos();
+    });
+  d.style.width = 'min(900px,calc(100% - 32px))';
+  if (!canE) d.querySelector('button[value=cancel]')?.remove();
+  const qb = $('#ps-qb', d); if (qb) qb.onclick = () => dlgQB(p.qb_doc, null, null, true);
+}
+
+/* ===== Recruitment cases ===== */
+async function pageHRCases(){
+  const el = $('#page');
+  el.innerHTML = `<div class="ph"><div><h1>งานบุคคล · เคสสรรหา</h1><p class="mut small" style="margin:4px 0 0">1 อัตราที่อนุมัติ = 1 เคส · ขออัตรา → คัดกรอง → สัมภาษณ์ → ข้อเสนอจ้าง (Agent AC ตรวจงบ · ผู้มีอำนาจอนุมัติ) → สัญญา → Onboarding → ปิดเคสเมื่อหลักฐานครบ · <b>Agent ไม่ตัดสินรับ/ปฏิเสธ ไม่กำหนดค่าจ้าง ไม่ส่ง LINE เอง</b></p></div><div class="act">${hrTabs()}</div></div><div id="hr-b"><div class="empty">กำลังโหลด…</div></div>`;
+  bindHrTabs();
+  const [CS, F, OB] = await Promise.all([
+    sb.from('recruitment_cases').select('*').eq('company_id', S.cid).order('opened_at', { ascending:false }),
+    sb.from('hr_forms').select('id,form,no,status,result,score,project_id,staff_id,data,created_at').eq('company_id', S.cid).in('form', ['FM-HR-01-01','FM-HR-01-02','FM-HR-01-03','FM-HR-01-04']),
+    sb.from('onboarding_tasks').select('*').eq('company_id', S.cid).order('seq')]);
+  if (CS.error) return $('#hr-b').innerHTML = `<div class="msg err">${h(errText(CS.error))}</div>`;
+  await hrPositions();
+  const cases = CS.data || [], docs = F.data || [], tasks = OB.data || [], today = todayStr();
+  S.rcDocs = docs; S.rcTasks = tasks;
+  const pj = id => (S.hrProj || S.projects || []).find(p => p.id === id)?.code || '';
+  const app = id => docs.find(x => x.id === id);
+  const prog = c => { const t = tasks.filter(x => x.case_id === c.id); return t.length ? `${t.filter(x => x.status !== 'open').length}/${t.length}` : '—'; };
+  const age = c => Math.round((Date.now() - new Date(c.opened_at)) / 864e5);
+  const open = cases.filter(c => !['closed','cancelled'].includes(c.stage)), late = open.filter(c => age(c) > 30 || (c.need_by && c.need_by < today));
+  const overdue = tasks.filter(t => t.status === 'open' && t.due_on && t.due_on < today);
+  const q = (S.rcQ || '').toLowerCase(), stg = S.rcStage || '';
+  const rows = cases.filter(c => (!stg || c.stage === stg) && (!q || [c.no, c.position_title, c.position_code, app(c.selected_application_id)?.data?.full_name, pj(c.project_id)].join(' ').toLowerCase().includes(q)));
+  $('#hr-b').innerHTML = `
+    <div class="stats">${stat('เคสเปิดอยู่', cnt(open.length), `ปิดแล้ว ${cases.filter(c => c.stage === 'closed').length}`)}${stat('เกิน 30 วัน / เลยวันที่ต้องการ', cnt(late.length), 'แจ้ง BM Agent', late.length ? 'crit' : '')}${stat('ข้อเสนอรออนุมัติ / รอตอบ', cnt(cases.filter(c => ['submitted','reviewed'].includes(c.offer_status)).length) + ' / ' + cnt(cases.filter(c => c.offer_status === 'sent').length), 'Offer')}${stat('Onboarding เลยกำหนด', cnt(overdue.length), 'รายการ', overdue.length ? 'gold' : '')}</div>
+    <div class="cal-sum hr-pipe">${Object.entries(RC_ST).filter(([k]) => k !== 'cancelled').map(([k, [l, tone]]) => `<button class="cal-k" data-rcs="${k}" style="--c:var(--${tone || 'faint'})" ${stg === k ? 'aria-pressed="true"' : ''}><small>${l}</small><b>${cases.filter(c => c.stage === k).length}</b><span>เคส</span></button>`).join('')}</div>
+    <div class="panel"><div class="hd" style="flex-wrap:wrap;gap:8px"><input id="rc-q" class="inp" placeholder="ค้นหา เลขเคส / ตำแหน่ง / ผู้สมัคร / โครงการ" style="max-width:300px" value="${h(S.rcQ || '')}">${stg ? `<button class="btn sm" id="rc-all">ทุกขั้น</button>` : ''}<span class="small mut" style="margin-left:auto">${rows.length} เคส</span></div>
+      <div class="tw">${rows.length ? `<table><thead><tr><th>เคส</th><th>ตำแหน่ง</th><th>โครงการ / หน้างาน</th><th>ผู้สมัครที่เลือก</th><th>ขั้น</th><th>ข้อเสนอ</th><th>Onboarding</th><th>อายุ</th></tr></thead><tbody>
+        ${rows.map(c => `<tr class="clk" data-rc="${c.id}"><td class="mono small">${h(c.no)}<div class="faint">อัตราที่ ${c.seat} · ${h(docs.find(x => x.id === c.rq_id)?.no || '')}</div></td><td>${h(c.position_title || '')}<div class="small mono faint">${h(c.position_code || 'ไม่มีรหัส')}</div></td>
+          <td class="small">${h(pj(c.project_id))}<div class="mut">${h(c.site || '')}</div></td><td class="small">${h(app(c.selected_application_id)?.data?.full_name || '—')}</td><td>${chip(RC_ST, c.stage)}</td>
+          <td>${c.offer_status ? chip(OF_ST, c.offer_status) : ''}</td><td class="num">${prog(c)}</td><td class="num" style="color:${age(c) > 30 && !['closed','cancelled'].includes(c.stage) ? 'var(--crit)' : ''}">${age(c)} วัน</td></tr>`).join('')}</tbody></table>`
+        : `<div class="empty">${cases.length ? 'ไม่มีเคสตามตัวกรอง' : 'ยังไม่มีเคส — เคสเปิดเองเมื่อใบขออัตรากำลัง (FM-HR-01-01) ได้รับอนุมัติ'}</div>`}</div></div>${asOf()}`;
+  $('#rc-q').oninput = e => { S.rcQ = e.target.value; clearTimeout(pageHRCases.t); pageHRCases.t = setTimeout(pageHRCases, 250); };
+  document.querySelectorAll('[data-rcs]').forEach(b => b.onclick = () => { S.rcStage = S.rcStage === b.dataset.rcs ? '' : b.dataset.rcs; pageHRCases(); });
+  const all = $('#rc-all'); if (all) all.onclick = () => { S.rcStage = ''; pageHRCases(); };
+  document.querySelectorAll('[data-rc]').forEach(r => r.onclick = () => dlgCase(cases.find(c => c.id === r.dataset.rc)));
+}
+async function dlgCase(c){
+  const docs = S.rcDocs || [], C = await hrContent(), pay = canPay(), canE = S.isOwner || can('hr','e') || can('hr','c');
+  const rq = docs.find(x => x.id === c.rq_id), apps = docs.filter(x => x.form === 'FM-HR-01-02' && x.data?.req_id === c.rq_id);
+  const ivOf = a => docs.filter(x => x.form === 'FM-HR-01-03' && x.data?.application_id === a.id).sort((x, y) => x.created_at < y.created_at ? 1 : -1)[0];
+  const sel = docs.find(x => x.id === c.selected_application_id), ec = docs.find(x => x.id === c.contract_id) || (sel && docs.find(x => x.form === 'FM-HR-01-04' && x.data?.application_id === sel.id));
+  const offers = pay ? ((await sb.from('hr_offers').select('*').eq('case_id', c.id).order('round')).data || []) : [];
+  const tasks = (S.rcTasks || []).filter(t => t.case_id === c.id);
+  const last = offers[offers.length - 1], passed = apps.filter(a => ivOf(a)?.result === 'pass' && ivOf(a)?.status === 'approved');
+  const steps = ['screen','interview','offer','contract','onboarding','closed'], si = steps.indexOf(c.stage);
+  const pj = (S.hrProj || S.projects || []).find(p => p.id === c.project_id);
+  const agentBoxO = o => o.agent_checked_at ? `<div class="msg ${o.agent_status === 'returned' && !o.override_reason ? 'err' : 'ok'} small" style="margin:6px 0"><b>Agent AC ตรวจ:</b> ${o.agent_status === 'passed' ? 'ผ่าน — พร้อมเสนอผู้มีอำนาจ' : 'ส่งกลับ'}${(o.agent_issues || []).map(x => `<div>${x.level === 'block' ? '• ต้องแก้: ' : '• ข้อสังเกต: '}${h(x.msg)} <span class="faint mono">${h(x.code)}</span></div>`).join('')}${o.override_reason ? `<div>อนุมัติทับ: ${h(o.override_reason)}</div>` : ''}</div>` : '';
+  const offerRow = o => { const P = o.pay || {}; const mine = o.requested_by === S.user.id, A = [];
+    if (['draft','returned'].includes(o.status) && (mine || S.isOwner)) A.push(`<button type="button" class="btn sm primary" data-of="${o.id}" data-oa="submit">ส่งให้ Agent AC ตรวจ + ขออนุมัติ</button>`);
+    if (['submitted','reviewed'].includes(o.status) && !mine && (S.isOwner || can('hr','a'))) A.push(`<button type="button" class="btn sm ${o.agent_status === 'passed' ? 'primary' : ''}" data-of="${o.id}" data-oa="approve">${o.agent_status === 'passed' ? 'อนุมัติ' : 'อนุมัติทับ'}</button><button type="button" class="btn sm ghost" data-of="${o.id}" data-oa="return">ตีกลับ</button>`);
+    if (o.status === 'approved') A.push(`<button type="button" class="btn sm primary" data-of="${o.id}" data-oa="sent">บันทึกว่าส่ง LINE แล้ว</button>`);
+    if (o.status === 'sent') A.push(`<button type="button" class="btn sm primary" data-of="${o.id}" data-oa="accepted">ผู้สมัครตอบรับ</button><button type="button" class="btn sm" data-of="${o.id}" data-oa="declined">ไม่ตกลง</button><button type="button" class="btn sm ghost" data-of="${o.id}" data-oa="expired">หมดอายุ</button>`);
+    if (['draft','returned','approved','sent'].includes(o.status)) A.push(`<button type="button" class="btn sm ghost" data-of="${o.id}" data-oa="withdrawn">ถอน</button>`);
+    return `<div class="pb-cat"><div class="pb-h"><b>${h(o.no)} · รอบ ${o.round} · ${h(sel?.data?.full_name || docs.find(x => x.id === o.application_id)?.data?.full_name || '')}</b>${chip(OF_ST, o.status)}</div>
+      <div class="small">ทดลองงาน <b>${money(P.pp_total)}</b> · หลังผ่าน <b>${money(P.ap_total)}</b> บาท/เดือน · เริ่ม ${thDate(o.start_date)} · ตอบภายใน ${thDate(o.expires_on)}${o.decline_reason ? `<div style="color:var(--crit)">เหตุผลที่ไม่ตกลง: ${h(o.decline_reason)}</div>` : ''}${o.evidence_note ? `<div>หลักฐานตอบรับ: ${h(o.evidence_note)}</div>` : ''}</div>
+      ${agentBoxO(o)}<div class="gates" style="margin-top:6px">${A.join(' ')}</div></div>`; };
+  const lineVal = k => { const t = C?.line?.[k]?.x || ''; const A = sel?.data || {}, o = last || {};
+    return t.replace(/\{ชื่อ\}/g, A.full_name || '{ชื่อ}').replace(/\{ตำแหน่ง\}/g, c.position_title || '').replace(/\{หน้างาน\}/g, c.site || A.site || '').replace(/\{เลขที่ AP\}/g, sel?.no || '').replace(/\{เลขที่ Offer\}/g, o.no || '{เลขที่ Offer}')
+      .replace(/\{วันที่ หมดอายุ Offer\}/g, o.expires_on ? thDate(o.expires_on) : '{วันที่}').replace(/\{รหัสโครงการ\}/g, pj?.code || ''); };
+  const d = dialog(`เคส ${c.no} · ${c.position_title || ''} (อัตราที่ ${c.seat})`, `
+    <div class="gs" style="min-width:0;margin-bottom:10px"><div class="gs-bar" style="max-width:none;grid-template-columns:repeat(6,1fr)">${steps.map((s, i) => `<i style="background:${i < si ? 'var(--good)' : i === si ? 'var(--amber)' : 'var(--line)'}"${i === si ? ' class="cur"' : ''}></i>`).join('')}</div>
+      <div class="gs-t">${steps.map(s => RC_ST[s][0]).join(' → ')} · ตอนนี้ <b>${RC_ST[c.stage][0]}</b> · ${h(c.data_status)}</div></div>
+    <div class="small mut">ใบขออัตรา ${h(rq?.no || '')} · ${h(c.position_code || 'ไม่มีรหัสตำแหน่ง')} · โครงการ ${h(pj?.code || '—')} · หน้างาน ${h(c.site || '—')} · ต้องการภายใน ${thDate(c.need_by)}</div>
+    <h4 style="margin:12px 0 4px">ผู้สมัครของใบขออัตรานี้ (${apps.length})</h4>
+    ${apps.length ? `<div class="tw"><table><thead><tr><th>ใบสมัคร</th><th>ชื่อ</th><th>สัมภาษณ์</th><th>การ์ดคำถาม</th><th></th></tr></thead><tbody>${apps.map(a => { const iv = ivOf(a); return `<tr${a.id === c.selected_application_id ? ' class="sel"' : ''}><td class="mono small">${h(a.no)}</td><td>${h(a.data?.full_name || '')}</td>
+      <td class="small">${iv ? `${h(iv.no)} · ${iv.score ?? ''} คะแนน · ${h(iv.data?.resultText || '')}` : '<span class="faint">ยังไม่สัมภาษณ์</span>'}</td><td class="small">${iv?.data?.qb ? `${h(iv.data.qb.doc)} · รวม ${Number(iv.data.qb.total).toFixed(2)}${iv.data.qb.red?.length ? ' · <b style="color:var(--crit)">ความปลอดภัย 0–1</b>' : ''}` : '—'}</td><td>${ivR() ? `<button type="button" class="btn sm" data-ivapp="${a.id}">Interview Card</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div>`
+      : '<div class="small faint">ยังไม่มีใบสมัคร — สร้างที่แท็บ "เอกสาร HR" แล้วอ้างอิงใบขออัตรานี้</div>'}
+    <h4 style="margin:12px 0 4px">ข้อเสนอจ้าง (Offer)</h4>
+    ${pay ? `${offers.map(offerRow).join('') || '<div class="small faint">ยังไม่มีข้อเสนอ</div>'}
+      ${passed.length && !['contract','onboarding','closed','cancelled'].includes(c.stage) && !offers.some(o => ['draft','submitted','reviewed','approved','sent','returned'].includes(o.status)) ? `<button type="button" class="btn sm" id="of-new">+ สร้างข้อเสนอจ้าง</button>` : ''}`
+      : `<div class="small">${c.offer_status ? chip(OF_ST, c.offer_status) : '—'} <span class="faint">· รายละเอียดค่าจ้างเห็นเฉพาะผู้มีสิทธิ์เงินเดือน</span></div>`}
+    ${ec ? `<div class="small" style="margin-top:6px">สัญญาจ้าง ${h(ec.no)} · ${chip(HR_ST, ec.status)} ${pay || ec.status !== 'draft' ? `<button type="button" class="btn sm ghost" id="rc-ec">เปิดสัญญา</button>` : ''}</div>` : ''}
+    <h4 style="margin:12px 0 4px">ข้อความ LINE (Agent ร่าง · คนกดส่ง)</h4>
+    ${C ? `<div class="row"><div class="field"><select id="ln-k" class="inp">${Object.entries(C.line).map(([k, v]) => `<option value="${k}">${k} ${h(v.t)}</option>`).join('')}</select></div></div>
+      <textarea id="ln-x" class="inp" rows="6"></textarea><div class="small faint" id="ln-n"></div>
+      <div class="gates" style="margin-top:6px"><button type="button" class="btn sm" id="ln-cp">คัดลอก</button>${canE ? `<button type="button" class="btn sm" id="ln-log">บันทึกว่าส่งแล้ว</button>` : ''}</div>
+      ${(c.line_log || []).length ? `<div class="small mut" style="margin-top:6px">ประวัติส่ง: ${(c.line_log || []).map(x => `${h(x.k)} ${new Date(x.at).toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' })} (${h(x.by || '')})`).join(' · ')}</div>` : ''}` : noContent()}
+    <h4 style="margin:12px 0 4px">Onboarding</h4>
+    ${tasks.length ? `<div class="tw"><table><tbody>${tasks.map(t => `<tr><td class="small">${t.seq}. ${h(t.item)}<div class="faint">${h(t.owner_position)} · ครบ ${thDate(t.due_on)}${t.evidence ? ' · ' + h(t.evidence) : ''}</div></td>
+      <td class="nw">${chip(ONB_ST, t.status)} ${canE && t.status === 'open' ? `<button type="button" class="btn sm" data-ob="${t.id}" data-s="done">เสร็จ</button><button type="button" class="btn sm ghost" data-ob="${t.id}" data-s="na">ไม่เกี่ยว</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`
+      : '<div class="small faint">เริ่มเมื่อสัญญาจ้างได้รับอนุมัติ (ระบบสร้างรายการ 12 ข้อพร้อมวันครบกำหนด)</div>'}
+    ${c.stage === 'closed' ? `<div class="msg ok small">ปิดเคส ${thDate((c.closed_at || '').slice(0, 10))} · ${h(c.close_reason || '')}</div>` : ''}
+    ${canE && !['closed','cancelled'].includes(c.stage) ? `<div style="margin-top:10px"><button type="button" class="btn sm ghost" id="rc-cancel">ยกเลิกเคส</button></div>` : ''}`, 'ปิด', async () => true);
+  d.style.width = 'min(880px,calc(100% - 32px))'; d.querySelector('button[value=cancel]')?.remove();
+  const reload = () => { d.close(); pageHRCases(); };
+  if ($('#ln-k', d)) { const fill = () => { const k = $('#ln-k', d).value; $('#ln-x', d).value = lineVal(k); $('#ln-n', d).textContent = C.line[k].n || ''; }; $('#ln-k', d).onchange = fill; fill();
+    $('#ln-cp', d).onclick = async () => { try { await navigator.clipboard.writeText($('#ln-x', d).value); toast('คัดลอกแล้ว — เปิด LINE แล้ววางข้อความ'); } catch(e){ $('#ln-x', d).select(); toast('กด Ctrl+C เพื่อคัดลอก'); } };
+    const lg = $('#ln-log', d); if (lg) lg.onclick = async () => { const k = $('#ln-k', d).value;
+      if (k === 'L05' && !offers.some(o => ['approved','sent'].includes(o.status)) && c.offer_status !== 'approved' && c.offer_status !== 'sent') return toast('ส่ง Offer (L05) ได้หลังข้อเสนอได้รับอนุมัติเท่านั้น', true);
+      const log = [...(c.line_log || []), { k, at:new Date().toISOString(), by:S.user.user_metadata?.full_name || S.user.email || '' }];
+      const { error } = await sb.from('recruitment_cases').update({ line_log:log }).eq('id', c.id); if (error) return fail(error); toast('บันทึกการส่งแล้ว'); reload(); }; }
+  const nw = $('#of-new', d); if (nw) nw.onclick = () => dlgOffer(c, passed, reload);
+  d.querySelectorAll('[data-ivapp]').forEach(b => b.onclick = async () => { const { data: ex } = await sb.from('interview_sessions').select('id').eq('application_id', b.dataset.ivapp).order('round', { ascending:false }).limit(1);
+    if (ex?.length) return dlgIVR(ex[0].id); if (!ivW()) return toast('ยังไม่มี Interview Record', true); d.close(); ivOpenFromApp(b.dataset.ivapp); });
+  const ecb = $('#rc-ec', d); if (ecb) ecb.onclick = async () => { const { data } = await sb.from('hr_forms').select('*').eq('id', ec.id).single(); if (data) { S.hrDocs = S.hrDocs || docs; dlgHRF('FM-HR-01-04', data, null, !['draft','returned'].includes(data.status) && !(data.status === 'submitted' && data.agent_status === 'returned')); } };
+  d.querySelectorAll('[data-ob]').forEach(b => b.onclick = async () => { const ev = b.dataset.s === 'done' ? prompt('หลักฐาน (เช่น เลขรับแจ้ง สปส. / ใบลงชื่อ) — เว้นว่างได้') : prompt('เหตุผลที่ไม่เกี่ยว'); if (ev === null) return;
+    const { error } = await sb.from('onboarding_tasks').update({ status:b.dataset.s, evidence:ev.trim() || null }).eq('id', b.dataset.ob); if (error) return fail(error); toast('บันทึกแล้ว'); reload(); });
+  const cc = $('#rc-cancel', d); if (cc) cc.onclick = async () => { const r = prompt('เหตุผลที่ยกเลิกเคส'); if (!r || !r.trim()) return;
+    const { error } = await sb.from('recruitment_cases').update({ stage:'cancelled', close_reason:r.trim(), closed_at:new Date().toISOString() }).eq('id', c.id); if (error) return fail(error); toast('ยกเลิกเคสแล้ว'); reload(); };
+  d.querySelectorAll('[data-of]').forEach(b => b.onclick = async () => { const id = b.dataset.of, a = b.dataset.oa, o = offers.find(x => x.id === id); let patch = null;
+    if (a === 'submit') patch = { status:'submitted' };
+    else if (a === 'approve' || a === 'return') { let note = null;
+      if (a === 'return') { note = prompt('เหตุผลที่ตีกลับ'); if (note === null) return; }
+      else if (o.agent_status !== 'passed') { note = prompt(`Agent AC ส่งกลับ:\n${(o.agent_issues || []).filter(x => x.level === 'block').map(x => '• ' + x.msg).join('\n') || '(ยังไม่ได้ตรวจ)'}\n\nถ้าจะอนุมัติทับ พิมพ์เหตุผล:`); if (note === null) return; if (note.trim().length < 5) return toast('เหตุผลต้องอย่างน้อย 5 ตัวอักษร', true); }
+      else if (!confirm(`อนุมัติข้อเสนอ ${o.no}?${(o.agent_issues || []).length ? '\n\nข้อสังเกตจาก Agent AC:\n' + o.agent_issues.map(x => '• ' + x.msg).join('\n') : ''}`)) return;
+      const { error } = await sb.rpc('decide', { p_doc_type:'offer', p_doc_id:id, p_action:a, p_note:note }); if (error) return fail(error); toast(a === 'approve' ? 'อนุมัติข้อเสนอแล้ว' : 'ตีกลับแล้ว'); return reload(); }
+    else if (a === 'sent') { if (!confirm('ยืนยันว่าส่งข้อความ LINE (L05) ถึงผู้สมัครแล้ว?')) return; patch = { status:'sent' }; }
+    else if (a === 'accepted') { const ev = prompt('หลักฐานการตอบรับ (เช่น "ตอบรับใน LINE 21 ต.ค. 10:05" / แนบไฟล์ลงชื่อ)'); if (!ev || !ev.trim()) return; patch = { status:'accepted', evidence_note:ev.trim() }; }
+    else if (a === 'declined') { const r = prompt('เหตุผลที่ผู้สมัครไม่ตกลง (บันทึกไว้เพื่อเจรจาใหม่หรือเลือกผู้สมัครสำรอง)'); if (!r || !r.trim()) return; patch = { status:'declined', decline_reason:r.trim() }; }
+    else if (a === 'expired' || a === 'withdrawn') { if (!confirm(a === 'expired' ? 'ปิดข้อเสนอเพราะหมดอายุ?' : 'ถอนข้อเสนอนี้?')) return; patch = { status:a }; }
+    const { data: r, error } = await sb.from('hr_offers').update(patch).eq('id', id).select('status,agent_status,agent_issues').single(); if (error) return fail(error);
+    if (a === 'submit') toast(r.agent_status === 'passed' ? 'Agent AC ตรวจผ่าน — รอผู้มีอำนาจอนุมัติ' : 'Agent AC ส่งกลับ: ' + (r.agent_issues || []).filter(x => x.level === 'block').map(x => x.msg).join(' · '), r.agent_status !== 'passed');
+    else if (a === 'accepted') toast('ตอบรับแล้ว — ระบบเติมค่าจ้างและวันเริ่มงานลงร่างสัญญาจ้างให้แล้ว ส่ง BN15 ตรวจ');
+    else if (a === 'declined') toast('บันทึกแล้ว — เคสกลับไปขั้นสัมภาษณ์: เจรจาใหม่ (สร้างข้อเสนอรอบถัดไป) หรือเลือกผู้สมัครสำรอง');
+    else toast('บันทึกแล้ว');
+    reload(); });
+}
+function dlgOffer(c, passed, after){
+  const d = dialog(`ข้อเสนอจ้าง · เคส ${c.no}`, `<p class="small mut" style="margin:0 0 6px">BN15 เสนอค่าจ้าง → Agent AC ตรวจงบ → ผู้มีอำนาจตาม DOA อนุมัติ → HR ส่ง LINE (L05) · ผู้เสนอกับผู้อนุมัติต้องคนละคน</p>
+    <div class="field"><label for="of-a">ผู้สมัคร (สัมภาษณ์ผ่านแล้ว)</label><select id="of-a" class="inp" required>${passed.map(a => `<option value="${a.id}">${h(a.no)} · ${h(a.data?.full_name || '')}${a.data?.expected_salary ? ` · ขอ ${money(a.data.expected_salary)}` : ''}</option>`).join('')}</select></div>
+    ${['pp','ap'].map(p => `<div class="pb-cat"><b>${p === 'pp' ? 'ระหว่างทดลองงาน' : 'หลังผ่านทดลองงาน'}</b><div class="row">${[['b','เงินเดือน'],['x','ค่าประสบการณ์'],['s','ค่ากะ']].map(([k, l]) => `<div class="field"><label for="of-${p}${k}">${l}</label><input id="of-${p}${k}" class="inp mono" type="number" min="0" step="0.01"></div>`).join('')}</div></div>`).join('')}
+    <div class="row"><div class="field"><label for="of-st">วันเริ่มงาน</label><input id="of-st" class="inp" type="date" required></div><div class="field"><label for="of-ex">ตอบรับภายใน</label><input id="of-ex" class="inp" type="date" value="${addD(todayStr(), 7)}"></div></div>
+    <div class="field"><label for="of-nt">หมายเหตุ / เงื่อนไขอื่น</label><input id="of-nt" class="inp"></div>
+    <label class="small" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="of-send" checked> ส่งให้ Agent AC ตรวจและขออนุมัติทันที</label>`, 'บันทึก', async dd => {
+      const v = k => +$(`#of-${k}`, dd).value || 0, pay = {};
+      ['pp','ap'].forEach(p => { pay[p + '_base'] = v(p + 'b'); pay[p + '_exp'] = v(p + 'x'); pay[p + '_shift'] = v(p + 's'); pay[p + '_total'] = v(p + 'b') + v(p + 'x') + v(p + 's'); });
+      const row = { company_id:S.cid, case_id:c.id, application_id:$('#of-a', dd).value, pay, start_date:$('#of-st', dd).value || null, expires_on:$('#of-ex', dd).value || null, note:$('#of-nt', dd).value.trim() || null, status:$('#of-send', dd).checked ? 'submitted' : 'draft' };
+      const { data: r, error } = await sb.from('hr_offers').insert(row).select('no,agent_status,agent_issues').single(); if (error) { fail(error); return false; }
+      toast(row.status === 'draft' ? `บันทึก ${r.no} แล้ว` : r.agent_status === 'passed' ? `${r.no}: Agent AC ตรวจผ่าน — รอผู้มีอำนาจอนุมัติ` : `${r.no}: Agent AC ส่งกลับ — ${(r.agent_issues || []).filter(x => x.level === 'block').map(x => x.msg).join(' · ')}`, row.status !== 'draft' && r.agent_status !== 'passed');
+      after();
+    });
+  const a = $('#of-a', d), fillSt = () => { const x = passed.find(p => p.id === a.value); const iv = (S.rcDocs || []).find(z => z.form === 'FM-HR-01-03' && z.data?.application_id === x?.id); if (iv?.data?.start_date) $('#of-st', d).value = iv.data.start_date; else if (x?.data?.available_date) $('#of-st', d).value = x.data.available_date; };
+  a.onchange = fillSt; fillSt();
+}
+
+/* ---------- Interview & Question Card (p1_26) — 1 ผู้สมัคร = 1 Interview Record ต่อรอบ ---------- */
+const IVS = { draft:['ร่าง',''], scheduled:['นัดแล้ว','blue'], questions_sent:['ส่งคำถามแล้ว','gold'], answers_received:['ได้รับคำตอบ','amber'], ai_evaluated:['AI ประเมินแล้ว','blue'],
+  hr_reviewed:['HR รับรองแล้ว','good'], pending_approval:['รอผู้มีอำนาจ','gold'], approved:['อนุมัติ (ผ่าน)','good'], rejected:['ไม่ผ่าน','crit'], more_info_requested:['ขอข้อมูลเพิ่ม','amber'],
+  applicant_notified:['แจ้งผลแล้ว','good'], archived:['เก็บเข้าแฟ้ม',''] };
+const IV_FLOW = ['draft','scheduled','questions_sent','answers_received','ai_evaluated','hr_reviewed','pending_approval','approved','applicant_notified','archived'];
+const IV_REC = { pass:'ผ่าน', fail:'ไม่ผ่าน', more_info:'ขอข้อมูลเพิ่ม', pending:'รอพิจารณา' };
+const IV_FLAG = { no_answer:'ไม่ตอบ = 0 (V2.0)', missing_from_ai:'AI ไม่ส่งผล', invalid_score:'คะแนนผิดรูปแบบ', score_missing:'ไม่มีคะแนน', quote_not_in_answer:'อ้างข้อความที่ไม่มีในคำตอบ (ตัดออกแล้ว)',
+  no_evidence_quote:'ไม่มีหลักฐานอ้างอิง', possible_prompt_injection:'คำตอบพยายามสั่งระบบ — ไม่ใช้คะแนน AI', safety_low:'ข้อความปลอดภัยคะแนนต่ำ' };
+const ivW = () => S.isOwner || can('hr','c') || can('hr','e');
+const ivR = () => ivW() || can('hr','r');
+const ivLevel = { 1:'พื้นฐาน', 2:'มาตรฐาน', 3:'เชิงลึก' };
+
+/* parse answers pasted from LINE: "1. ...", "1) ...", "ข้อ 1 ...", "ตอบข้อ 1: ..." */
+function ivParse(text){
+  const L = (text || '').replace(/\r/g, '').split('\n'), out = []; let cur = null;
+  const re = /^\s*(?:ตอบ\s*)?(?:ข้อ(?:ที่)?\s*)?(\d{1,2})\s*[.)\]:：\-–]\s*(.*)$|^\s*(?:ตอบ\s*)?ข้อ(?:ที่)?\s*(\d{1,2})\s+(.*)$/;
+  for (const l of L) { const m = l.match(re);
+    if (m) { cur = { no:+(m[1] || m[3]), text:(m[2] ?? m[4] ?? '').trim() }; out.push(cur); }
+    else if (cur) cur.text += (cur.text ? '\n' : '') + l.trim();
+    else if (l.trim()) { cur = { no:null, text:l.trim() }; out.push(cur); } }
+  return out.map(x => ({ ...x, text:x.text.trim() })).filter(x => x.text || x.no);
+}
+function ivLineText(sess, set, app, deadline){
+  return `📋 SMART 3E — แบบสัมภาษณ์งาน\nตำแหน่ง: ${sess._pos?.title || app?.data?.position || ''}\nรหัสผู้สมัคร: ${app?.no || ''}\nรหัสชุดคำถาม: ${set.set_code}\nกรุณาตอบคำถามตามหมายเลขข้อ และอธิบายจากความรู้หรือประสบการณ์จริง\nส่งคำตอบกลับภายใน ${deadline || '{กำหนดส่ง}'}\n\n` +
+    set.items.map(x => `${x.no}. ${x.text}`).join('\n\n') + `\n\nขอบคุณครับ/ค่ะ — ฝ่ายทรัพยากรบุคคล`;
+}
+async function ivCopy(txt, sid, tpl){
+  try { await navigator.clipboard.writeText(txt); toast('คัดลอกแล้ว — วางใน LINE ได้เลย'); }
+  catch(e){ const t = document.createElement('textarea'); t.value = txt; document.body.appendChild(t); t.select(); let ok = false; try { ok = document.execCommand('copy'); } catch(_){} t.remove(); toast(ok ? 'คัดลอกแล้ว' : 'คัดลอกไม่สำเร็จ — กดค้างที่ข้อความแล้วคัดลอกเอง', !ok); if (!ok) return; }
+  if (sid && tpl) sb.rpc('iv_log_copy', { p_session:sid, p_template:tpl, p_note:null }).then(({ error }) => error && console.warn(error));
+}
+
+/* ===== tab: interview records (PC dashboard + mobile list) ===== */
+async function pageHRIV(){
+  const el = $('#page');
+  el.innerHTML = `<div class="ph"><div><h1>งานบุคคล · สัมภาษณ์</h1><p class="mut small" style="margin:4px 0 0">1 ผู้สมัคร = 1 Interview Record ต่อรอบ · สุ่มคำถามจากคลัง (หลัก 60% / เฉพาะทาง 40%) · ส่ง LINE แบบคัดลอก · วางคำตอบ · AI ร่างคะแนน → <b>HR ตรวจและรับรอง</b> → ผู้มีอำนาจพิจารณาผ่าน FM-HR-01-03 · AI ไม่ตัดสินผล</p></div><div class="act">${hrTabs()}</div></div><div id="hr-b"><div class="empty">กำลังโหลด…</div></div>`;
+  bindHrTabs();
+  const [SS, F, QB] = await Promise.all([
+    sb.from('interview_sessions').select('*').eq('company_id', S.cid).order('created_at', { ascending:false }),
+    sb.from('hr_forms').select('id,no,form,status,data,project_id,created_at').eq('company_id', S.cid).eq('form', 'FM-HR-01-02').order('created_at', { ascending:false }),
+    sb.from('hr_question_bank').select('bank,is_core,active,position_code').eq('company_id', S.cid)]);
+  if (SS.error) return $('#hr-b').innerHTML = `<div class="msg err">${h(errText(SS.error))}</div>`;
+  await hrPositions();
+  const ss = SS.data || [], apps = F.data || [], qb = QB.data || [], app = id => apps.find(a => a.id === id), pos = c => (S.hrPos || []).find(p => p.code === c);
+  S.ivApps = apps;
+  const q = (S.ivQ || '').toLowerCase(), fs = S.ivSt || '';
+  const rows = ss.filter(s => (!fs || s.status === fs) && (!q || [s.no, app(s.application_id)?.data?.full_name, app(s.application_id)?.no, pos(s.position_code)?.title].join(' ').toLowerCase().includes(q)));
+  const banks = countBy(qb, x => x.bank), C = await hrContent();
+  const noRec = apps.filter(a => !['rejected','cancelled'].includes(a.status) && !ss.some(s => s.application_id === a.id));
+  $('#hr-b').innerHTML = `
+    <div class="stats">${stat('Interview Record', cnt(ss.length), `ใบสมัครที่ยังไม่เปิด ${noRec.length}`)}${stat('รอคำตอบ / รอ HR ตรวจ', cnt(ss.filter(s => s.status === 'questions_sent').length) + ' / ' + cnt(ss.filter(s => ['answers_received','ai_evaluated'].includes(s.status)).length), 'ต้องติดตาม', ss.some(s => ['answers_received','ai_evaluated'].includes(s.status)) ? 'gold' : '')}
+      ${stat('รอผู้มีอำนาจ', cnt(ss.filter(s => s.status === 'pending_approval').length), 'ผ่าน FM-HR-01-03')}${stat('คลังคำถาม', cnt(qb.length) + ' ข้อ', `${banks.length} ตำแหน่ง`, qb.length ? '' : 'crit')}</div>
+    ${!qb.length ? `<div class="msg warn">ยังไม่มีคำถามในคลังฐานข้อมูล — ${ivW() && C?.qbmeta ? 'กดปุ่ม "นำเข้าคลังคำถาม" (ครั้งเดียว: ชุดละเอียด 200 ข้อ + ชุดถาม-ตอบ V2.0 80 ข้อ)' : 'ผู้มีสิทธิ์แก้ไขงานบุคคลต้องนำเข้าคลังคำถามก่อน'}</div>` : ''}
+    <div class="panel"><div class="hd" style="flex-wrap:wrap;gap:8px"><input id="iv-q" class="inp" placeholder="ค้นหา ชื่อ / เลขที่ / ตำแหน่ง" style="max-width:260px" value="${h(S.ivQ || '')}">
+      <select id="iv-st" class="inp" style="width:auto"><option value="">ทุกสถานะ</option>${Object.entries(IVS).map(([k, v]) => `<option value="${k}" ${fs === k ? 'selected' : ''}>${v[0]}</option>`).join('')}</select>
+      <span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">${ivW() && C?.qbmeta ? `<button class="btn sm" id="iv-imp">นำเข้าคลังคำถาม</button>` : ''}${ivW() ? `<button class="btn sm accent" id="iv-new">+ เปิด Interview Record</button>` : ''}</span></div>
+      <div class="tw">${rows.length ? `<table><thead><tr><th>เลขที่</th><th>ผู้สมัคร</th><th>ตำแหน่ง</th><th>รอบ / นัด</th><th>สถานะ</th><th>คะแนนที่รับรอง</th><th>ข้อเสนอ HR</th></tr></thead><tbody>
+        ${rows.map(s => { const a = app(s.application_id); return `<tr class="clk" data-ivs="${s.id}"><td class="mono small">${h(s.no)}<div class="faint">${h(a?.no || '')}</div></td><td>${h(a?.data?.full_name || '—')}</td>
+          <td class="small">${h(pos(s.position_code)?.title || '—')}<div class="faint mono">${h(s.position_code || 'ไม่มีรหัส')}</div></td><td class="small">รอบ ${s.round}${s.scheduled_at ? `<div class="mut">${new Date(s.scheduled_at).toLocaleString('th-TH', { dateStyle:'medium', timeStyle:'short' })}</div>` : ''}</td>
+          <td>${chip(IVS, s.status)}</td><td class="num">${s.certified_at ? `<b>${Number(s.weighted_total ?? 0).toFixed(2)}</b>/5<div class="small faint">ครอบคลุม ${Math.round((s.coverage || 0) * 100)}%</div>` : '—'}</td><td class="small">${h(IV_REC[s.recommendation] || '')}</td></tr>`; }).join('')}</tbody></table>`
+        : `<div class="empty">${ss.length ? 'ไม่มีรายการตามตัวกรอง' : 'ยังไม่มี Interview Record — เปิดจากใบสมัคร (FM-HR-01-02)'}</div>`}</div></div>
+    <div class="panel"><div class="hd"><b>คลังคำถาม (Question Bank)</b><span class="small mut" style="margin-left:auto">HR ดูแล · เปลี่ยนข้อความ/เกณฑ์แล้วเวอร์ชันขึ้นเอง</span></div>
+      <div class="tw"><table><thead><tr><th>ชุด</th><th>ตำแหน่ง</th><th>ทั้งหมด</th><th>คำถามหลัก</th><th>ใช้งาน</th></tr></thead><tbody>
+      ${banks.length ? banks.map(([b, n]) => `<tr class="clk" data-qbk="${h(b)}"><td class="mono">${h(b)}</td><td class="small">${h((S.hrPos || []).filter(p => p.qb_doc === b || qb.some(x => x.bank === b && x.position_code === p.code)).map(p => p.title).join(', '))}</td><td class="num">${n}</td><td class="num">${qb.filter(x => x.bank === b && x.is_core).length}</td><td class="num">${qb.filter(x => x.bank === b && x.active).length}</td></tr>`).join('') : '<tr><td colspan="5" class="empty">ว่าง</td></tr>'}</tbody></table></div></div>${asOf()}`;
+  $('#iv-q').oninput = e => { S.ivQ = e.target.value; clearTimeout(pageHRIV.t); pageHRIV.t = setTimeout(pageHRIV, 250); };
+  $('#iv-st').onchange = e => { S.ivSt = e.target.value; pageHRIV(); };
+  document.querySelectorAll('[data-ivs]').forEach(r => r.onclick = () => dlgIVR(r.dataset.ivs));
+  document.querySelectorAll('[data-qbk]').forEach(r => r.onclick = () => dlgQBank(r.dataset.qbk));
+  const nb = $('#iv-new'); if (nb) nb.onclick = () => dlgIVNew(noRec);
+  const ib = $('#iv-imp'); if (ib) ib.onclick = () => ivImportBank(C);
+}
+function dlgIVNew(apps){
+  if (!apps.length) return toast('ไม่มีใบสมัครที่ยังไม่เปิด Interview Record — สร้างใบสมัคร (FM-HR-01-02) ก่อน', true);
+  dialog('เปิด Interview Record', `<div class="field"><label for="ivn-a">ใบสมัคร</label><select id="ivn-a" class="inp">${apps.map(a => `<option value="${a.id}">${h(a.no)} · ${h(a.data?.full_name || '')} · ${h(a.data?.position || '')}</option>`).join('')}</select></div>
+    <p class="small faint">ระบบหาตำแหน่งจากใบขออัตรา/ชื่อตำแหน่งให้เอง เปลี่ยนได้ใน Interview Card ก่อนส่งคำถาม</p>`, 'เปิด', async d => {
+      const { data, error } = await sb.rpc('iv_open', { p_application:$('#ivn-a', d).value, p_new_round:false }); if (error) { fail(error); return false; }
+      toast(`เปิด ${data.no} แล้ว`); pageHRIV(); setTimeout(() => dlgIVR(data.id), 50); });
+}
+async function ivOpenFromApp(appId, after){
+  const { data, error } = await sb.rpc('iv_open', { p_application:appId, p_new_round:false });
+  if (error) return fail(error);
+  dlgIVR(data.id, after);
+}
+async function ivImportBank(C){
+  if (!C?.qbmeta) return toast('ไม่พบข้อมูลคลังคำถามใน hr-content.json', true);
+  if (!confirm('นำเข้าคลังคำถามจาก hr-content.json?\n• ชุดละเอียด 5 ตำแหน่ง (QB-…, 200 ข้อ)\n• ชุดถาม-ตอบ V2.0 4 ตำแหน่ง (QA-…, 80 ข้อ)\nข้อที่มีอยู่แล้วจะไม่ถูกแก้')) return;
+  const rows = [];
+  for (const [bank, m] of Object.entries(C.qbmeta)) for (const q of (C.qb[bank] || [])) {
+    const kind = q.c[0] === 'H' ? 'hard' : 'soft';
+    rows.push({ company_id:S.cid, question_id:`${bank}-${q.c}`, bank, position_code:m.pos, kind, competency:q.s ? 'ความปลอดภัย' : kind === 'hard' ? 'ความรู้เทคนิค' : 'พฤติกรรมการทำงาน',
+      difficulty:m.diff[q.c] || 2, is_core:!!m.core[q.c], core_rank:m.core[q.c] || null, safety:!!q.s, title:q.t, question_text:q.q, measures:q.m,
+      evaluation_rubric:{ 5:q.r5, 3:q.r3, 1:q.r1, warn:q.w || '' }, expected_evidence:q.g, weight:q.s ? 1.5 : kind === 'hard' ? 1.2 : 1.0 });
+  }
+  for (const [bank, m] of Object.entries(C.qa || {})) for (const q of m.items) rows.push({ company_id:S.cid, question_id:q.c, bank, position_code:m.pos, kind:'hard',
+    competency:q.s ? 'ความปลอดภัย' : 'สมรรถนะตำแหน่ง', difficulty:m.diff[q.c] || 2, is_core:!!m.core[q.c], core_rank:m.core[q.c] || null, safety:!!q.s, title:q.t, question_text:q.q, measures:null,
+    evaluation_rubric:{ ...(C.qascale || {}), guide:q.g }, expected_evidence:[q.g], weight:q.s ? 1.5 : 1.2 });
+  let ok = 0;
+  for (let i = 0; i < rows.length; i += 50) { const { error } = await sb.from('hr_question_bank').upsert(rows.slice(i, i + 50), { onConflict:'company_id,question_id', ignoreDuplicates:true }); if (error) return fail(error); ok += Math.min(50, rows.length - i); }
+  toast(`นำเข้าคลังคำถามแล้ว ${ok} ข้อ (ข้ามข้อที่มีอยู่แล้ว)`); pageHRIV();
+}
+async function dlgQBank(bank){
+  const { data, error } = await sb.from('hr_question_bank').select('*').eq('company_id', S.cid).eq('bank', bank).order('question_id'); if (error) return fail(error);
+  const canE = S.isOwner || can('hr','e');
+  const d = dialog(`คลังคำถาม ${bank}`, `<div class="tw"><table><thead><tr><th>รหัส</th><th>คำถาม</th><th>กลุ่ม</th><th>ยาก</th><th>น้ำหนัก</th><th>v</th><th>ใช้</th></tr></thead><tbody>
+    ${data.map(q => `<tr><td class="mono small">${h(q.question_id.slice(-3))}</td><td class="small"><b>${h(q.title)}</b>${q.safety ? ' <span class="chip crit">ความปลอดภัย</span>' : ''}<div class="mut">${h(q.question_text)}</div></td>
+      <td class="small">${q.is_core ? `<span class="chip amber">หลัก #${q.core_rank}</span>` : 'เฉพาะทาง'}<div class="faint">${h(q.competency)}</div></td><td class="num">${q.difficulty}</td><td class="num">${q.weight}</td><td class="num">${q.version}</td>
+      <td><input type="checkbox" data-qba="${q.id}" ${q.active ? 'checked' : ''} ${canE ? '' : 'disabled'}></td></tr>`).join('')}</tbody></table></div>
+    <p class="small faint">ปิด "ใช้" = ไม่ถูกสุ่มในชุดใหม่ (ชุดที่ส่งแล้วยังเก็บ question_id + เวอร์ชันเดิม) · แก้ข้อความ/เกณฑ์ในฐานข้อมูลแล้วเวอร์ชันเพิ่มเอง</p>`, 'ปิด', async () => true);
+  d.style.width = 'min(980px,calc(100% - 24px))'; d.querySelector('button[value=cancel]')?.remove();
+  d.querySelectorAll('[data-qba]').forEach(c => c.onchange = async () => { const { error } = await sb.from('hr_question_bank').update({ active:c.checked }).eq('id', c.dataset.qba); if (error) { c.checked = !c.checked; return fail(error); } toast(c.checked ? 'เปิดใช้แล้ว' : 'ปิดใช้แล้ว'); });
+}
+
+/* ===== Interview Card (mobile + PC) ===== */
+async function ivLoad(id){
+  const [Sx, ST, A, AI, RV, NE] = await Promise.all([
+    sb.from('interview_sessions').select('*').eq('id', id).single(),
+    sb.from('interview_question_sets').select('*').eq('session_id', id).order('created_at', { ascending:false }),
+    sb.from('interview_answers').select('*').eq('session_id', id),
+    sb.from('interview_ai_evaluations').select('*').eq('session_id', id).order('created_at', { ascending:false }),
+    sb.from('interview_reviews').select('*').eq('session_id', id).order('reviewed_at', { ascending:false }),
+    sb.from('hr_notification_events').select('*').eq('session_id', id).order('sent_at', { ascending:false })]);
+  if (Sx.error) throw Sx.error;
+  const s = Sx.data, sets = ST.data || [], set = sets.find(x => !x.superseded) || null;
+  const { data: app } = await sb.from('hr_forms').select('id,no,data,project_id,status').eq('id', s.application_id).single();
+  await hrPositions(); s._pos = (S.hrPos || []).find(p => p.code === s.position_code);
+  const BK = s.position_code ? await sb.from('hr_question_bank').select('question_id,bank,title,question_text,is_core,core_rank,competency,safety,expected_evidence,evaluation_rubric,active,version')
+    .eq('company_id', s.company_id).or(`position_code.eq.${s.position_code}${s._pos?.qb_doc ? `,bank.eq.${s._pos.qb_doc}` : ''}`).order('question_id') : { data:[] };
+  const bank = BK.data || [];
+  const latest = (rows, key) => { const m = {}; for (const r of rows) if (set && r.set_id === set.id && !m[r[key]]) m[r[key]] = r; return m; };
+  return { s, sets, set, app, bank, qmap:Object.fromEntries(bank.map(q => [q.question_id, q])), ans:Object.fromEntries((A.data || []).filter(a => set && a.set_id === set.id).map(a => [a.question_id, a])), ai:latest(AI.data || [], 'question_id'), rv:latest(RV.data || [], 'question_id'), rvAll:RV.data || [], ne:NE.data || [] };
+}
+async function dlgIVR(id, after){
+  let X; try { X = await ivLoad(id); } catch(e){ return fail(e); }
+  const { s, set, app, ans, ai, rv, bank, qmap } = X, W = ivW() && !['approved','rejected','applicant_notified','archived','pending_approval'].includes(s.status), Rv = ivR();
+  const locked = !!set?.locked_at, certified = !!s.certified_at, canEditScores = Rv && !certified && locked;
+  const si = IV_FLOW.indexOf(s.status === 'rejected' ? 'approved' : s.status === 'more_info_requested' ? 'pending_approval' : s.status);
+  const scoreSel = (q, cur) => `<select class="inp" data-rvs="${q}" ${canEditScores ? '' : 'disabled'} style="width:auto;min-height:40px"><option value="">—</option>${[5,4,3,2,1,0].map(n => `<option value="${n}" ${cur === n ? 'selected' : ''}>${n}${n === 0 ? ' (ไม่ตอบ/ข้อมูลไม่พอ)' : ''}</option>`).join('')}</select>`;
+  const itemHtml = x => { const a = ans[x.question_id], e = ai[x.question_id], r = rv[x.question_id];
+    const cur = r ? r.final_score : e && e.provisional_score != null ? e.provisional_score : '';
+    return `<div class="ivq" data-q="${x.question_id}">
+      <div class="ivq-h"><b>${x.no}.</b> <span class="chip ${x.grp === 'core' ? 'amber' : 'blue'}">${x.grp === 'core' ? 'หลัก' : 'เฉพาะทาง'}</span> <span class="small faint">${h(x.competency)} · ระดับ ${x.difficulty} · น้ำหนัก ${x.weight} · ${h(x.question_id)} v${x.version}</span></div>
+      <div class="ivq-t">${x.title && x.title !== x.text ? `<b>${h(x.title)}</b><br>` : ''}${h(x.text)}</div>
+      ${qmap[x.question_id] ? `<details class="small ivg"><summary>แนวคำตอบ (เฉพาะผู้ประเมิน — ไม่ส่งผู้สมัคร)</summary><ul style="margin:4px 0;padding-left:18px">${(qmap[x.question_id].expected_evidence || []).map(g => `<li>${h(g)}</li>`).join('')}</ul>
+        ${['5','3','1'].filter(k => qmap[x.question_id].evaluation_rubric?.[k]).map(k => `<div><b>${k}:</b> ${h(qmap[x.question_id].evaluation_rubric[k])}</div>`).join('')}${qmap[x.question_id].evaluation_rubric?.warn ? `<div style="color:var(--crit)">สัญญาณเตือน: ${h(qmap[x.question_id].evaluation_rubric.warn)}</div>` : ''}</details>` : ''}
+      <div class="gates"><button type="button" class="btn sm" data-cpq="${x.no}">คัดลอกข้อนี้</button>${!locked && W ? `<button type="button" class="btn sm ghost" data-rpq="${x.question_id}">เปลี่ยนคำถาม</button>` : ''}</div>
+      ${locked ? `<label class="small mut" for="ans-${x.no}">คำตอบผู้สมัคร</label><textarea id="ans-${x.no}" class="inp" rows="3" data-ans="${x.question_id}" ${W && !certified && !s.answers_purged_at ? '' : 'disabled'} placeholder="${s.answers_purged_at ? 'ลบตามนโยบายแล้ว' : `วางคำตอบข้อ ${x.no}`}">${h(a?.answer_text || '')}</textarea>` : ''}
+      ${e ? `<div class="msg ${e.not_assessable ? 'warn' : 'info'} small" style="margin:6px 0"><b>AI ร่าง:</b> ${e.provisional_score == null ? 'ไม่ให้คะแนน — HR ประเมินเอง' : `${e.provisional_score}/5`} · ความมั่นใจ ${Math.round((e.confidence || 0) * 100)}%
+        ${(e.flags || []).length ? `<div style="color:var(--crit)">⚠ ${e.flags.map(f => h(IV_FLAG[f] || f)).join(' · ')}</div>` : ''}
+        ${(e.evidence_quotes || []).length ? `<div>หลักฐาน: ${e.evidence_quotes.map(q => `“${h(q)}”`).join(' · ')}</div>` : ''}
+        ${e.strengths ? `<div>จุดแข็ง: ${h(e.strengths)}</div>` : ''}${e.gaps ? `<div>ช่องว่าง: ${h(e.gaps)}</div>` : ''}${e.rationale ? `<div class="mut">เหตุผล: ${h(e.rationale)}</div>` : ''}
+        ${e.follow_up_question ? `<div>คำถามต่อยอด: ${h(e.follow_up_question)}</div>` : ''}</div>` : ''}
+      ${locked ? `<div class="row ivq-rv"><div class="field" style="flex:0 0 auto"><label>คะแนน HR</label>${scoreSel(x.question_id, cur)}</div>
+        <div class="field"><label>เหตุผล (บังคับเมื่อต่างจาก AI)</label><input class="inp" data-rvr="${x.question_id}" value="${h(r?.reason || '')}" ${canEditScores ? '' : 'disabled'}></div>
+        <div class="field"><label>ความเห็นผู้ประเมิน</label><input class="inp" data-rvc="${x.question_id}" value="${h(r?.comment || '')}" ${canEditScores ? '' : 'disabled'}></div></div>
+        ${r ? `<div class="small faint">HR ยืนยันแล้ว ${new Date(r.reviewed_at).toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' })}${r.ai_score != null && r.final_score !== r.ai_score ? ` · แก้จาก AI ${r.ai_score}` : ''}</div>` : ''}` : ''}
+    </div>`; };
+  const prev = () => { if (!set) return ''; let ws = 0, w = 0, n = 0;
+    for (const x of set.items) { const r = rv[x.question_id]; if (r && !r.not_assessable) { ws += r.final_score * x.weight; w += +x.weight; n++; } }
+    return w ? `คะแนนถ่วงน้ำหนัก (ข้อที่ HR ยืนยันแล้ว) <b>${(ws / w).toFixed(2)}</b>/5 · ยืนยันแล้ว ${n}/${set.items.length} ข้อ · เกณฑ์ V2.0: ไม่ตอบ = 0` : 'ยังไม่มีคะแนนที่ HR ยืนยัน · เกณฑ์ V2.0: 5 ครบถ้วนปลอดภัย · 4 ส่วนใหญ่ถูก · 3 พื้นฐาน · 2 บางส่วน · 1 ส่วนใหญ่ผิด · 0 ไม่ตอบ/ข้อมูลไม่พอ'; };
+  const d = dialog(`Interview Record ${s.no} · รอบ ${s.round}`, `
+    <div class="gs" style="min-width:0;margin-bottom:8px"><div class="gs-bar" style="max-width:none;grid-template-columns:repeat(${IV_FLOW.length},1fr)">${IV_FLOW.map((k, i) => `<i style="background:${i < si ? 'var(--good)' : i === si ? 'var(--amber)' : 'var(--line)'}"${i === si ? ' class="cur"' : ''}></i>`).join('')}</div>
+      <div class="gs-t">${chip(IVS, s.status)} ${s.recommendation ? `· ข้อเสนอ HR: <b>${h(IV_REC[s.recommendation])}</b>` : ''} ${s.certified_at ? `· รับรอง ${new Date(s.certified_at).toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' })}` : ''}</div></div>
+    ${s.answers_purged_at ? `<div class="msg warn small">ลบคำตอบของผู้สมัครแล้วตามนโยบาย (ไม่ได้รับเลือก · ${new Date(s.answers_purged_at).toLocaleDateString('th-TH')}) — เหลือเฉพาะคำถาม คะแนน และประวัติ</div>` : ''}
+    <div class="ivhead"><div><small>ผู้สมัคร</small><b>${h(app?.data?.full_name || '—')}</b><span class="mono small">${h(app?.no || '')}</span></div>
+      <div><small>ตำแหน่ง</small>${W && !locked ? `<select id="iv-pos" class="inp">${(S.hrPos || []).filter(p => p.qb_doc).map(p => `<option value="${p.code}" ${p.code === s.position_code ? 'selected' : ''}>${h(p.title)} (${h(p.qb_doc)})</option>`).join('')}${s.position_code && !s._pos?.qb_doc ? `<option value="" selected>${h(s._pos?.title || s.position_code)} — ไม่มีคลังคำถาม</option>` : ''}${!s.position_code ? '<option value="" selected>— เลือก —</option>' : ''}</select>` : `<b>${h(s._pos?.title || '—')}</b><span class="mono small">${h(s.position_code || '')}</span>`}</div>
+      <div><small>วันเวลาสัมภาษณ์</small>${W ? `<input id="iv-at" class="inp" type="datetime-local" value="${s.scheduled_at ? new Date(new Date(s.scheduled_at) - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : ''}">` : `<b>${s.scheduled_at ? new Date(s.scheduled_at).toLocaleString('th-TH') : '—'}</b>`}</div>
+      <div><small>ผู้สัมภาษณ์ / บทบาท</small>${W ? `<input id="iv-note" class="inp" value="${h(s.interviewer_note || '')}" placeholder="เช่น คุณ ก. (หัวหน้างาน) · คุณ ข. (HR)">` : `<b>${h(s.interviewer_note || '—')}</b>`}</div></div>
+    ${W ? `<div class="gates" style="margin:6px 0 10px"><button type="button" class="btn sm" id="iv-save-h">บันทึกนัด/ตำแหน่ง</button></div>` : ''}
+
+    <h4 style="margin:12px 0 4px">1 · ชุดคำถาม ${set ? `<span class="mono small">${h(set.set_code)}</span> ${locked ? `<span class="chip good">ส่งแล้ว · ล็อก</span>` : '<span class="chip gold">ยังไม่ส่ง</span>'}` : ''}</h4>
+    ${W && !locked ? `<div class="row ivdraw"><div class="field"><label for="iv-bk">คลังคำถาม</label><select id="iv-bk" class="inp">${[...new Set(bank.map(q => q.bank))].map(b => `<option value="${h(b)}" ${b === (set?.bank || s._pos?.qb_doc) ? 'selected' : ''}>${h(b)} · ${bank.filter(q => q.bank === b && q.active).length} ข้อ${b.startsWith('QA-') ? ' (ถาม-ตอบ V2.0)' : ' (ละเอียด)'}</option>`).join('') || '<option value="">— ยังไม่มีคลัง (นำเข้าก่อน) —</option>'}</select></div>
+      <div class="field"><label for="iv-md">โหมด</label><select id="iv-md" class="inp">${[['random','สุ่ม (หลัก 60 / เฉพาะทาง 40)'],['all','ทั้งหมดในคลัง'],['pick','เลือกเอง']].map(([k, l]) => `<option value="${k}" ${k === (set?.mode || 'random') ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field" data-rnd><label for="iv-n">จำนวนข้อ</label><select id="iv-n" class="inp">${[3,5,7,10].map(n => `<option ${n === (set?.n || 5) ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+      <div class="field" data-rnd><label for="iv-lv">ระดับความยาก</label><select id="iv-lv" class="inp">${[1,2,3].map(n => `<option value="${n}" ${n === (set?.level || 2) ? 'selected' : ''}>${n} · ${ivLevel[n]}</option>`).join('')}</select></div>
+      <div class="field" style="flex:0 0 auto;align-self:end"><button type="button" class="btn primary" id="iv-draw">${set ? 'สร้างชุดใหม่' : 'สุ่ม / สร้างชุดคำถาม'}</button></div></div>
+      <div id="iv-pick" class="ivpick" hidden></div><p class="small faint" id="iv-split"></p>` : ''}
+    ${set ? `<div class="small mut">คลัง ${h(set.bank || '')} · โหมด ${({ random:'สุ่ม', all:'ทั้งหมด', pick:'เลือกเอง' })[set.mode] || set.mode} · หลัก ${set.core_n} ข้อ${set.mode === 'random' ? ' (เหมือนกันทุกคนในตำแหน่ง/ระดับเดียวกัน)' : ''} · เฉพาะทาง ${set.spec_n} ข้อ${set.mode === 'random' ? ` (seed ${set.seed} กระจายตามสมรรถนะ) · ระดับ ${set.level}` : ''}</div>
+      ${!locked && W ? `<div class="row" style="margin-top:6px"><div class="field"><label for="iv-dl">กำหนดส่งคำตอบ</label><input id="iv-dl" class="inp" value="${h(addD(todayStr(), 2))} 17:00"></div></div>
+        <div class="gates"><button type="button" class="btn" id="iv-cpall">คัดลอกชุดคำถามส่ง LINE</button><button type="button" class="btn primary" id="iv-sent">ยืนยันส่ง LINE แล้ว (ล็อกชุด)</button></div>` : `<div class="gates" style="margin-top:6px"><button type="button" class="btn sm" id="iv-cpall">คัดลอกชุดคำถามอีกครั้ง</button></div>`}
+      ${set.items.map(itemHtml).join('')}` : '<div class="small faint">ยังไม่ได้สุ่มคำถาม</div>'}
+
+    ${locked ? `<h4 style="margin:14px 0 4px">2 · คำตอบจาก LINE</h4>
+      ${W && !certified ? `<details class="pb-cat"><summary><b>วางคำตอบหลายข้อพร้อมกัน</b> <span class="small mut">ระบบแยกตามเลขข้อ แล้วให้ HR ตรวจการจับคู่ก่อนใช้</span></summary>
+        <textarea id="iv-paste" class="inp" rows="6" placeholder="1. คำตอบข้อหนึ่ง&#10;2. คำตอบข้อสอง"></textarea><div class="gates" style="margin-top:6px"><button type="button" class="btn sm" id="iv-parse">แยกคำตอบตามข้อ</button></div><div id="iv-map"></div></details>
+        <div class="gates" style="margin:8px 0"><button type="button" class="btn primary" id="iv-save-a">บันทึกคำตอบ</button></div>` : ''}
+      <h4 style="margin:14px 0 4px">3 · ประเมิน</h4>
+      ${W && !certified ? `<div class="gates"><button type="button" class="btn" id="iv-ai">ส่งประเมิน AI (ร่างคะแนน)</button><span class="small faint">ส่งเฉพาะคำถาม เกณฑ์ และคำตอบ — ไม่ส่งชื่อหรือข้อมูลส่วนตัวผู้สมัคร</span></div>` : ''}
+      ${canEditScores ? `<div class="gates" style="margin:8px 0"><button type="button" class="btn sm" id="iv-acc">ใช้คะแนน AI เป็นค่าเริ่มต้นทุกข้อ</button><button type="button" class="btn primary" id="iv-save-r">บันทึกคะแนน HR</button></div>` : ''}
+      <div class="msg info small" id="iv-prev">${prev()}</div>
+      <h4 style="margin:14px 0 4px">4 · รับรองผลและส่งพิจารณา</h4>
+      ${!certified && Rv && !['pending_approval','approved','rejected','applicant_notified','archived'].includes(s.status) ? `<div class="row"><div class="field"><label for="iv-rec">ข้อเสนอ HR (เป็นเพียงข้อเสนอ)</label><select id="iv-rec" class="inp">${Object.entries(IV_REC).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
+        <div class="field"><label for="iv-cn">ความเห็นรวม</label><input id="iv-cn" class="inp"></div></div><div class="gates"><button type="button" class="btn primary" id="iv-cert">รับรองผล</button></div>`
+        : certified ? `<div class="msg ok small">รับรองผลแล้ว · คะแนนรวม <b>${Number(s.weighted_total ?? 0).toFixed(2)}</b>/5 · ครอบคลุม ${Math.round((s.coverage || 0) * 100)}% (${s.assessed}/${s.total_items}) · ข้อเสนอ ${h(IV_REC[s.recommendation] || '')}</div>
+          <div class="gates">${s.status === 'hr_reviewed' && ivW() ? `<button type="button" class="btn primary" id="iv-submit">ส่งพิจารณา (FM-HR-01-03)</button><button type="button" class="btn ghost" id="iv-reopen">เปิดแก้ไข</button>` : ''}
+          ${s.status === 'more_info_requested' && ivW() ? `<button type="button" class="btn" id="iv-reopen">เปิดแก้ไขตามที่ขอข้อมูลเพิ่ม</button>` : ''}
+          ${s.iv_form_id ? `<span class="small mut">เอกสารพิจารณา: FM-HR-01-03 (ดูในแท็บเอกสาร HR)</span>` : ''}</div>` : '<div class="small faint">ต้องมีสิทธิ์ตรวจงานบุคคลจึงรับรองผลได้</div>'}
+      ${['approved','rejected'].includes(s.status) && ivW() ? `<h4 style="margin:14px 0 4px">5 · แจ้งผลผู้สมัคร (อิงผลอนุมัติจริง)</h4>
+        <div class="gates"><button type="button" class="btn" id="iv-cpres">คัดลอกข้อความแจ้งผล (${s.status === 'approved' ? 'L03' : 'L04'})</button><button type="button" class="btn primary" id="iv-notif">บันทึกว่าแจ้งผลแล้ว</button></div>
+        <p class="small faint">ข้อความไม่มีคะแนนหรือรายละเอียดภายใน · HR ตรวจและกดส่งเองใน LINE</p>` : ''}
+      ${s.status === 'applicant_notified' && ivW() ? `<div class="gates"><button type="button" class="btn ghost" id="iv-arch">เก็บเข้าแฟ้ม</button></div>` : ''}` : ''}
+    <div class="gates" style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px">${set ? `<button type="button" class="btn sm" id="iv-sum">คัดลอกสรุปผล (ภายใน)</button><button type="button" class="btn sm" id="iv-pdf">พิมพ์ / PDF</button>` : ''}<button type="button" class="btn sm ghost" id="iv-log">ประวัติ</button></div>`, 'ปิด', async () => true);
+  d.classList.add('ivdlg'); d.querySelector('button[value=cancel]')?.remove();
+  const reload = async () => { d.close(); if (S.hrTab === 'iv') pageHRIV(); await dlgIVR(id, after); };
+  const run = async (btn, fn) => { if (btn) btn.disabled = true; try { const ok = await fn(); if (ok !== false) await reload(); } catch(e){ fail(e); } finally { if (btn) btn.disabled = false; } };
+  const rpc = async (name, args) => { const { data, error } = await sb.rpc(name, args); if (error) throw error; return data; };
+  const B = sel => $(sel, d);
+  if (B('#iv-n')) { const sp = () => { const md = B('#iv-md').value, bk = B('#iv-bk').value, pool = bank.filter(q => q.bank === bk && q.active);
+      d.querySelectorAll('[data-rnd]').forEach(f => f.hidden = md !== 'random'); B('#iv-pick').hidden = md !== 'pick';
+      if (md === 'random') { const n = +B('#iv-n').value, c = Math.round(n * 0.6); B('#iv-split').textContent = `จะได้คำถามหลัก ${c} ข้อ + เฉพาะทาง ${n - c} ข้อ · ไม่ซ้ำในชุด · บันทึก seed ไว้สอบทาน`; }
+      else if (md === 'all') B('#iv-split').textContent = `ใช้ทุกข้อที่เปิดใช้ในคลัง ${bk}: ${pool.length} ข้อ (สูงสุด 40)`;
+      else { B('#iv-split').textContent = 'ติ๊กเลือกข้อตามลำดับที่ต้องการถาม (ลำดับ = ลำดับการติ๊ก)';
+        B('#iv-pick').innerHTML = pool.map(q => `<label class="ivpk"><input type="checkbox" data-pk="${h(q.question_id)}"> <b class="mono">${h(q.question_id.replace(/^QB-[A-Z]+-\d+-/, ''))}</b> ${q.is_core ? '<span class="chip amber">หลัก</span>' : ''}${q.safety ? '<span class="chip crit">ปลอดภัย</span>' : ''} ${h(q.question_text)}</label>`).join('');
+        S.ivPick = []; B('#iv-pick').querySelectorAll('[data-pk]').forEach(c => c.onchange = () => { S.ivPick = c.checked ? [...S.ivPick, c.dataset.pk] : S.ivPick.filter(x => x !== c.dataset.pk); B('#iv-split').textContent = `เลือกแล้ว ${S.ivPick.length} ข้อ: ${S.ivPick.join(', ')}`; }); } };
+    ['#iv-n', '#iv-md', '#iv-bk'].forEach(k => B(k).onchange = sp); sp(); }
+  if (B('#iv-save-h')) B('#iv-save-h').onclick = e => run(e.target, async () => { const at = B('#iv-at').value; const pc = B('#iv-pos')?.value || null;
+    if (pc && pc !== s.position_code && set && !confirm('เปลี่ยนตำแหน่งแล้วชุดคำถามเดิมจะถูกยกเลิก ดำเนินการต่อ?')) return false;
+    await rpc('iv_schedule', { p_session:s.id, p_at:at ? new Date(at).toISOString() : null, p_position:pc, p_note:B('#iv-note').value.trim() || null }); toast('บันทึกแล้ว'); });
+  if (B('#iv-draw')) B('#iv-draw').onclick = e => run(e.target, async () => {
+    const pc = B('#iv-pos')?.value; if (pc && pc !== s.position_code) await rpc('iv_schedule', { p_session:s.id, p_at:s.scheduled_at, p_position:pc, p_note:null });
+    const md = B('#iv-md').value; if (md === 'pick' && !(S.ivPick || []).length) { toast('ติ๊กเลือกคำถามก่อน', true); return false; }
+    const r = await rpc('iv_draw_set', { p_session:s.id, p_mode:md, p_n:+B('#iv-n').value, p_level:+B('#iv-lv').value, p_bank:B('#iv-bk').value || null, p_pick:md === 'pick' ? S.ivPick : null, p_seed:null });
+    toast(`สร้างชุด ${r.set_code}: ${r.n} ข้อ (หลัก ${r.core_n} + เฉพาะทาง ${r.spec_n})`); });
+  d.querySelectorAll('[data-rpq]').forEach(b => b.onclick = () => { const why = prompt('เหตุผลที่เปลี่ยนคำถามข้อนี้ (บันทึกไว้ตรวจสอบ)'); if (why === null) return;
+    run(b, async () => { await rpc('iv_replace', { p_set:set.id, p_question_id:b.dataset.rpq, p_reason:why }); toast('เปลี่ยนคำถามแล้ว'); }); });
+  d.querySelectorAll('[data-cpq]').forEach(b => b.onclick = () => { const x = set.items.find(i => String(i.no) === b.dataset.cpq); ivCopy(`${x.no}. ${x.text}`, null); });
+  if (B('#iv-cpall')) B('#iv-cpall').onclick = () => ivCopy(ivLineText(s, set, app, B('#iv-dl')?.value || ''), s.id, 'IV-QUESTIONS-COPY');
+  if (B('#iv-sent')) B('#iv-sent').onclick = e => { if (!confirm(`ยืนยันว่าส่งชุดคำถาม ${set.set_code} ทาง LINE แล้ว? หลังยืนยันจะเปลี่ยนคำถามไม่ได้`)) return;
+    run(e.target, async () => { await rpc('iv_mark_sent', { p_set:set.id, p_deadline:B('#iv-dl').value || null }); toast('ล็อกชุดคำถามแล้ว — รอคำตอบจากผู้สมัคร'); }); };
+  if (B('#iv-parse')) B('#iv-parse').onclick = () => { const P = ivParse(B('#iv-paste').value); if (!P.length) return toast('ไม่พบข้อความ', true);
+    B('#iv-map').innerHTML = `<div class="tw"><table><thead><tr><th>ข้อความที่แยกได้</th><th style="min-width:150px">จับคู่กับข้อ</th></tr></thead><tbody>${P.map((p, i) => `<tr><td class="small" style="white-space:pre-wrap">${h(p.text.slice(0, 400))}${p.text.length > 400 ? '…' : ''}</td>
+      <td><select class="inp" data-pm="${i}"><option value="">— ไม่ใช้ —</option>${set.items.map(x => `<option value="${x.no}" ${p.no === x.no ? 'selected' : ''}>ข้อ ${x.no}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>
+      <div class="gates" style="margin-top:6px"><button type="button" class="btn sm primary" id="iv-useMap">ใช้การจับคู่นี้</button><span class="small faint">ตรวจให้แน่ใจก่อนกด — ข้อที่จับคู่จะถูกแทนที่ในช่องคำตอบ</span></div>`;
+    B('#iv-useMap').onclick = () => { const used = {}; let dup = false;
+      d.querySelectorAll('[data-pm]').forEach(s2 => { if (!s2.value) return; if (used[s2.value]) dup = true; used[s2.value] = P[+s2.dataset.pm].text; });
+      if (dup) return toast('มีข้อความมากกว่าหนึ่งท่อนจับคู่กับข้อเดียวกัน — แก้ก่อน', true);
+      Object.entries(used).forEach(([no, t]) => { const ta = B(`#ans-${no}`); if (ta) ta.value = t; }); toast(`ใส่คำตอบ ${Object.keys(used).length} ข้อแล้ว — กด "บันทึกคำตอบ"`); }; };
+  if (B('#iv-save-a')) B('#iv-save-a').onclick = e => run(e.target, async () => {
+    const list = [...d.querySelectorAll('[data-ans]')].map(t => ({ question_id:t.dataset.ans, answer_text:t.value }));
+    const n = await rpc('iv_save_answers', { p_set:set.id, p_answers:list, p_source:'line_paste' }); const empty = list.filter(x => !x.answer_text.trim()).length;
+    toast(`บันทึกคำตอบ ${n} ข้อแล้ว${empty ? ` (ว่าง ${empty} ข้อ = N/A)` : ''}`); });
+  if (B('#iv-ai')) B('#iv-ai').onclick = e => run(e.target, async () => {
+    const unsaved = [...d.querySelectorAll('[data-ans]')].some(t => (t.value || '') !== (ans[t.dataset.ans]?.answer_text || ''));
+    if (unsaved && !confirm('มีคำตอบที่ยังไม่ได้บันทึก — AI จะประเมินจากคำตอบที่บันทึกแล้วเท่านั้น ดำเนินการต่อ?')) return false;
+    toast('กำลังส่งให้ AI ประเมิน…');
+    const { data, error } = await sb.functions.invoke('hr-ai-evaluate', { body:{ session_id:s.id } });
+    if (error) { let m = errText(error); try { const j = await error.context?.json?.(); if (j?.error) m = j.error; } catch(_){} throw new Error('AI ประเมินไม่สำเร็จ: ' + m); }
+    if (!data?.ok) throw new Error('AI ประเมินไม่สำเร็จ: ' + (data?.error || 'ไม่ทราบสาเหตุ'));
+    toast(`AI ร่างคะแนนแล้ว ${data.stored} ข้อ (${data.model}) — HR ตรวจและยืนยันทุกข้อ`); });
+  if (B('#iv-acc')) B('#iv-acc').onclick = () => { let skip = 0; d.querySelectorAll('[data-rvs]').forEach(sel => { const e = ai[sel.dataset.rvs]; if (e && !sel.value) { if (e.provisional_score == null) skip++; else sel.value = String(e.provisional_score); } }); toast(`ใส่คะแนน AI ในช่องที่ว่างแล้ว${skip ? ` · ${skip} ข้อ AI ไม่ให้คะแนน HR ต้องใส่เอง` : ''} — ตรวจแล้วกดบันทึก`); };
+  if (B('#iv-save-r')) B('#iv-save-r').onclick = e => run(e.target, async () => {
+    const items = []; for (const sel of d.querySelectorAll('[data-rvs]')) { if (sel.value === '') continue; const q = sel.dataset.rvs;
+      items.push({ question_id:q, final_score:+sel.value, reason:B(`[data-rvr="${q}"]`).value, comment:B(`[data-rvc="${q}"]`).value }); }
+    if (!items.length) { toast('ยังไม่ได้ให้คะแนนข้อใด', true); return false; }
+    const n = await rpc('iv_review', { p_session:s.id, p_items:items }); toast(`บันทึกคะแนน HR ${n} ข้อ${n < set.items.length ? ` (ยังเหลือ ${set.items.length - n} ข้อ)` : ''}`); });
+  if (B('#iv-cert')) B('#iv-cert').onclick = e => { if (!confirm('รับรองผลการประเมินนี้? หลังรับรองจะแก้คำตอบ/คะแนนไม่ได้จนกว่าจะเปิดแก้ไข')) return;
+    run(e.target, async () => { const r = await rpc('iv_certify', { p_session:s.id, p_recommendation:B('#iv-rec').value, p_note:B('#iv-cn').value || null }); toast(`รับรองแล้ว · ${Number(r.weighted_total ?? 0).toFixed(2)}/5`); }); };
+  if (B('#iv-reopen')) B('#iv-reopen').onclick = e => { const why = prompt('เหตุผลที่เปิดแก้ไข'); if (why === null) return; run(e.target, async () => { await rpc('iv_reopen', { p_session:s.id, p_reason:why }); toast('เปิดแก้ไขแล้ว'); }); };
+  if (B('#iv-submit')) B('#iv-submit').onclick = () => { d.close();
+    const red = set.items.filter(x => x.competency === 'ความปลอดภัย' && rv[x.question_id] && rv[x.question_id].final_score <= 1).map(x => x.question_id);
+    dlgHRF('FM-HR-01-03', null, { project_id:app?.project_id, data:{ application_id:app.id, full_name:app.data?.full_name, position:app.data?.position || s._pos?.title, session_id:s.id, start_date:app.data?.available_date || null, site:app.data?.site || '',
+      comment:`Interview Record ${s.no}: คะแนน ${Number(s.weighted_total ?? 0).toFixed(2)}/5 · ครอบคลุม ${Math.round((s.coverage || 0) * 100)}% · ข้อเสนอ HR: ${IV_REC[s.recommendation] || ''}`,
+      qb:{ doc:s._pos?.qb_doc, session_no:s.no, set_code:set.set_code, total:s.weighted_total, asked:set.items.length, coverage:s.coverage, red } } }); };
+  if (B('#iv-cpres')) B('#iv-cpres').onclick = async () => { const C = await hrContent(), k = s.status === 'approved' ? 'L03' : 'L04', t = C?.line?.[k]?.x || '';
+    ivCopy(t.replace(/\{ชื่อ\}/g, app?.data?.full_name || '').replace(/\{ตำแหน่ง\}/g, s._pos?.title || app?.data?.position || ''), s.id, k + '-COPY'); };
+  if (B('#iv-notif')) B('#iv-notif').onclick = e => { if (!confirm('ยืนยันว่าส่งข้อความแจ้งผลทาง LINE แล้ว?')) return; run(e.target, async () => { await rpc('iv_notified', { p_session:s.id, p_template:s.status === 'approved' ? 'L03' : 'L04' }); toast('บันทึกการแจ้งผลแล้ว'); }); };
+  if (B('#iv-arch')) B('#iv-arch').onclick = e => run(e.target, async () => { await rpc('iv_archive', { p_session:s.id }); toast('เก็บเข้าแฟ้มแล้ว'); });
+  if (B('#iv-sum')) B('#iv-sum').onclick = () => ivCopy(ivSummary(X), null);
+  if (B('#iv-pdf')) B('#iv-pdf').onclick = () => ivPrint(X);
+  B('#iv-log').onclick = () => ivHistory(X);
+  if (after) d.addEventListener('close', () => after(), { once:true });
+}
+function ivSummary(X){
+  const { s, set, app, rv } = X;
+  return `สรุปผลสัมภาษณ์ (ภายใน · ห้ามส่งผู้สมัคร)\n${s.no} รอบ ${s.round} · ${app?.data?.full_name || ''} · ${s._pos?.title || ''}\nชุดคำถาม ${set.set_code} · สถานะ ${IVS[s.status][0]}\n` +
+    set.items.map(x => { const r = rv[x.question_id]; return `${x.no}. ${x.title} — ${r ? r.final_score + '/5' : 'ยังไม่ตรวจ'}${r?.comment ? ' · ' + r.comment : ''}`; }).join('\n') +
+    `\nคะแนนรวมถ่วงน้ำหนัก: ${s.weighted_total != null ? Number(s.weighted_total).toFixed(2) + '/5' : '—'} · ครอบคลุม ${s.coverage != null ? Math.round(s.coverage * 100) + '%' : '—'}\nข้อเสนอ HR: ${IV_REC[s.recommendation] || '—'}`;
+}
+function ivHistory(X){
+  const { sets, rvAll, ne } = X, ev = [];
+  for (const st of sets) for (const l of (st.selection_log || [])) ev.push([l.at, `${st.set_code} · ${({ draw:'สุ่มคำถาม', replace:'เปลี่ยนคำถาม', sent:'ส่ง LINE (ล็อก)' })[l.act] || l.act}${l.act === 'draw' ? ` ${l.n} ข้อ (หลัก ${l.core}/เฉพาะทาง ${l.specific}) ระดับ ${l.level} seed ${l.seed}` : ''}${l.act === 'replace' ? ` ${l.from} → ${l.to} · เหตุผล: ${l.reason}` : ''}${st.superseded ? ' (ชุดถูกแทนที่)' : ''}`]);
+  for (const r of rvAll) ev.push([r.reviewed_at, `HR ให้คะแนน ${r.question_id}: ${r.not_assessable ? 'N/A' : r.final_score}${r.ai_score != null ? ` (AI ${r.ai_score})` : ''}${r.reason ? ' · ' + r.reason : ''}`]);
+  for (const n of ne) ev.push([n.sent_at, `แจ้ง/คัดลอก ${n.template}${n.note ? ' · ' + n.note : ''}`]);
+  if (X.s.certified_at) ev.push([X.s.certified_at, `รับรองผล · ข้อเสนอ ${IV_REC[X.s.recommendation] || ''}`]);
+  ev.sort((a, b) => a[0] < b[0] ? 1 : -1);
+  const d = dialog('ประวัติ Interview Record', ev.length ? `<div class="tw"><table><tbody>${ev.map(([t, x]) => `<tr><td class="small nw">${new Date(t).toLocaleString('th-TH', { dateStyle:'short', timeStyle:'short' })}</td><td class="small">${h(x)}</td></tr>`).join('')}</tbody></table></div><p class="small faint">ประวัติการแก้ไขทุกตารางเก็บใน Audit Log ของระบบด้วย</p>` : '<div class="empty">ยังไม่มี</div>', 'ปิด', async () => true);
+  d.querySelector('button[value=cancel]')?.remove();
+}
+function ivPrint(X){
+  const { s, set, app, ans, ai, rv } = X, dt = t => t ? new Date(t).toLocaleString('th-TH', { dateStyle:'long', timeStyle:'short' }) : '—';
+  const w = window.open('', '_blank'); if (!w) return toast('เบราว์เซอร์บล็อกหน้าต่างใหม่ — อนุญาต pop-up แล้วลองอีกครั้ง', true);
+  w.document.write(`<!doctype html><html lang="th"><head><meta charset="utf-8"><title>${h(s.no)} Interview Record</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <style>@page{size:A4;margin:14mm}body{font:13.5px/1.55 Sarabun,sans-serif;color:#000;margin:0}h1{font-size:19px;margin:0 0 2px}table{width:100%;border-collapse:collapse;margin:6px 0}th,td{border:1px solid #000;padding:4px 6px;vertical-align:top;text-align:left}
+    .meta td{border:0;padding:1px 6px 1px 0}.q{page-break-inside:avoid;border:1px solid #000;margin:8px 0;padding:6px 8px}.q .a{white-space:pre-wrap;border-left:3px solid #999;padding-left:6px;margin:4px 0}.sm{font-size:11.5px;color:#333}
+    .sg{display:flex;gap:24px;margin-top:26px}.sg div{flex:1;text-align:center}.ft{font-size:10px;text-align:center;color:#444;margin-top:18px}@media screen{body{padding:24px;max-width:820px;margin:auto}}</style></head><body>
+    <h1>บันทึกการสัมภาษณ์งาน (Interview Record)</h1><div class="sm">SMART 3E · ${h(s.no)} · รอบ ${s.round} · ชุดคำถาม ${h(set.set_code)} (seed ${set.seed})</div>
+    <table class="meta"><tr><td><b>ผู้สมัคร</b> ${h(app?.data?.full_name || '')} (${h(app?.no || '')})</td><td><b>ตำแหน่ง</b> ${h(s._pos?.title || '')} ${h(s.position_code || '')}</td></tr>
+      <tr><td><b>วันเวลาสัมภาษณ์</b> ${dt(s.scheduled_at)}</td><td><b>ผู้สัมภาษณ์</b> ${h(s.interviewer_note || '—')}</td></tr><tr><td><b>สถานะ</b> ${IVS[s.status][0]}</td><td><b>รับรองผล</b> ${dt(s.certified_at)}</td></tr></table>
+    ${set.items.map(x => { const a = ans[x.question_id], e = ai[x.question_id], r = rv[x.question_id]; return `<div class="q"><b>${x.no}. ${h(x.title)}</b> <span class="sm">(${x.grp === 'core' ? 'หลัก' : 'เฉพาะทาง'} · ${h(x.competency)} · น้ำหนัก ${x.weight} · ${h(x.question_id)} v${x.version})</span>
+      <div>${h(x.text)}</div><div class="a">${h(a?.answer_text || '— ไม่มีคำตอบ —')}</div>
+      <div class="sm">AI ร่าง: ${e ? (e.provisional_score == null ? 'ไม่ให้คะแนน' : e.provisional_score + '/5') : '—'} · <b>คะแนน HR: ${r ? r.final_score + '/5' : '—'}</b>${r?.reason ? ' · เหตุผลแก้: ' + h(r.reason) : ''}${r?.comment ? ' · ความเห็น: ' + h(r.comment) : ''}${(e?.evidence_quotes || []).length ? '<br>หลักฐาน: ' + e.evidence_quotes.map(q => '“' + h(q) + '”').join(' ') : ''}</div></div>`; }).join('')}
+    <table><tr><th>คะแนนรวมถ่วงน้ำหนัก</th><td>${s.weighted_total != null ? Number(s.weighted_total).toFixed(2) + ' / 5' : '—'}</td><th>ครอบคลุม</th><td>${s.coverage != null ? Math.round(s.coverage * 100) + '% (' + s.assessed + '/' + s.total_items + ')' : '—'}</td></tr>
+      <tr><th>ข้อเสนอ HR</th><td>${h(IV_REC[s.recommendation] || '—')}</td><th>ผลพิจารณา</th><td>${['approved','rejected','applicant_notified','archived'].includes(s.status) ? (s.status === 'rejected' ? 'ไม่ผ่าน' : 'ตามเอกสาร FM-HR-01-03') : 'ยังไม่พิจารณา'}</td></tr></table>
+    <div class="sm">คะแนน AI เป็นร่างเท่านั้น ผลที่ใช้คือคะแนนที่ HR รับรอง · เกณฑ์ V2.0 (ไม่ตอบ = 0) · การตัดสินจ้างงานเป็นของผู้มีอำนาจตาม DOA${s.answers_purged_at ? ' · คำตอบของผู้สมัครถูกลบตามนโยบายแล้ว' : ''}</div>
+    <div class="sg"><div>ลงชื่อ .................................<br>ผู้สัมภาษณ์</div><div>ลงชื่อ .................................<br>HR ผู้รับรองผล</div><div>ลงชื่อ .................................<br>ผู้มีอำนาจอนุมัติ</div></div>
+    <div class="ft">${h(s.no)} · พิมพ์จาก SMART ERP ${new Date().toLocaleString('th-TH')} · ข้อมูลส่วนบุคคล — ใช้เพื่อการสรรหาเท่านั้น</div><script>if(!/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent))setTimeout(()=>print(),600)<\/script></body></html>`);
+  w.document.close();
+}
+
 async function pageHRF(){
+  if (S.hrTab === 'iv') return pageHRIV();
+  if (S.hrTab === 'cases') return pageHRCases();
+  if (S.hrTab === 'pos') return pageHRPos();
   const el = $('#page'), canC = S.isOwner || can('hr','c');
-  el.innerHTML = `<div class="ph"><div><h1>งานบุคคล</h1><p class="mut small" style="margin:4px 0 0">แบบฟอร์ม FM-HR-01 ทำในระบบ · ส่ง–ตรวจ–อนุมัติตามสิทธิ์ V3 (คนขอกับคนอนุมัติต้องคนละคน) · อนุมัติแล้วระบบอัปเดตทะเบียนพนักงานเอง · พิมพ์ตามแบบฟอร์มเดิมได้</p></div>
-    <div class="act">${dvSeg('hrf','เอกสารทั้งหมด')}</div></div><div id="hr-b"><div class="empty">กำลังโหลด…</div></div>`;
-  bindDv(pageHRF);
+  el.innerHTML = `<div class="ph"><div><h1>งานบุคคล</h1><p class="mut small" style="margin:4px 0 0">ขั้นตอนกระชับ HR-FLOW-02 · ส่งแล้ว Manager Agent ตรวจก่อนทุกฉบับ · บอสอนุมัติเฉพาะ ขออัตรา · สัญญาจ้าง · ทดลองงานไม่ผ่าน · ต่อสัญญา/ปรับรายได้ · โอนข้ามโครงการ · ที่เหลือ Agent ปิดเรื่องให้ · อนุมัติแล้วระบบอัปเดตทะเบียนพนักงานเอง</p></div>
+    <div class="act">${hrTabs()} ${dvSeg('hrf','เอกสารทั้งหมด')}</div></div><div id="hr-b"><div class="empty">กำลังโหลด…</div></div>`;
+  bindDv(pageHRF); bindHrTabs();
   const [F, staff, PJ] = await Promise.all([sb.from('hr_forms').select('*').eq('company_id', S.cid).order('created_at', { ascending:false }), hrStaff(), S.projects ? { data:S.projects } : sb.from('projects').select('id,code,name').eq('company_id', S.cid).order('code')]);
   if (F.error) return fail(F.error);
   const docs = F.data || [], byId = Object.fromEntries(staff.map(s => [s.id, s])), pcode = id => (PJ.data || []).find(p => p.id === id)?.code || '';
   S.hrDocs = docs; S.hrProj = PJ.data || [];
   const today = todayStr(), in14 = addD(today, 14);
-  const cards = `<div class="bu-cards hr-cards">${Object.entries(HRF).map(([k, f]) => `<button class="bu-card${f.ready ? '' : ' empty-bu'}" data-newf="${k}" ${f.ready && canC && (!f.pay || canPay()) ? '' : 'disabled'} title="${h(f.name)}">
+  const cards = `<div class="bu-cards hr-cards">${Object.entries(HRF).map(([k, f]) => `<button class="bu-card${f.ready ? '' : ' empty-bu'}" data-newf="${k}" ${f.ready ? '' : 'disabled'} title="${h(f.name)}">
       <div class="bu-top"><b style="font-family:var(--head);font-size:15px">${h(f.short)}</b><span class="small mono faint">${k.slice(-5)}</span></div>
-      <div class="bu-nm">${h(f.name)}</div><div class="bu-v">${f.ready ? (canC && (!f.pay || canPay()) ? '+ สร้างเอกสาร' : f.pay ? 'เฉพาะผู้มีสิทธิ์เงินเดือน' : 'ดูได้อย่างเดียว') : 'ระยะถัดไป'}</div></button>`).join('')}</div>`;
+      <div class="bu-nm">${h(f.name)}</div><div class="bu-v">${f.ready ? (canC && (!f.pay || canPay()) ? '+ สร้างเอกสาร' : 'ดูแบบฟอร์ม (ดูอย่างเดียว)') : 'ระยะถัดไป'}</div></button>`).join('')}</div>`;
   /* probation due: active staff who started within the last 130 days */
   const pbDone = new Set(docs.filter(d => d.form === 'FM-HR-01-05' && !['rejected','cancelled'].includes(d.status)).map(d => d.staff_id + ':' + d.variant));
   const due = staff.filter(s => ['active','intern'].includes(s.status) && s.start_date && s.start_date > addD(today, -130)).map(s => { const v = pbVariantFor(s), d = addD(s.start_date, PB[v].days); return { s, v, d, done: pbDone.has(s.id + ':' + v) }; })
     .filter(x => !x.done).sort((a, b) => a.d < b.d ? -1 : 1);
   if (dvIs('hrf')) {
     const pend = docs.filter(d => ['submitted','reviewed'].includes(d.status)), m = today.slice(0, 7);
+    const boss = pend.filter(d => d.agent_status === 'passed'), back = pend.filter(d => d.agent_status !== 'passed'), closed = docs.filter(d => d.agent_closed && (d.updated_at || d.created_at) > addD(today, -7));
     $('#hr-b').innerHTML = `
       <div class="stats">
-        ${stat('รอพิจารณา', cnt(pend.length), 'เอกสาร', pend.length ? 'gold' : '')}
+        ${stat('รอบอสอนุมัติ', cnt(boss.length), `Agent ตรวจผ่านแล้ว · Agent ส่งกลับ ${back.length}`, boss.length ? 'gold' : '')}
         ${stat('ครบกำหนดประเมินทดลองงาน', cnt(due.filter(x => x.d <= in14).length), `ภายใน 14 วัน · เลยกำหนด ${due.filter(x => x.d < today).length}`, due.some(x => x.d < today) ? 'crit' : '')}
         ${stat('ลาออก (อนุมัติแล้ว)', cnt(docs.filter(d => d.form === 'FM-HR-01-09' && d.status === 'approved').length), `เดือนนี้ ${docs.filter(d => d.form === 'FM-HR-01-09' && d.status === 'approved' && (d.effective_date || '').startsWith(m)).length} คน`)}
         ${stat('ขออัตรากำลัง (อนุมัติแล้ว)', cnt(docs.filter(d => d.form === 'FM-HR-01-01' && d.status === 'approved').reduce((a, d) => a + Number(d.data?.count || 0), 0)), 'อัตรา')}
@@ -2739,10 +3529,11 @@ async function pageHRF(){
         ${pnl('สายรับคนเข้า (ขออัตรา → สมัคร → สัมภาษณ์ → สัญญา → ทดลองงาน)', `<div class="cal-sum hr-pipe">${[
             ['ขออัตรากำลัง', docs.filter(d => d.form === 'FM-HR-01-01' && d.status === 'approved').reduce((a, d) => a + Number(d.data?.count || 0), 0) + ' อัตรา', 'อนุมัติแล้ว', 'var(--budget)'],
             ['ใบสมัคร', docs.filter(d => d.form === 'FM-HR-01-02' && !['rejected','cancelled'].includes(d.status) && !docs.some(i => i.form === 'FM-HR-01-03' && i.data?.application_id === d.id)).length + ' คน', 'รอสัมภาษณ์', 'var(--gold)'],
-            ['สัมภาษณ์', docs.filter(d => d.form === 'FM-HR-01-03' && ['submitted','reviewed'].includes(d.status)).length + ' คน', 'รออนุมัติผล', 'var(--gold)'],
+            ['สัมภาษณ์', docs.filter(d => d.form === 'FM-HR-01-03' && ['submitted','reviewed'].includes(d.status)).length + ' คน', 'Agent ส่งกลับ', 'var(--gold)'],
             ['สัญญาจ้าง', docs.filter(d => d.form === 'FM-HR-01-04' && !['approved','rejected','cancelled'].includes(d.status)).length + ' ฉบับ', 'ร่าง/รออนุมัติ', 'var(--amber)'],
             ['ทดลองงาน', due.length + ' คน', 'รอประเมิน', 'var(--good)']].map(([a, b, c, col]) => `<div class="cal-k" style="--c:${col};cursor:default"><small>${a}</small><b>${b}</b><span>${c}</span></div>`).join('')}</div>`, { cls:'w2' })}
-        ${pnl('รอพิจารณา', pend.length ? `<div class="tw"><table><tbody>${pend.map(d => `<tr class="clk" data-hro="${d.id}"><td class="mono small">${h(d.no)}</td><td>${h(HRF[d.form].short)}<div class="small mut">${h(staffLabel(byId[d.staff_id]) || d.title || '')}</div></td><td>${chip(HR_ST, d.status)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">ไม่มีเอกสารรอ</div>')}
+        ${pnl('รอบอสอนุมัติ (Manager Agent ตรวจผ่านแล้ว)', boss.length ? `<div class="tw"><table><tbody>${boss.map(d => `<tr class="clk" data-hro="${d.id}"><td class="mono small">${h(d.no)}</td><td>${h(HRF[d.form].short)}<div class="small mut">${h(staffLabel(byId[d.staff_id]) || d.title || '')}</div></td><td>${agentChip(d)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">ไม่มีเอกสารรออนุมัติ</div>')}
+        ${pnl('Agent ส่งกลับ / ปิดเรื่องให้ 7 วันล่าสุด', back.length || closed.length ? `<div class="tw"><table><tbody>${[...back, ...closed].map(d => `<tr class="clk" data-hro="${d.id}"><td class="mono small">${h(d.no)}</td><td>${h(HRF[d.form].short)}<div class="small mut">${h(staffLabel(byId[d.staff_id]) || d.title || '')}</div>${d.agent_status === 'returned' ? `<div class="small" style="color:var(--crit)">${h((d.agent_issues || []).filter(x => x.level === 'block').map(x => x.msg).join(' · '))}</div>` : ''}</td><td>${agentChip(d)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">ไม่มี</div>', { note:'ส่งกลับ = ผู้ทำต้องแก้ · ปิดเรื่อง = ใบสมัคร สัมภาษณ์ ทดลองงานผ่าน ลาออก โอนย้ายในโครงการ' })}
         ${pnl('เอกสารตามแบบฟอร์ม', donut(countBy(docs, d => HRF[d.form].short), { sub:'เอกสาร' }))}
         ${pnl('สถานะเอกสาร', donut(countBy(docs, d => HR_ST[d.status][0]), { sub:'เอกสาร', colors:['var(--good)','var(--gold)','var(--budget)','var(--crit)','var(--faint)','#8E6CB8'] }))}
       </div>${asOf()}`;
@@ -2757,41 +3548,96 @@ async function pageHRF(){
         ${rows.map(d => `<tr><td class="mono">${h(d.no)}<div class="small faint">${thDate(d.created_at)}</div></td><td>${h(HRF[d.form].short)}<div class="small faint mono">${d.form}${d.variant ? ' · ' + PB[d.variant]?.days + ' วัน' : ''}</div></td>
           <td>${h(staffLabel(byId[d.staff_id]) || d.title || '—')}${d.project_id ? `<div class="small mut mono">${h(pcode(d.project_id))}</div>` : ''}</td>
           <td class="small">${d.score != null ? `<b>${d.score}</b> คะแนน · ` : ''}${h(d.data?.resultText || '')}${d.effective_date ? `<div class="mut">มีผล ${thDate(d.effective_date)}</div>` : ''}</td>
-          <td>${chip(HR_ST, d.status)}<div class="gates" style="margin-top:8px">${hrActs(d)}</div></td></tr>`).join('')}</tbody></table>` : '<div class="empty">ยังไม่มีเอกสาร</div>'}</div></div>`;
+          <td>${chip(HR_ST, d.status)} ${agentChip(d)}<div class="gates" style="margin-top:8px">${hrActs(d)}</div></td></tr>`).join('')}</tbody></table>` : '<div class="empty">ยังไม่มีเอกสาร</div>'}</div></div>`;
     $('#hr-q').oninput = e => { S.hrQ = e.target.value; clearTimeout(pageHRF.t); pageHRF.t = setTimeout(pageHRF, 250); };
     $('#hr-f').onchange = e => { S.hrForm = e.target.value; pageHRF(); };
   }
-  document.querySelectorAll('[data-newf]').forEach(b => b.onclick = () => dlgHRF(b.dataset.newf, null));
+  document.querySelectorAll('[data-newf]').forEach(b => b.onclick = () => { const k = b.dataset.newf, f = HRF[k]; canC && (!f.pay || canPay()) ? dlgHRF(k, null) : dlgHRF(k, null, {}, true); });
   document.querySelectorAll('[data-pbnew]').forEach(b => b.onclick = () => dlgHRF('FM-HR-01-05', null, { staff_id:b.dataset.pbnew, variant:b.dataset.v }));
   document.querySelectorAll('[data-hro]').forEach(r => r.onclick = () => { (S.dv ||= {}).hrf = 'list'; S.hrQ = docs.find(d => d.id === r.dataset.hro)?.no || ''; pageHRF(); });
   bindHrActs(docs);
 }
+const HR_BOSS = d => !(['FM-HR-01-02','FM-HR-01-03','FM-HR-01-09'].includes(d.form) || (d.form === 'FM-HR-01-05' && d.result === 'pass'));
+function agentChip(d){
+  if (d.agent_closed) return '<span class="chip good" title="Manager Agent ตรวจผ่านและปิดเรื่องตาม HR-FLOW-02">ปิดโดย Agent</span>';
+  if (d.override_reason) return `<span class="chip amber" title="${h(d.override_reason)}">อนุมัติทับผล Agent</span>`;
+  if (d.status !== 'submitted' && d.status !== 'reviewed') return '';
+  if (d.agent_status === 'passed') return `<span class="chip good">Agent ✓ ผ่าน${(d.agent_issues || []).length ? ` · ข้อสังเกต ${d.agent_issues.length}` : ''}</span>`;
+  if (d.agent_status === 'returned') return `<span class="chip crit">Agent ↩ ส่งกลับ ${(d.agent_issues || []).filter(x => x.level === 'block').length} ข้อ</span>`;
+  return '<span class="chip">Agent รอตรวจ</span>';
+}
+function agentBox(d){
+  if (!d || !['submitted','reviewed','approved'].includes(d.status) || (d.status === 'approved' && !d.agent_checked_at)) return '';
+  const L = d.agent_issues || [], B = L.filter(x => x.level === 'block'), W = L.filter(x => x.level !== 'block');
+  const head = d.agent_closed ? 'ตรวจผ่าน และปิดเรื่องแล้ว (ไม่ต้องรอบอสอนุมัติ)' : d.agent_status === 'passed' ? (HR_BOSS(d) ? 'ตรวจผ่าน — พร้อมเสนอบอสอนุมัติ' : 'ตรวจผ่าน') : d.agent_status === 'returned' ? 'ส่งกลับ — ผู้ทำต้องแก้ก่อน (บอสอนุมัติทับได้โดยพิมพ์เหตุผล)' : 'รอตรวจ';
+  return `<div class="msg ${d.agent_status === 'returned' && !d.override_reason ? 'err' : 'ok'}" style="margin:0 0 10px"><b>ผล Manager Agent:</b> ${head}${d.agent_checked_at ? ` <span class="small faint">· ตรวจ ${new Date(d.agent_checked_at).toLocaleString('th-TH', { dateStyle:'medium', timeStyle:'short' })}</span>` : ''}
+    ${B.length ? `<ul style="margin:6px 0 0;padding-left:20px">${B.map(x => `<li><b>ต้องแก้:</b> ${h(x.msg)} <span class="faint mono small">${h(x.code)}</span></li>`).join('')}</ul>` : ''}
+    ${W.length ? `<ul style="margin:6px 0 0;padding-left:20px;color:var(--gold)">${W.map(x => `<li>ข้อสังเกต: ${h(x.msg)} <span class="faint mono small">${h(x.code)}</span></li>`).join('')}</ul>` : ''}
+    ${d.override_reason ? `<div class="small" style="margin-top:6px">เหตุผลที่อนุมัติทับ: ${h(d.override_reason)}</div>` : ''}
+    ${d.status === 'submitted' ? `<div style="margin-top:8px"><button type="button" class="btn sm" data-agrecheck="${d.id}">ให้ Agent ตรวจใหม่</button></div>` : ''}</div>`;
+}
+async function hrDecide(d, action){
+  if (action !== 'approve') return decide('hr', d.id, action, pageHRF);
+  let note = null;
+  if (d.agent_status !== 'passed') {
+    const B = (d.agent_issues || []).filter(x => x.level === 'block').map(x => '• ' + x.msg).join('\n');
+    note = prompt(`Manager Agent ส่งกลับเอกสารนี้:\n${B || '(ยังไม่ได้ตรวจ)'}\n\nถ้าจะอนุมัติทับ พิมพ์เหตุผล (บันทึกในประวัติ):`);
+    if (note === null) return; if (note.trim().length < 5) return toast('เหตุผลต้องอย่างน้อย 5 ตัวอักษร', true);
+  } else {
+    const W = (d.agent_issues || []).map(x => '• ' + x.msg).join('\n');
+    if (!confirm(`ยืนยันอนุมัติ ${d.no}?${W ? '\n\nข้อสังเกตจาก Manager Agent:\n' + W : ''}`)) return;
+  }
+  const { error } = await sb.rpc('decide', { p_doc_type:'hr', p_doc_id:d.id, p_action:'approve', p_note:note });
+  if (error) return fail(error);
+  toast(note ? 'อนุมัติทับผล Agent แล้ว (บันทึกเหตุผล)' : 'อนุมัติแล้ว'); pageHRF();
+}
+/* ช่วงทดลองใช้ (บอสสั่ง 31 ต.ค. 2569): แก้เอกสารที่ส่ง/อนุมัติแล้วได้ · ใช้จริงให้ตั้ง false และ private.hr_trial_edit() = false */
+const HR_TRIAL_EDIT = true;
 function hrActs(d){
   const me = S.user.id, mine = d.requested_by === me, o = [];
   if (['draft','returned'].includes(d.status) && (mine || S.isOwner || can('hr','e'))) o.push(`<button class="btn sm" data-hre="${d.id}">แก้ไข</button><button class="btn sm primary" data-hrs="${d.id}">ส่งพิจารณา</button>`);
+  if (d.status === 'submitted' && d.agent_status === 'returned' && (mine || S.isOwner || can('hr','e'))) o.push(`<button class="btn sm primary" data-hre="${d.id}">แก้ตาม Agent</button>`);
   if (['submitted','reviewed'].includes(d.status) && !mine && (S.isOwner || can('hr','r') || can('hr','a'))) {
-    if (d.status === 'submitted' && (S.isOwner || can('hr','r'))) o.push(`<button class="btn sm" data-hrd="${d.id}" data-a="review">ตรวจผ่าน</button>`);
-    if (S.isOwner || can('hr','a')) o.push(`<button class="btn sm primary" data-hrd="${d.id}" data-a="approve">อนุมัติ</button>`);
+    if (S.isOwner || can('hr','a')) o.push(d.agent_status === 'passed' ? `<button class="btn sm primary" data-hrd="${d.id}" data-a="approve">อนุมัติ</button>` : `<button class="btn sm" data-hrd="${d.id}" data-a="approve" title="Agent ส่งกลับ — ต้องพิมพ์เหตุผล">อนุมัติทับ</button>`);
     o.push(`<button class="btn sm ghost" data-hrd="${d.id}" data-a="return">ตีกลับ</button><button class="btn sm ghost" data-hrd="${d.id}" data-a="reject">ไม่อนุมัติ</button>`);
   }
   if (!['draft','returned'].includes(d.status)) o.push(`<button class="btn sm ghost" data-hrv="${d.id}">ดู</button>`);
+  if (HR_TRIAL_EDIT && !['draft','returned','cancelled'].includes(d.status) && (S.isOwner || can('hr','e'))) o.push(`<button class="btn sm ghost" data-hrt="${d.id}" title="ช่วงทดลองใช้: แก้ข้อมูลเอกสารที่ส่ง/อนุมัติแล้วได้ สถานะไม่เปลี่ยน">แก้ไข (ทดลอง)</button>`);
+  if (d.form === 'FM-HR-01-02' && ivR() && !['rejected','cancelled'].includes(d.status)) o.push(`<button class="btn sm" data-hriv="${d.id}">สัมภาษณ์</button>`);
   o.push(`<button class="btn sm ghost" data-hrp="${d.id}">พิมพ์</button>`);
   if (d.approval_id || d.status !== 'draft') o.push(`<button class="btn sm ghost" data-hrh="${d.id}" data-no="${h(d.no)}">ประวัติ</button>`);
   return o.join(' ');
 }
+function hrAgentToast(r){
+  if (!r) return;
+  if (r.status === 'approved') return toast(`${r.no}: Manager Agent ตรวจผ่านและปิดเรื่องแล้ว`);
+  if (r.agent_status === 'returned') return toast(`${r.no}: Manager Agent ส่งกลับ — ${(r.agent_issues || []).filter(x => x.level === 'block').map(x => x.msg).join(' · ')}`, true);
+  if (r.agent_status === 'passed') return toast(`${r.no}: Manager Agent ตรวจผ่าน — รอบอสอนุมัติ${(r.agent_issues || []).length ? ` (ข้อสังเกต ${r.agent_issues.length})` : ''}`);
+  toast(`บันทึก ${r.no} แล้ว`);
+}
+function bindAgentRecheck(root = document){
+  root.querySelectorAll('[data-agrecheck]').forEach(b => b.onclick = async () => { b.disabled = true;
+    const { error } = await sb.rpc('hr_agent_verify', { p_id:b.dataset.agrecheck }); if (error) { b.disabled = false; return fail(error); }
+    toast('Manager Agent ตรวจใหม่แล้ว'); b.closest('dialog')?.close(); pageHRF(); });
+}
 function bindHrActs(docs){
   const f = id => docs.find(d => d.id === id);
   document.querySelectorAll('[data-hre]').forEach(b => b.onclick = () => dlgHRF(f(b.dataset.hre).form, f(b.dataset.hre)));
+  document.querySelectorAll('[data-hrt]').forEach(b => b.onclick = () => dlgHRF(f(b.dataset.hrt).form, f(b.dataset.hrt), { trial:true }));
   document.querySelectorAll('[data-hrv]').forEach(b => b.onclick = () => dlgHRF(f(b.dataset.hrv).form, f(b.dataset.hrv), null, true));
   document.querySelectorAll('[data-hrs]').forEach(b => b.onclick = async () => { if (!confirm('ส่งเอกสารให้ผู้มีอำนาจพิจารณา?')) return;
-    const { error } = await sb.from('hr_forms').update({ status:'submitted' }).eq('id', b.dataset.hrs); if (error) return fail(error); toast('ส่งพิจารณาแล้ว'); pageHRF(); });
-  document.querySelectorAll('[data-hrd]').forEach(b => b.onclick = () => decide('hr', b.dataset.hrd, b.dataset.a, pageHRF));
+    const { data: r, error } = await sb.from('hr_forms').update({ status:'submitted' }).eq('id', b.dataset.hrs).select('no,status,agent_status,agent_issues').single(); if (error) return fail(error); hrAgentToast(r); pageHRF(); });
+  document.querySelectorAll('[data-hrd]').forEach(b => b.onclick = () => hrDecide(f(b.dataset.hrd), b.dataset.a));
+  bindAgentRecheck();
   document.querySelectorAll('[data-hrh]').forEach(b => b.onclick = () => showHistory('hr', b.dataset.hrh, b.dataset.no));
   document.querySelectorAll('[data-hrp]').forEach(b => b.onclick = () => printHRF(f(b.dataset.hrp)));
+  document.querySelectorAll('[data-hriv]').forEach(b => b.onclick = async () => { const { data: ex } = await sb.from('interview_sessions').select('id').eq('application_id', b.dataset.hriv).order('round', { ascending:false }).limit(1);
+    if (ex?.length) return dlgIVR(ex[0].id); if (!ivW()) return toast('ยังไม่มี Interview Record', true); ivOpenFromApp(b.dataset.hriv); });
 }
 async function dlgHRF(form, doc, pre = {}, readonly = false){
-  const staff = await hrStaff(), projs = S.hrProj || S.projects || [];
-  const d0 = doc || { form, data:{}, variant: pre.variant, staff_id: pre.staff_id };
+  const staff = await hrStaff(), projs = S.hrProj || S.projects || [], POS = await hrPositions();
+  const d0 = doc || { form, data:{ ...(pre?.data || {}) }, project_id: pre?.project_id || null, variant: pre?.variant, staff_id: pre?.staff_id };
+  S.ivLinkSid = doc ? (doc.data?.session_id || null) : (pre?.data?.session_id || null);
   const D = d0.data || {}, dis = readonly ? 'disabled' : '';
   const sOpt = `<datalist id="hr-staff">${staff.filter(s => s.status !== 'resigned' || s.id === d0.staff_id).map(s => `<option value="${h(staffLabel(s))}">`).join('')}</datalist>`;
   const curS = staff.find(s => s.id === d0.staff_id);
@@ -2805,11 +3651,13 @@ async function dlgHRF(form, doc, pre = {}, readonly = false){
       <div class="row"><div class="field"><label for="hf-eff">ขอสิ้นสุดการปฏิบัติงาน ตั้งแต่วันที่</label><input id="hf-eff" class="inp" type="date" required ${dis} value="${h(d0.effective_date || '')}"></div></div>
       <div class="field"><label for="hf-r">ด้วยเหตุผล</label><textarea id="hf-r" class="inp" rows="2" required ${dis}>${h(D.reason || '')}</textarea></div>
       <div class="field"><label>สิ่งของที่คืนบริษัท</label><div id="hf-ret" class="small"></div><textarea id="hf-ret2" class="inp" rows="2" placeholder="รายการอื่น บรรทัดละ 1 รายการ (เช่น บัตรพนักงาน ยูนิฟอร์ม กุญแจ)" ${dis}>${h((D.returns_extra || []).join('\n'))}</textarea></div>
-      <p class="small faint">อนุมัติแล้ว ระบบจะ: ตั้งวันสิ้นสุดการจ้าง · ประกันสังคม "กำลังแจ้งออก" (แจ้งภายในวันที่ 15 ของเดือนถัดไป) · ถึงวันสิ้นสุดแล้วเปลี่ยนสถานะเป็นลาออกและระงับบัญชีเข้าระบบ · ผู้ช่วยตรวจ AI เตือนถ้ายังถือทรัพย์สิน · ไม่เก็บเลขบัตรประชาชน (กรอกมือในฉบับพิมพ์)</p>`;
+      <p class="small faint">ส่งแล้ว Manager Agent ตรวจและปิดเรื่องเอง (ไม่ต้องรอบอสอนุมัติ — HR-FLOW-02) แล้วระบบจะ: ร่างใบขออัตรากำลังทดแทนให้หัวหน้า · ตั้งวันสิ้นสุดการจ้าง · ประกันสังคม "กำลังแจ้งออก" (แจ้งภายในวันที่ 15 ของเดือนถัดไป) · ถึงวันสิ้นสุดแล้วเปลี่ยนสถานะเป็นลาออกและระงับบัญชีเข้าระบบ · ผู้ช่วยตรวจ AI เตือนถ้ายังถือทรัพย์สิน · ไม่เก็บเลขบัตรประชาชน (กรอกมือในฉบับพิมพ์)</p>`;
     collect = dd => { const s = pickStaff(dd); if (!s) return null; const assets = [...dd.querySelectorAll('[data-ret]')].map(c => ({ code:c.dataset.ret, name:c.dataset.n, returned:c.checked }));
       return { staff_id:s.id, project_id:s.project_id, effective_date:$('#hf-eff', dd).value || null, title:'ลาออก ' + s.full_name, data:{ reason:$('#hf-r', dd).value.trim(), returns_assets:assets, returns_extra:$('#hf-ret2', dd).value.split('\n').map(x => x.trim()).filter(Boolean), position:s.position, site:s.site, start_date:s.start_date } }; };
   } else if (form === 'FM-HR-01-01') {
-    body = `<div class="row"><div class="field"><label for="hf-pos">ชื่อตำแหน่ง</label><input id="hf-pos" class="inp" required ${dis} value="${h(D.position || '')}"></div>
+    const pc0 = d0.position_code || posOf(D.position)?.code || '';
+    body = `<div class="row"><div class="field"><label for="hf-pc">ตำแหน่งตาม Position Master</label><select id="hf-pc" class="inp" ${dis}><option value="">— ไม่อยู่ในทะเบียน (พิมพ์ชื่อเอง · Agent จะเตือน) —</option>${Object.entries(POS_GRP).map(([g, gl]) => `<optgroup label="${h(gl)}">${POS.filter(p => p.grp === g).map(p => `<option value="${p.code}" ${p.code === pc0 ? 'selected' : ''}>${p.code.slice(6)} · ${h(p.title)}</option>`).join('')}</optgroup>`).join('')}</select><div id="hf-pci" class="small mut"></div></div>
+        <div class="field"><label for="hf-pos">ชื่อตำแหน่ง</label><input id="hf-pos" class="inp" required ${dis} value="${h(D.position || '')}"></div>
         <div class="field" style="max-width:130px"><label for="hf-n">อัตราที่ต้องการ</label><input id="hf-n" class="inp" type="number" min="1" required ${dis} value="${h(D.count || 1)}"></div></div>
       <div class="row"><div class="field"><label for="hf-dept">สังกัดแผนก / หน้างาน</label><input id="hf-dept" class="inp" list="hr-sites" ${dis} value="${h(D.dept || '')}"><datalist id="hr-sites">${[...new Set(staff.map(s => s.site).filter(Boolean))].map(x => `<option>${h(x)}</option>`).join('')}</datalist></div>
         <div class="field"><label for="hf-div">ฝ่าย</label><input id="hf-div" class="inp" ${dis} value="${h(D.division || '')}" placeholder="เช่น ฝ่ายปฏิบัติการ"></div>
@@ -2817,17 +3665,17 @@ async function dlgHRF(form, doc, pre = {}, readonly = false){
       <div class="row"><div class="field"><label for="hf-k">เป็น</label><select id="hf-k" class="inp" ${dis}>${[['replace','ตำแหน่งเดิม เพื่อทดแทน'],['new','ตำแหน่งที่ตั้งขึ้นใหม่'],['other','อื่น ๆ']].map(([k, l]) => `<option value="${k}" ${D.kind === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
         <div class="field"><label for="hf-rep">ทดแทน (ชื่อ) / หมายเหตุ</label><input id="hf-rep" class="inp" ${dis} value="${h(D.replace || '')}"></div>
         <div class="field"><label><input type="checkbox" id="hf-indept" ${D.in_dept ? 'checked' : ''} ${dis}> อยู่ในแผนก</label><label for="hf-bud"><input type="checkbox" id="hf-bud" ${D.in_budget ? 'checked' : ''} ${dis}> อยู่ในงบประมาณ</label></div></div>
-      <div class="field"><label for="hf-desc">ลักษณะงานโดยย่อ</label><textarea id="hf-desc" class="inp" rows="3" ${dis}>${h(D.desc || '')}</textarea></div>
+      <div class="field"><label for="hf-desc">ลักษณะงานโดยย่อ <span class="small mut" id="hf-jdref">${D.jd_ref ? '· จาก ' + h(D.jd_ref) : ''}</span></label><textarea id="hf-desc" class="inp" rows="6" ${dis} ${D.jd_ref ? 'readonly' : ''}>${h(D.desc || '')}</textarea><div class="small faint">ดึงจาก JD ของตำแหน่งที่เลือกอัตโนมัติ (แก้ที่ JD/JS ในเมนูตำแหน่ง) · ตำแหน่งที่ไม่อยู่ในทะเบียนจึงพิมพ์เองได้</div></div>
       <div class="row"><div class="field"><label for="hf-sex">เพศ</label><input id="hf-sex" class="inp" ${dis} value="${h(D.sex || 'ไม่จำกัด')}"></div><div class="field"><label for="hf-age">อายุ (ปี)</label><input id="hf-age" class="inp" ${dis} value="${h(D.age || '')}" placeholder="เช่น 20–45"></div>
         <div class="field"><label for="hf-edu">การศึกษา</label><input id="hf-edu" class="inp" ${dis} value="${h(D.edu || '')}"></div><div class="field"><label for="hf-maj">วิชาเอก</label><input id="hf-maj" class="inp" ${dis} value="${h(D.major || '')}"></div></div>
       <div class="row"><div class="field" style="max-width:220px"><label for="hf-expn">ประสบการณ์</label><select id="hf-expn" class="inp" ${dis}><option value="0">ไม่จำเป็นต้องมีประสบการณ์</option><option value="1" ${(D.exp_need ?? !!(D.exp || D.exp_years)) ? 'selected' : ''}>จำเป็นต้องมีประสบการณ์</option></select></div><div class="field"><label for="hf-exp">ประสบการณ์ด้าน</label><input id="hf-exp" class="inp" ${dis} value="${h(D.exp || '')}" placeholder="เช่น งานระบบไฟฟ้าอาคาร"></div><div class="field" style="max-width:130px"><label for="hf-expy">จำนวนปี</label><input id="hf-expy" class="inp" type="number" min="0" ${dis} value="${h(D.exp_years ?? '')}"></div></div>
       <div class="row"><div class="field"><label for="hf-sk">ความสามารถอื่น ๆ</label><input id="hf-sk" class="inp" ${dis} value="${h(D.skills || '')}"></div><div class="field"><label for="hf-need">ต้องการภายในวันที่</label><input id="hf-need" class="inp" type="date" ${dis} value="${h(D.need_by || '')}"></div></div>`;
-    collect = dd => ({ project_id:$('#hf-p', dd).value || null, title:`ขอ ${$('#hf-pos', dd).value.trim()} ${$('#hf-n', dd).value} อัตรา`, data:{ position:$('#hf-pos', dd).value.trim(), count:+$('#hf-n', dd).value || 1, dept:$('#hf-dept', dd).value.trim(), division:$('#hf-div', dd).value.trim(), in_dept:$('#hf-indept', dd).checked, exp_need:$('#hf-expn', dd).value === '1', kind:$('#hf-k', dd).value, replace:$('#hf-rep', dd).value.trim(), in_budget:$('#hf-bud', dd).checked, desc:$('#hf-desc', dd).value.trim(), sex:$('#hf-sex', dd).value.trim(), age:$('#hf-age', dd).value.trim(), edu:$('#hf-edu', dd).value.trim(), major:$('#hf-maj', dd).value.trim(), exp:$('#hf-exp', dd).value.trim(), exp_years:$('#hf-expy', dd).value === '' ? null : +$('#hf-expy', dd).value, skills:$('#hf-sk', dd).value.trim(), need_by:$('#hf-need', dd).value || null } });
+    collect = dd => ({ project_id:$('#hf-p', dd).value || null, position_code:$('#hf-pc', dd).value || null, title:`ขอ ${$('#hf-pos', dd).value.trim()} ${$('#hf-n', dd).value} อัตรา`, data:{ position:$('#hf-pos', dd).value.trim(), count:+$('#hf-n', dd).value || 1, dept:$('#hf-dept', dd).value.trim(), division:$('#hf-div', dd).value.trim(), in_dept:$('#hf-indept', dd).checked, exp_need:$('#hf-expn', dd).value === '1', jd_ref:$('#hf-desc', dd).dataset.ref || (D.jd_ref && $('#hf-pc', dd).value === pc0 ? D.jd_ref : null), kind:$('#hf-k', dd).value, replace:$('#hf-rep', dd).value.trim(), in_budget:$('#hf-bud', dd).checked, desc:$('#hf-desc', dd).value.trim(), sex:$('#hf-sex', dd).value.trim(), age:$('#hf-age', dd).value.trim(), edu:$('#hf-edu', dd).value.trim(), major:$('#hf-maj', dd).value.trim(), exp:$('#hf-exp', dd).value.trim(), exp_years:$('#hf-expy', dd).value === '' ? null : +$('#hf-expy', dd).value, skills:$('#hf-sk', dd).value.trim(), need_by:$('#hf-need', dd).value || null } });
   } else if (form === 'FM-HR-01-05') {
     const v = d0.variant || pbVariantFor(curS), P = PB[v], sc = D.scores || {};
     const row = (ci, ii, txt, scale, labels) => { const k = `${ci}.${ii}`, val = sc[k];
       return `<tr><td class="small">${ii + 1}. ${h(txt)}</td><td class="nw">${Array.from({ length:scale }, (_, j) => scale - j).map(n => `<label class="pb-r" title="${labels ? labels[scale - n] : n + ' คะแนน'}"><input type="radio" name="pb-${k}" value="${n}" ${val == n ? 'checked' : ''} ${dis}><span>${labels ? labels[scale - n] : n}</span></label>`).join('')}</td></tr>`; };
-    body = `<div class="row"><div class="field" style="max-width:220px"><label for="hf-v">แบบประเมิน</label><select id="hf-v" class="inp" ${doc ? 'disabled' : ''}>${Object.entries(PB).map(([k, p]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${p.days} วัน${k === 'probation45' ? ' (วิศวกร/หัวหน้างาน)' : ' (ช่าง)'}</option>`).join('')}</select></div>
+    body = `<div class="row"><div class="field" style="max-width:220px"><label for="hf-v">แบบประเมิน</label><select id="hf-v" class="inp" ${doc || readonly ? 'disabled' : ''}>${Object.entries(PB).map(([k, p]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${p.days} วัน${k === 'probation45' ? ' (วิศวกร/หัวหน้างาน)' : ' (ช่าง)'}</option>`).join('')}</select></div>
         ${staffField('ผู้รับการประเมิน')}</div>
       <div class="row"><div class="field"><label for="hf-ed">ประเมินถึงวันที่</label><input id="hf-ed" class="inp" type="date" ${dis} value="${h(d0.effective_date || '')}"></div><div class="field"><label for="hf-p">โครงการ</label>${projSel('hf-p', d0.project_id)}</div></div>
       <div class="field"><label>${h(P.branchLabel)}</label><div class="gates">${P.branches.map(b => `<label class="chip"><input type="checkbox" data-br="${h(b)}" ${(D.branches || []).includes(b) ? 'checked' : ''} ${dis}> ${h(b)}</label>`).join('')}</div></div>
@@ -2845,20 +3693,32 @@ async function dlgHRF(form, doc, pre = {}, readonly = false){
         data:{ scores, total:tot, missing:miss, resultText:g[1], branches:[...dd.querySelectorAll('[data-br]:checked')].map(x => x.dataset.br), comment:$('#hf-cm', dd).value.trim(), improve:$('#hf-imp', dd).value.trim(), position:s.position, site:s.site, start_date:s.start_date, evaluator:S.user.user_metadata?.full_name || '' }, _miss:miss }; };
   }
   const isNew = !doc;
-  const d = dialog(`${HRF[form].name}${doc ? ' · ' + doc.no : ''}`, `<p class="small faint" style="margin:0 0 6px">${form} · ฉบับแก้ไข 00 · มีผล 15/07/2568</p>${body}
-    ${readonly ? '' : `<label class="small" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="hf-send"> ส่งพิจารณาทันที</label>`}`,
+  const trial = !!pre.trial && !readonly, resub = doc?.status === 'submitted' && !trial;
+  const d = dialog(`${HRF[form].name}${doc ? ' · ' + doc.no : ''}`, `${agentBox(doc)}<p class="small faint" style="margin:0 0 6px">${form} · ฉบับแก้ไข 00 · มีผล 15/07/2568</p>${body}
+    ${readonly ? '' : trial ? `<div class="msg warn small" style="margin:8px 0">โหมดแก้ไขช่วงทดลองใช้ — บันทึกแล้วสถานะคงเดิม (${h(HR_ST[doc.status]?.[0] || doc.status)}) · ข้อมูลที่ระบบสร้างต่อไปแล้ว (เช่น ทะเบียนพนักงานจากสัญญาจ้าง) ไม่อัปเดตตาม</div>` : resub ? `<p class="small" style="margin:8px 0"><input type="checkbox" id="hf-send" checked hidden>บันทึกแล้ว Manager Agent จะตรวจใหม่ทันที</p>` : `<label class="small" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="hf-send"> ส่งพิจารณาทันที (Manager Agent ตรวจก่อนถึงผู้อนุมัติ)</label>`}`,
     readonly ? 'ปิด' : 'บันทึก', async dd => {
       if (readonly) return true;
       const r = collect(dd); if (!r) return false;
-      if (r._miss) { if ($('#hf-send', dd).checked) { toast(`ยังให้คะแนนไม่ครบ ${r._miss} ข้อ`, true); return false; } } delete r._miss;
-      if (r._needCode && $('#hf-send', dd).checked) { toast('ใส่รหัสพนักงานก่อนส่งพิจารณา', true); return false; } delete r._needCode;
-      const row = { ...r, status: $('#hf-send', dd).checked ? 'submitted' : (doc?.status === 'returned' ? 'returned' : 'draft') };
-      const { data: saved, error } = isNew ? await sb.from('hr_forms').insert({ ...row, company_id:S.cid, form }).select('no').single() : await sb.from('hr_forms').update(row).eq('id', doc.id).select('no').single();
+      if (r._miss) { if ($('#hf-send', dd)?.checked) { toast(`ยังให้คะแนนไม่ครบ ${r._miss} ข้อ`, true); return false; } } delete r._miss;
+      if (r._needCode && $('#hf-send', dd)?.checked) { toast('ใส่รหัสพนักงานก่อนส่งพิจารณา', true); return false; } delete r._needCode;
+      const row = trial ? { ...r } : { ...r, status: $('#hf-send', dd)?.checked ? 'submitted' : (doc?.status === 'returned' ? 'returned' : 'draft') };
+      const cols = 'no,status,agent_status,agent_issues';
+      const { data: saved, error } = isNew ? await sb.from('hr_forms').insert({ ...row, company_id:S.cid, form }).select(cols).single() : await sb.from('hr_forms').update(row).eq('id', doc.id).select(cols).single();
       if (error) { fail(error); return false; }
-      toast(`บันทึก ${saved?.no || ''} แล้ว${row.status === 'submitted' ? ' · ส่งพิจารณาแล้ว' : ''}`); pageHRF();
+      if (row.status === 'submitted') hrAgentToast(saved); else toast(`บันทึก ${saved?.no || ''} แล้ว`); pageHRF();
     });
   if (readonly) d.querySelector('button[value=cancel]')?.remove();
+  bindAgentRecheck(d);
   hireWire(form, d);
+  const pcs = $('#hf-pc', d); if (pcs) { const info = () => { const p = POS.find(x => x.code === pcs.value); $('#hf-pci', d).innerHTML = p ? `${chip(POS_ST, p.status)} JD/JS v${h(p.jdjs_version)}${p.qb_doc ? ' · การ์ดคำถาม ' + h(p.qb_doc) : ''} · รายงานต่อ ${h(p.reports_to || '—')}` : ''; };
+    const fillJD = async () => { if (readonly || form !== 'FM-HR-01-01') return; const p = POS.find(x => x.code === pcs.value), ta = $('#hf-desc', d); if (!ta) return;
+      if (!p) { ta.readOnly = false; delete ta.dataset.ref; $('#hf-jdref', d).textContent = ''; return; }
+      const C = await hrContent(), md = C?.jd?.[p.code]; if (!md) { ta.readOnly = false; delete ta.dataset.ref; $('#hf-jdref', d).textContent = '· ตำแหน่งนี้ยังไม่มี JD — พิมพ์เอง'; return; }
+      const j = jdBrief(md, p); ta.value = j.desc; ta.readOnly = true; ta.dataset.ref = j.ref; $('#hf-jdref', d).textContent = '· จาก ' + j.ref;
+      [['#hf-edu', j.edu], ['#hf-exp', j.exp], ['#hf-sk', j.skills]].forEach(([id, v]) => { const e = $(id, d); if (e && !e.value && v) e.value = v; });
+      if (j.exp && $('#hf-expn', d) && !$('#hf-exp', d).dataset.touched) $('#hf-expn', d).value = '1'; };
+    pcs.onchange = () => { const p = POS.find(x => x.code === pcs.value); if (p) $('#hf-pos', d).value = p.title; info(); fillJD(); }; info();
+    if (form === 'FM-HR-01-01' && !readonly && pcs.value && (!D.desc || D.jd_ref)) fillJD(); }
   /* live staff info + resignation asset list + probation totals */
   const onStaff = async () => { const s = pickStaff(d, true); $('#hf-si', d) && ($('#hf-si', d).textContent = s ? `${s.position || ''} · ${s.site || ''} · เริ่มงาน ${thDate(s.start_date)}` : '');
     if (form === 'FM-HR-01-09' && $('#hf-ret', d)) { if (!s) return $('#hf-ret', d).innerHTML = ''; const { data } = await sb.rpc('staff_assets', { p_staff:s.id }); const prev = Object.fromEntries((D.returns_assets || []).map(a => [a.code, a.returned]));
@@ -2918,17 +3778,17 @@ async function printRQ(doc){
   table.hd{width:100%;border-collapse:collapse}table.hd td{border:1px solid #000;border-top:0;padding:3px 8px;font-size:13px}table.hd tr td:first-child{border-left:0}table.hd tr td:last-child{border-right:0}
   .lg{width:30%;text-align:center}.lg img{height:92px}.tt{text-align:center;width:36%}.tt b{font-size:18px;display:block;margin:2px 0 6px}.tt img{height:44px}
   .k{text-align:right;width:20%}.v{text-align:center;width:14%}
-  .bd{padding:6px 22px 0;flex:1}.r{display:flex;align-items:baseline;gap:6px;margin:5px 0;flex-wrap:wrap}.sp{flex:1}
+  .bd{padding:6px 22px 0;flex:1}.r{display:flex;align-items:baseline;gap:6px;margin:3px 0;flex-wrap:wrap}.sp{flex:1}
   .f{display:inline-block;border-bottom:1px dotted #000;padding:0 6px;text-align:center;font-weight:400;color:#0a2a66;min-height:1.3em}
   .bx{display:inline-flex;justify-content:space-between;width:28px;font-weight:700;color:#0a2a66}.bx::before{content:'(';color:#000}.bx::after{content:')';color:#000}
   .ci{display:inline-block;width:17px;height:17px;border:1.3px solid #000;border-radius:50%;text-align:center;line-height:15px;font-weight:700;color:#0a2a66;margin-right:6px;vertical-align:-3px}
-  .ln{border-bottom:1px dotted #000;min-height:1.65em;color:#0a2a66;padding-left:4px}
-  h4{margin:10px 0 4px;font-size:14.5px}.ind{padding-left:48px}
-  .sg{display:flex;justify-content:space-between;margin:14px 0 8px}.sg>div{text-align:center}
+  .ln{border-bottom:1px dotted #000;min-height:1.6em;color:#0a2a66;padding-left:4px;font-size:12.5px;line-height:1.45}
+  h4{margin:7px 0 2px;font-size:14.5px}.ind{padding-left:48px}
+  .sg{display:flex;justify-content:space-between;margin:10px 0 6px}.sg>div{text-align:center}
   .bt{display:flex;border-top:1.4px solid #000}.bt>div{padding:6px 10px;flex:1}.bt>div+div{border-left:1.4px solid #000;flex:1.35}
   .hrr{display:flex;align-items:baseline;gap:4px;margin:4px 0;font-size:12.5px;white-space:nowrap}.hrr .f{flex:1 1 0;min-width:0!important;overflow:hidden}
   .ft{border-top:1.4px solid #000;text-align:center;font-size:11.5px;padding:4px}
-  @media screen{body{background:#eee;padding:20px}.pg{background:#fff}}</style></head><body><div class="pg">
+  @media screen{body{background:#eee;padding:0 0 20px}.pg{background:#fff;margin-top:16px}}.pbar{position:sticky;top:0;z-index:9;display:flex;gap:8px;justify-content:center;padding:10px;background:#1f2937}.pbar button{font:600 15px Sarabun,sans-serif;padding:10px 18px;border-radius:10px;border:0;cursor:pointer;background:#fff;color:#111}.pbar button:first-child{background:#E8542E;color:#fff}@media print{.pbar{display:none!important}}</style></head><body><div class="pbar"><button onclick="if(window.opener){window.close()}else{history.length>1?history.back():location.href=location.origin}">✕ ปิด กลับเข้าโปรแกรม</button><button onclick="print()">🖨 พิมพ์ / บันทึก PDF</button></div><div class="pg">
   <table class="hd"><tr><td class="lg" rowspan="4"><img src="${RQ_LOGO}" alt="SMART TERMINAL"></td><td class="tt" rowspan="4"><b>แบบใบขออัตรากำลัง</b><img src="${RQ_STAMP}" alt="เอกสารควบคุม"></td><td class="k">รหัสเอกสาร :</td><td class="v">FM-HR-01-01</td></tr>
     <tr><td class="k">วันที่มีผลบังคับใช้ :</td><td class="v">15/07/2568</td></tr><tr><td class="k">ครั้งที่แก้ไข :</td><td class="v">00</td></tr><tr><td class="k">จำนวนหน้า :</td><td class="v">1 จาก 1</td></tr></table>
   <div class="bd">
@@ -2961,7 +3821,7 @@ async function printRQ(doc){
     <div><b>บันทึกฝ่ายบุคคล</b>${hr}
       <div class="sg" style="margin:10px 0 0"><div>(${f('', 170)})<br>ลงชื่อ</div><div>(${f('', 120)})<br>วันที่</div></div></div></div>
   <div class="ft">Copyright© SMART Terminal Corporation Co., Ltd All Right Reserved.<br>เอกสารฉบับนี้จะอยู่ในรูปแบบอิเล็กทรอนิกส์ หากปรากฏส่วนหนึ่งส่วนใดอยู่ในรูปแบบสื่อกระดาษให้ตรวจสอบความทันสมัยกับศูนย์ควบคุมเอกสารก่อนนำมาใช้อ้างอิง · พิมพ์จาก SMART ERP</div>
-  </div><script>document.fonts.ready.then(()=>setTimeout(()=>print(),300))<\/script></body></html>`);
+  </div><style id="fit"></style><script>document.fonts.ready.then(()=>{const pg=document.querySelector('.pg'),mm=pg.offsetWidth/190,hmax=277*mm,hh=pg.scrollHeight;if(hh>hmax)document.getElementById('fit').textContent='@media print{.pg{zoom:'+(hmax/hh*0.98).toFixed(3)+'}}';if(!/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent))setTimeout(()=>print(),300)})<\/script></body></html>`);
   w.document.close();
 }
 
@@ -3012,7 +3872,7 @@ function printHRF(doc){
     table.sc{width:100%;border-collapse:collapse;margin:4px 0 10px;font-size:13.5px}table.sc th,table.sc td{border:1px solid #000;padding:3px 6px}table.sc .c{text-align:center;width:44px}
     table.pay{margin:4px 0 8px 3em;border-collapse:collapse}table.pay td{padding:2px 10px}.box{display:block;min-height:3.2em;border-bottom:1px dotted #000;white-space:pre-wrap}.sg{display:flex;justify-content:space-between;gap:24px;margin-top:22px}.sg>div{flex:1}
     .ft{font-size:10.5px;text-align:center;color:#444;margin-top:24px}@media print{.ft{position:fixed;bottom:0;left:0;right:0;margin:0}}.small{font-size:13px}@media screen{body{padding:24px;max-width:820px;margin:auto}}</style></head>
-    <body>${body}<div class="ft">Copyright© SMART Terminal Corporation Co., Ltd All Right Reserved. · ${h(doc.no)} · พิมพ์จาก SMART ERP</div><script>setTimeout(()=>print(),600)<\/script></body></html>`);
+    <style>.pbar{position:sticky;top:0;z-index:9;display:flex;gap:8px;justify-content:center;padding:10px;background:#1f2937}.pbar button{font:600 15px Sarabun,sans-serif;padding:10px 18px;border-radius:10px;border:0;cursor:pointer;background:#fff;color:#111}.pbar button:first-child{background:#E8542E;color:#fff}@media print{.pbar{display:none!important}}</style><body><div class="pbar"><button onclick="if(window.opener){window.close()}else{history.length>1?history.back():location.href=location.origin}">✕ ปิด กลับเข้าโปรแกรม</button><button onclick="print()">🖨 พิมพ์ / บันทึก PDF</button></div>${body}<div class="ft">Copyright© SMART Terminal Corporation Co., Ltd All Right Reserved. · ${h(doc.no)} · พิมพ์จาก SMART ERP</div><script>if(!/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent))setTimeout(()=>print(),600)<\/script></body></html>`);
   w.document.close();
 }
 
@@ -3043,11 +3903,13 @@ function hireBody(form, d0, dis){
   }
   if (form === 'FM-HR-01-03') {
     const apps = docs.filter(x => x.form === 'FM-HR-01-02' && !['rejected','cancelled'].includes(x.status));
+    S.ivQB = D.qb || null; S.ivRO = !!dis || !!D.session_id;
     const sc = D.scores || {}, r = (k, n) => `<label class="pb-r"><input type="radio" name="iv-${k}" value="${n}" ${sc[k] == n ? 'checked' : ''} ${dis}><span>${{ 5:'ดี 5', 3:'ปานกลาง 3', 1:'ปรับปรุง 1' }[n]}</span></label>`;
     const opt = (id, vals, cur) => `<select id="${id}" class="inp" ${dis}>${['', ...vals].map(x => `<option ${x === cur ? 'selected' : ''}>${x}</option>`).join('')}</select>`;
     return `<div class="row"><div class="field"><label for="hf-app">ใบสมัคร</label><select id="hf-app" class="inp" required ${dis}><option value="">— เลือกใบสมัคร —</option>${apps.map(a => `<option value="${a.id}" ${a.id === D.application_id ? 'selected' : ''}>${h(a.no)} · ${h(a.data?.full_name || '')} · ${h(a.data?.position || '')}</option>`).join('')}</select></div></div>
       <div class="row">${inp('hf-fn', 'ชื่อผู้สมัคร', D.full_name, 'required')}${inp('hf-pos', 'ตำแหน่งที่สมัคร', D.position, 'required')}</div>
       <div class="row"><div class="field"><label>ประสบการณ์ด้าน ISO</label>${opt('hf-iso', ['ดี','พอใช้','ไม่ดี'], D.iso)}</div><div class="field"><label>ประวัติการเปลี่ยนงาน</label>${opt('hf-wh', ['ไม่ค่อยเปลี่ยนงาน','เปลี่ยนงานบ่อย'], D.history)}</div><div class="field"><label>ที่พัก</label>${opt('hf-res', ['ใกล้บริษัท','ไกลบริษัท'], D.residence)}</div></div>
+      <div class="pb-cat" id="iv-qb" style="border-color:var(--amber)"></div>
       ${IV_ITEMS.map(([t, items], ci) => `<div class="pb-cat"><div class="pb-h"><b>ส่วนที่ ${h(t)}</b><span class="small mut"><b data-ivs="${ci}">0</b></span></div><table class="pb-t"><tbody>${items.map((x, i) => `<tr><td class="small">${ci + 1}.${i + 1} ${h(x)}</td><td class="nw">${[5, 3, 1].map(n => r(`${ci}.${i}`, n)).join('')}</td></tr>`).join('')}</tbody></table></div>`).join('')}
       <div class="msg info" id="iv-tot"></div>
       <div class="row">${inp('hf-st', 'วันเริ่มงาน (ถ้าผ่าน)', D.start_date, 'type="date"')}<div class="field"><label for="hf-site">หน้างานที่จะไปประจำ</label><input id="hf-site" class="inp" list="hr-sites" ${dis} value="${h(D.site || '')}">${sites}</div>${projSel(d0.project_id)}</div>
@@ -3083,7 +3945,7 @@ function hireCollect(form, dd){
     IV_ITEMS.forEach(([, items], ci) => items.forEach((_, i) => { const r = dd.querySelector(`[name="iv-${ci}.${i}"]:checked`); if (r) { scores[`${ci}.${i}`] = +r.value; tot += +r.value; } else miss++; }));
     const g = ivGrade(tot), app = (S.hrDocs || []).find(x => x.id === v('#hf-app'));
     return { project_id:v('#hf-p') || app?.project_id || null, score:tot, result:g[0], title:`สัมภาษณ์ ${v('#hf-fn')}`, effective_date:v('#hf-st') || null, _miss:miss,
-      data:{ application_id:v('#hf-app'), application_no:app?.no, req_no:(S.hrDocs || []).find(x => x.id === app?.data?.req_id)?.no || null, full_name:v('#hf-fn'), position:v('#hf-pos'), iso:v('#hf-iso'), history:v('#hf-wh'), residence:v('#hf-res'), scores, total:tot, resultText:g[1], start_date:v('#hf-st') || null, site:v('#hf-site'), comment:v('#hf-cm'), interviewer:S.user.user_metadata?.full_name || '' } };
+      data:{ application_id:v('#hf-app'), application_no:app?.no, req_no:(S.hrDocs || []).find(x => x.id === app?.data?.req_id)?.no || null, full_name:v('#hf-fn'), position:v('#hf-pos'), iso:v('#hf-iso'), history:v('#hf-wh'), residence:v('#hf-res'), scores, total:tot, resultText:g[1], start_date:v('#hf-st') || null, site:v('#hf-site'), comment:v('#hf-cm'), interviewer:S.user.user_metadata?.full_name || '', ...(S.ivQB ? { qb:S.ivQB } : {}), ...(S.ivLinkSid ? { session_id:S.ivLinkSid } : {}) } };
   }
   if (form === 'FM-HR-01-04') {
     if (!v('#hf-fn') || !v('#hf-pos') || !v('#hf-st')) { toast('กรอกชื่อ ตำแหน่ง และวันเริ่มงาน', true); return null; }
@@ -3099,9 +3961,16 @@ function hireWire(form, d){
     const sum = () => { let t = 0; IV_ITEMS.forEach(([, items], ci) => { let s = 0; items.forEach((_, i) => { const r = d.querySelector(`[name="iv-${ci}.${i}"]:checked`); if (r) s += +r.value; }); d.querySelector(`[data-ivs="${ci}"]`).textContent = s; t += s; });
       const g = ivGrade(t); $('#iv-tot', d).innerHTML = `รวม <b>${t}</b> / 45 คะแนน → <b>${g[1]}</b>`; $('#iv-tot', d).className = 'msg ' + (g[0] === 'pass' ? 'ok' : g[0] === 'wait' ? 'warn' : 'err'); };
     d.addEventListener('change', e => { if (e.target.type === 'radio') sum(); }); sum();
+    const qbBox = async () => { const box = $('#iv-qb', d); if (!box) return; await hrPositions(); const p = posOf($('#hf-pos', d).value), Q = S.ivQB, doc = Q?.doc || p?.qb_doc;
+      if (Q?.session_no) { box.innerHTML = `<div class="pb-h"><b>เชื่อม Interview Record ${h(Q.session_no)}</b><span class="small">ชุด ${h(Q.set_code || '')} · ${Q.asked} ข้อ · คะแนนที่ HR รับรอง <b>${Q.total != null ? Number(Q.total).toFixed(2) : '—'}</b>/5 · ครอบคลุม ${Math.round((Q.coverage || 0) * 100)}%${Q.red?.length ? ' · <b style="color:var(--crit)">ข้อความปลอดภัยได้ 0–1</b>' : ''}</span></div><span class="small faint">คำถาม คำตอบ และคะแนนรายข้ออยู่ใน Interview Record (แท็บสัมภาษณ์) · ผู้มีอำนาจพิจารณาจากเอกสารนี้</span>`; return; }
+      if (!doc) { box.innerHTML = `<span class="small faint">ตำแหน่ง "${h($('#hf-pos', d).value || '—')}" ยังไม่มีการ์ดคำถามสัมภาษณ์ (Question Bank) — ใช้แบบประเมินด้านบนตามเดิม</span>`; return; }
+      box.innerHTML = `<div class="pb-h"><b>การ์ดคำถามสัมภาษณ์ ${h(doc)}</b>${Q ? `<span class="small">ถาม ${Q.asked} ข้อ · รวม <b>${Number(Q.total).toFixed(2)}</b>/5${Q.red?.length ? ' · <b style="color:var(--crit)">ข้อความปลอดภัยได้ 0–1</b>' : ''}</span>` : '<span class="small" style="color:var(--gold)">ยังไม่ให้คะแนน (Agent จะเตือน A35)</span>'}</div>
+        <button type="button" class="btn sm" id="iv-qbo">${S.ivRO ? 'ดูคะแนนในการ์ด' : Q ? 'แก้คะแนนในการ์ด' : 'เปิดการ์ดคำถาม + ให้คะแนน'}</button> <span class="small faint">คะแนนการ์ดเก็บแนบกับใบสัมภาษณ์นี้ · ผู้สัมภาษณ์เป็นผู้ตัดสิน</span>`;
+      $('#iv-qbo', d).onclick = () => dlgQB(doc, S.ivQB, q => { S.ivQB = q; qbBox(); }, S.ivRO); };
+    qbBox(); $('#hf-pos', d)?.addEventListener('change', qbBox);
     const ap = $('#hf-app', d); if (ap) ap.addEventListener('change', () => { const a = (S.hrDocs || []).find(x => x.id === ap.value); if (!a) return;
       if (!$('#hf-fn', d).value) $('#hf-fn', d).value = a.data?.full_name || ''; if (!$('#hf-pos', d).value) $('#hf-pos', d).value = a.data?.position || '';
-      if (!$('#hf-st', d).value && a.data?.available_date) $('#hf-st', d).value = a.data.available_date; if (!$('#hf-site', d).value) $('#hf-site', d).value = a.data?.site || ''; if (a.project_id) $('#hf-p', d).value = a.project_id; });
+      if (!$('#hf-st', d).value && a.data?.available_date) $('#hf-st', d).value = a.data.available_date; if (!$('#hf-site', d).value) $('#hf-site', d).value = a.data?.site || ''; if (a.project_id) $('#hf-p', d).value = a.project_id; qbBox(); });
   }
   if (form === 'FM-HR-01-04') {
     const st = $('#hf-st', d); if (st) st.addEventListener('change', () => { if (!st.value) return; $('#hf-pe', d).value = addD(st.value, 118); $('#hf-ce', d).value = addD(st.value, 329); });
@@ -3411,11 +4280,11 @@ function dlgAssign(m){
 function pageV3(){
   const g = S.posGrp;
   const grps = [['all','ทั้งหมด'],['EX','ผู้บริหาร'],['BN','Budget Node'],['OC','OC Node'],['BU','Business Unit'],['SY','ระบบ'],['AI','AI Agent']];
-  const rows = S.catalog.filter(p => g === 'all' || p.code.startsWith(g));
+  const rows = (S.catalog || []).filter(p => g === 'all' || p.code.startsWith(g));
   const cell = raw => { if (!raw || raw === '—') return '<span class="pm n">—</span>';
     const cls = raw.includes('A*') ? 'a' : /Recommendation/.test(raw) ? 'v' : /[CEX]/.test(raw.replace(/\(.*?\)/g,'')) ? 'c' : raw.includes('R') ? 'r' : 'v';
     return `<span class="pm ${cls}" title="${h(raw)}">${h(raw.replace('Recommendation only','AI').replace(/ \(.*\)/,'*'))}</span>`; };
-  $('#page').innerHTML = `<div class="ph"><div><h1>ตำแหน่งและสิทธิ์ (Permission Matrix V3)</h1><p class="mut small" style="margin:4px 0 0">${S.catalog.length} ตำแหน่ง × 14 โมดูล · * = มีขอบเขต (ชี้เพื่อดู) · AI = แนะนำเท่านั้น</p></div>
+  $('#page').innerHTML = `<div class="ph"><div><h1>ตำแหน่งและสิทธิ์ (Permission Matrix V3)</h1><p class="mut small" style="margin:4px 0 0">${(S.catalog || []).length} ตำแหน่ง × 14 โมดูล · * = มีขอบเขต (ชี้เพื่อดู) · AI = แนะนำเท่านั้น</p></div>
     <div class="act"><div class="seg" role="group" aria-label="กลุ่มตำแหน่ง">${grps.map(([k,l]) => `<button data-g="${k}" aria-pressed="${g === k}">${l}</button>`).join('')}</div></div></div>
     <div class="panel"><div class="tw"><table><thead><tr><th>รหัส</th><th>ตำแหน่ง</th>${MODS.map(m => `<th title="${h(m[1])}">${h(m[1].split(' ')[0])}</th>`).join('')}</tr></thead><tbody>
     ${rows.map(p => `<tr><td class="mono">${h(p.code)}</td><td><b>${h(p.title)}</b><div class="small mut">${h(p.purpose || '')}</div></td>
