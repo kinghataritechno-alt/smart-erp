@@ -4531,7 +4531,7 @@ function dlgPiImport(R, replace){
 
 async function pagePayInput(){
   const el = $('#page');
-  el.innerHTML = `<div class="ph"><div><h1>แบบบันทึกการทำ Payroll</h1><p class="mut small" style="margin:4px 0 0">นำเข้ารายงานตารางเวลาทำงาน → สรุปวันทำงาน สาย OT ลา ขาด รายคน → Agent ตรวจ → ผู้ตรวจยืนยัน · ใช้เป็น Payroll Input ก่อนตัดรอบวันที่ 25</p></div>
+  el.innerHTML = `<div class="ph"><div><h1>แบบบันทึกการทำ Payroll</h1><p class="mut small" style="margin:4px 0 0">นำเข้ารายงานตารางเวลาทำงาน → สรุปวันทำงาน สาย OT ลา ขาด รายคน → ส่งตรวจ → Agent HR ตรวจและยืนยันอัตโนมัติ (มีรายการระดับสูง = รอบอส) · ใช้เป็น Payroll Input ก่อนตัดรอบวันที่ 25</p></div>
     <div class="act">${dvSeg('pay', 'รายชื่อ / รายคน')}<button class="btn primary" id="pi-imp">นำเข้าไฟล์เวลาทำงาน</button></div></div><div id="pi-b"><div class="empty">กำลังโหลด…</div></div>`;
   bindDv(pagePayroll); $('#pi-imp').onclick = () => piPickFile();
   if (!S.staff) { const q = await sb.from('staff').select('id,employee_code,full_name,dept,status').eq('company_id', S.cid); if (!q.error) S.staff = q.data; }
@@ -4567,7 +4567,7 @@ async function piDetail(id){
   const iss = x.issues || [], lvN = lv => iss.filter(i => i.level === lv).length;
   const byEmp = {}; for (const i of iss) if (i.emp) (byEmp[i.emp] ||= []).push(i);
   const leaveTypes = [...new Set(lines.flatMap(l => Object.keys(l.leave || {})))];
-  const steps = [['draft', 'จัดทำ / นำเข้า'], ['submitted', 'ส่งตรวจ + Agent ตรวจ'], ['checked', 'ผู้ตรวจยืนยัน']], si = { draft:0, returned:0, submitted:1, checked:2 }[x.status];
+  const steps = [['draft', 'จัดทำ / นำเข้า'], ['submitted', 'ส่งตรวจ'], ['checked', 'Agent HR ยืนยัน']], si = { draft:0, returned:0, submitted:1, checked:2 }[x.status];
   $('#pi-b').innerHTML = `
     <div class="panel"><div class="hd" style="flex-wrap:wrap;gap:8px"><button class="btn" id="pi-back">← รายการ</button>
       <h3 style="margin:0">${h(x.doc_no)} · ${h(x.dept)}</h3>${chip(PI_ST, x.status)}
@@ -4614,7 +4614,7 @@ async function piDetail(id){
   const upd = async (patch, msg) => { const q = await sb.from('payroll_inputs').update(patch).eq('id', id); if (q.error) return fail(q.error); toast(msg); piDetail(id); };
   $('#pi-re') && ($('#pi-re').onclick = () => piPickFile(x));
   $('#pi-chk') && ($('#pi-chk').onclick = async () => { const q = await sb.rpc('payroll_input_check', { p_id:id }); if (q.error) return fail(q.error); toast(`Agent ตรวจแล้ว ${q.data.length} รายการ`); piDetail(id); });
-  $('#pi-sub') && ($('#pi-sub').onclick = () => confirm('ส่งแบบบันทึกให้ผู้ตรวจ? (Agent จะตรวจซ้ำอัตโนมัติ และแก้ไขไม่ได้จนกว่าจะถูกส่งกลับ)') && upd({ status:'submitted' }, 'ส่งตรวจแล้ว'));
+  $('#pi-sub') && ($('#pi-sub').onclick = () => confirm('ส่งตรวจ? Agent HR จะตรวจทันที — ไม่มีรายการระดับสูง = ยืนยัน "ตรวจแล้ว" อัตโนมัติ · มีระดับสูง = รอบอส/ผู้มีสิทธิ์ตัดสิน · ส่งแล้วแก้ไม่ได้จนกว่าจะถูกส่งกลับ') && upd({ status:'submitted' }, 'ส่งตรวจแล้ว — Agent HR ตรวจเรียบร้อย'));
   $('#pi-wd') && ($('#pi-wd').onclick = () => confirm('ถอนกลับเป็นร่าง?') && upd({ status:'draft' }, 'ถอนกลับเป็นร่างแล้ว'));
   $('#pi-ret') && ($('#pi-ret').onclick = () => { const r = prompt('เหตุผลที่ส่งกลับ (อย่างน้อย 5 ตัวอักษร)'); if (r) upd({ status:'returned', return_reason:r }, 'ส่งกลับแล้ว'); });
   $('#pi-ok') && ($('#pi-ok').onclick = () => dialog('ยืนยันตรวจแบบบันทึกการทำ Payroll', `
@@ -4682,7 +4682,7 @@ function printPI(x, lines){
     ${offIss.map(i => `<br>${h(i.code)}: ${h(i.msg)}`).join('')}
     ${x.note ? `<br><b>หมายเหตุผู้ตรวจ:</b> ${h(x.note)}` : ''}</div>
   <div class="sg"><div><div class="l">${h(x.prepared_name || '')}</div>ผู้จัดทำ (เจ้าหน้าที่เงินเดือน)<br>วันที่ ${dts(x.submitted_at) || '................'}</div>
-    <div><div class="l">${h(x.checked_name || '')}</div>ผู้ตรวจสอบ (ผู้จัดการฝ่ายบุคคล)<br>วันที่ ${dts(x.checked_at) || '................'}</div>
+    <div><div class="l">${h(x.checked_name || '')}</div>ผู้ตรวจสอบ<br>วันที่ ${dts(x.checked_at) || '................'}</div>
     <div><div class="l"></div>ผู้อนุมัติ<br>วันที่ ................</div></div>
   <div class="ft">ลา/ขาด 8 ชม. = 1 วัน · OT วันหยุด = ค่าล่วงเวลาในวันหยุด · ค่าวันหยุด = ค่าทำงานในวันหยุด · ผลตรวจ PI01–PI12 ตามกฎ Agent HR ในระบบ · แบบบันทึกนี้ไม่มีตัวเลขค่าจ้าง และไม่ใช่การอนุมัติจ่ายเงินเดือน · พิมพ์จาก Smart Office Platform ${new Date().toLocaleString('th-TH', { dateStyle:'medium', timeStyle:'short' })}</div>
   </div></body></html>`);
