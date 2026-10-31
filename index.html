@@ -1734,7 +1734,7 @@ async function dashStaff(){
   const certd = cur.filter(s => (s.certs || []).some(c => typeof c === 'string' ? c.trim() && c !== '-' : c.license)).length;
   const q = [['ไม่มีหน้างาน', cur.filter(s => !s.site)], ['ไม่มีประเภทการจ้าง', cur.filter(s => !s.emp_type)], ['ไม่มีวันเริ่มงาน', cur.filter(s => !s.start_date)],
     ['หน่วยงาน ≠ หน้างาน', cur.filter(s => s.dept && s.site && s.dept !== s.site)], ['ยังไม่ผูก BU / โครงการ', cur.filter(s => !s.project_id)],
-    ['ประกันสังคม: กำลังแจ้งออก', all.filter(s => s.sso_status === 'กำลังแจ้งออก')], ['ไม่มีบัญชีเข้าระบบ', cur.filter(s => !s.user_id)],
+    ['ประกันสังคม: กำลังแจ้งออก', all.filter(s => s.sso_status === 'กำลังแจ้งออก')], ['อายุ 60+ ไม่ส่ง สปส. (เบี้ยขยัน 2-1/2-2)', all.filter(s => s.sso_status === 'ไม่ส่ง (อายุ 60+)')], ['ไม่มีบัญชีเข้าระบบ', cur.filter(s => !s.user_id)],
     ['ลาออกแล้ว แต่ยังถือทรัพย์สิน', leavers.map(l => ({ employee_code:l.employee_code, full_name:`${l.full_name} (${l.n} รายการ: ${l.codes})` }))]];
   const siteKeys = bySite.map(x => x[0]), typeKeys = types.map(x => x[0]);
   const cross = siteKeys.map(k => [k, ...typeKeys.map(t => cur.filter(s => siteOf(s) === k && (s.emp_type || 'ไม่ระบุ') === t).length)]);
@@ -4776,7 +4776,7 @@ function dlgStaff(s){
       <div class="field"><label for="s-st">สถานะ</label><select id="s-st" class="inp">${Object.entries(STAFF_ST).map(([k, v]) => `<option value="${k}" ${k === s.status ? 'selected' : ''}>${v[0]}</option>`).join('')}</select></div>
       <div class="field"><label for="s-end">วันสิ้นสุด (ถ้าลาออก)</label><input id="s-end" class="inp" type="date" value="${h(s.end_date || '')}"></div></div>
     <div class="row"><div class="field"><label for="s-edu">การศึกษา</label><input id="s-edu" class="inp" value="${h(s.education || '')}"></div>
-      <div class="field" style="max-width:160px"><label for="s-sso">ประกันสังคม</label><select id="s-sso" class="inp">${['มี','ไม่มี','กำลังแจ้งออก'].map(x => `<option ${x === s.sso_status ? 'selected' : ''}>${x}</option>`).join('')}</select></div></div>
+      <div class="field" style="max-width:160px"><label for="s-sso">ประกันสังคม</label><select id="s-sso" class="inp">${['มี','ไม่มี','ไม่ส่ง (อายุ 60+)','กำลังแจ้งออก'].map(x => `<option ${x === s.sso_status ? 'selected' : ''}>${x}</option>`).join('')}</select></div></div>
     <div class="field"><label for="s-certs">ใบรับรอง / การอบรม (บรรทัดละ 1 รายการ)</label><textarea id="s-certs" class="inp" rows="3">${h(certs)}</textarea></div>
     ${lic.length ? `<p class="small mut">ใบอนุญาต: ${lic.map(l => h(l.license)).join(' · ')}</p>` : ''}
     <div class="field"><label for="s-note">หมายเหตุ</label><input id="s-note" class="inp" value="${h(s.note || '')}"></div>`, 'บันทึก', async d => {
