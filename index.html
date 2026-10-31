@@ -3546,7 +3546,7 @@ async function pageHRF(){
         <span class="small mut" style="margin-left:auto">${rows.length} เอกสาร</span></div>
       <div class="tw">${rows.length ? `<table><thead><tr><th>เลขที่</th><th>แบบฟอร์ม</th><th>พนักงาน / เรื่อง</th><th>ผล / วันที่มีผล</th><th style="min-width:200px">สถานะ / ดำเนินการ</th></tr></thead><tbody>
         ${rows.map(d => `<tr><td class="mono">${h(d.no)}<div class="small faint">${thDate(d.created_at)}</div></td><td>${h(HRF[d.form].short)}<div class="small faint mono">${d.form}${d.variant ? ' · ' + PB[d.variant]?.days + ' วัน' : ''}</div></td>
-          <td>${h(staffLabel(byId[d.staff_id]) || d.title || '—')}${d.project_id ? `<div class="small mut mono">${h(pcode(d.project_id))}</div>` : ''}</td>
+          <td>${h(staffLabel(byId[d.staff_id]) || d.title || '—')}${d.form === 'FM-HR-01-01' && d.data?.req_name ? `<div class="small mut">ผู้ขอ ${h(d.data.req_name)}${d.data.req_position ? ' · ' + h(d.data.req_position) : ''}</div>` : ''}${d.project_id ? `<div class="small mut mono">${h(pcode(d.project_id))}</div>` : ''}</td>
           <td class="small">${d.score != null ? `<b>${d.score}</b> คะแนน · ` : ''}${h(d.data?.resultText || '')}${d.effective_date ? `<div class="mut">มีผล ${thDate(d.effective_date)}</div>` : ''}</td>
           <td>${chip(HR_ST, d.status)} ${agentChip(d)}<div class="gates" style="margin-top:8px">${hrActs(d)}</div></td></tr>`).join('')}</tbody></table>` : '<div class="empty">ยังไม่มีเอกสาร</div>'}</div></div>`;
     $('#hr-q').oninput = e => { S.hrQ = e.target.value; clearTimeout(pageHRF.t); pageHRF.t = setTimeout(pageHRF, 250); };
@@ -3659,9 +3659,12 @@ async function dlgHRF(form, doc, pre = {}, readonly = false){
     body = `<div class="row"><div class="field"><label for="hf-pc">ตำแหน่งตาม Position Master</label><select id="hf-pc" class="inp" ${dis}><option value="">— ไม่อยู่ในทะเบียน (พิมพ์ชื่อเอง · Agent จะเตือน) —</option>${Object.entries(POS_GRP).map(([g, gl]) => `<optgroup label="${h(gl)}">${POS.filter(p => p.grp === g).map(p => `<option value="${p.code}" ${p.code === pc0 ? 'selected' : ''}>${p.code.slice(6)} · ${h(p.title)}</option>`).join('')}</optgroup>`).join('')}</select><div id="hf-pci" class="small mut"></div></div>
         <div class="field"><label for="hf-pos">ชื่อตำแหน่ง</label><input id="hf-pos" class="inp" required ${dis} value="${h(D.position || '')}"></div>
         <div class="field" style="max-width:130px"><label for="hf-n">อัตราที่ต้องการ</label><input id="hf-n" class="inp" type="number" min="1" required ${dis} value="${h(D.count || 1)}"></div></div>
+      <div class="row"><div class="field"><label for="hf-rqn">ผู้ขออัตรากำลัง (ชื่อ-สกุล)</label><input id="hf-rqn" class="inp" list="hr-staff-rq" required ${dis} value="${h(D.req_name ?? (doc ? '' : (staff.find(s => s.user_id === S.user.id)?.full_name || '')))}" placeholder="พิมพ์ชื่อหรือรหัสพนักงาน แล้วเลือก"><datalist id="hr-staff-rq">${staff.filter(s => s.status !== 'resigned').map(s => `<option value="${h(s.full_name)}">${h(s.employee_code)} · ${h(s.position || '')}</option>`).join('')}</datalist></div>
+        <div class="field"><label for="hf-rqp">ตำแหน่งผู้ขอ</label><input id="hf-rqp" class="inp" required ${dis} value="${h(D.req_position ?? (doc ? '' : (staff.find(s => s.user_id === S.user.id)?.position || '')))}"></div>
+        <div class="field"><label for="hf-p">โครงการของผู้ขอ (ที่ขออัตรา)</label>${projSel('hf-p', d0.project_id)}</div></div>
       <div class="row"><div class="field"><label for="hf-dept">สังกัดแผนก / หน้างาน</label><input id="hf-dept" class="inp" list="hr-sites" ${dis} value="${h(D.dept || '')}"><datalist id="hr-sites">${[...new Set(staff.map(s => s.site).filter(Boolean))].map(x => `<option>${h(x)}</option>`).join('')}</datalist></div>
         <div class="field"><label for="hf-div">ฝ่าย</label><input id="hf-div" class="inp" ${dis} value="${h(D.division || '')}" placeholder="เช่น ฝ่ายปฏิบัติการ"></div>
-        <div class="field"><label for="hf-p">โครงการ</label>${projSel('hf-p', d0.project_id)}</div></div>
+</div>
       <div class="row"><div class="field"><label for="hf-k">เป็น</label><select id="hf-k" class="inp" ${dis}>${[['replace','ตำแหน่งเดิม เพื่อทดแทน'],['new','ตำแหน่งที่ตั้งขึ้นใหม่'],['other','อื่น ๆ']].map(([k, l]) => `<option value="${k}" ${D.kind === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
         <div class="field"><label for="hf-rep">ทดแทน (ชื่อ) / หมายเหตุ</label><input id="hf-rep" class="inp" ${dis} value="${h(D.replace || '')}"></div>
         <div class="field"><label><input type="checkbox" id="hf-indept" ${D.in_dept ? 'checked' : ''} ${dis}> อยู่ในแผนก</label><label for="hf-bud"><input type="checkbox" id="hf-bud" ${D.in_budget ? 'checked' : ''} ${dis}> อยู่ในงบประมาณ</label></div></div>
@@ -3670,7 +3673,7 @@ async function dlgHRF(form, doc, pre = {}, readonly = false){
         <div class="field"><label for="hf-edu">การศึกษา</label><input id="hf-edu" class="inp" ${dis} value="${h(D.edu || '')}"></div><div class="field"><label for="hf-maj">วิชาเอก</label><input id="hf-maj" class="inp" ${dis} value="${h(D.major || '')}"></div></div>
       <div class="row"><div class="field" style="max-width:220px"><label for="hf-expn">ประสบการณ์</label><select id="hf-expn" class="inp" ${dis}><option value="0">ไม่จำเป็นต้องมีประสบการณ์</option><option value="1" ${(D.exp_need ?? !!(D.exp || D.exp_years)) ? 'selected' : ''}>จำเป็นต้องมีประสบการณ์</option></select></div><div class="field"><label for="hf-exp">ประสบการณ์ด้าน</label><input id="hf-exp" class="inp" ${dis} value="${h(D.exp || '')}" placeholder="เช่น งานระบบไฟฟ้าอาคาร"></div><div class="field" style="max-width:130px"><label for="hf-expy">จำนวนปี</label><input id="hf-expy" class="inp" type="number" min="0" ${dis} value="${h(D.exp_years ?? '')}"></div></div>
       <div class="row"><div class="field"><label for="hf-sk">ความสามารถอื่น ๆ</label><input id="hf-sk" class="inp" ${dis} value="${h(D.skills || '')}"></div><div class="field"><label for="hf-need">ต้องการภายในวันที่</label><input id="hf-need" class="inp" type="date" ${dis} value="${h(D.need_by || '')}"></div></div>`;
-    collect = dd => ({ project_id:$('#hf-p', dd).value || null, position_code:$('#hf-pc', dd).value || null, title:`ขอ ${$('#hf-pos', dd).value.trim()} ${$('#hf-n', dd).value} อัตรา`, data:{ position:$('#hf-pos', dd).value.trim(), count:+$('#hf-n', dd).value || 1, dept:$('#hf-dept', dd).value.trim(), division:$('#hf-div', dd).value.trim(), in_dept:$('#hf-indept', dd).checked, exp_need:$('#hf-expn', dd).value === '1', jd_ref:$('#hf-desc', dd).dataset.ref || (D.jd_ref && $('#hf-pc', dd).value === pc0 ? D.jd_ref : null), kind:$('#hf-k', dd).value, replace:$('#hf-rep', dd).value.trim(), in_budget:$('#hf-bud', dd).checked, desc:$('#hf-desc', dd).value.trim(), sex:$('#hf-sex', dd).value.trim(), age:$('#hf-age', dd).value.trim(), edu:$('#hf-edu', dd).value.trim(), major:$('#hf-maj', dd).value.trim(), exp:$('#hf-exp', dd).value.trim(), exp_years:$('#hf-expy', dd).value === '' ? null : +$('#hf-expy', dd).value, skills:$('#hf-sk', dd).value.trim(), need_by:$('#hf-need', dd).value || null } });
+    collect = dd => ({ project_id:$('#hf-p', dd).value || null, position_code:$('#hf-pc', dd).value || null, title:`ขอ ${$('#hf-pos', dd).value.trim()} ${$('#hf-n', dd).value} อัตรา`, data:{ position:$('#hf-pos', dd).value.trim(), count:+$('#hf-n', dd).value || 1, req_name:$('#hf-rqn', dd).value.trim(), req_position:$('#hf-rqp', dd).value.trim(), hr_name:D.hr_name || (S.hrStaff || []).find(x => x.user_id === (doc?.requested_by || S.user.id))?.full_name || (doc ? '' : S.user.user_metadata?.full_name || ''), dept:$('#hf-dept', dd).value.trim(), division:$('#hf-div', dd).value.trim(), in_dept:$('#hf-indept', dd).checked, exp_need:$('#hf-expn', dd).value === '1', jd_ref:$('#hf-desc', dd).dataset.ref || (D.jd_ref && $('#hf-pc', dd).value === pc0 ? D.jd_ref : null), kind:$('#hf-k', dd).value, replace:$('#hf-rep', dd).value.trim(), in_budget:$('#hf-bud', dd).checked, desc:$('#hf-desc', dd).value.trim(), sex:$('#hf-sex', dd).value.trim(), age:$('#hf-age', dd).value.trim(), edu:$('#hf-edu', dd).value.trim(), major:$('#hf-maj', dd).value.trim(), exp:$('#hf-exp', dd).value.trim(), exp_years:$('#hf-expy', dd).value === '' ? null : +$('#hf-expy', dd).value, skills:$('#hf-sk', dd).value.trim(), need_by:$('#hf-need', dd).value || null } });
   } else if (form === 'FM-HR-01-05') {
     const v = d0.variant || pbVariantFor(curS), P = PB[v], sc = D.scores || {};
     const row = (ci, ii, txt, scale, labels) => { const k = `${ci}.${ii}`, val = sc[k];
@@ -3711,6 +3714,7 @@ async function dlgHRF(form, doc, pre = {}, readonly = false){
   bindAgentRecheck(d);
   hireWire(form, d);
   const pcs = $('#hf-pc', d); if (pcs) { const info = () => { const p = POS.find(x => x.code === pcs.value); $('#hf-pci', d).innerHTML = p ? `${chip(POS_ST, p.status)} JD/JS v${h(p.jdjs_version)}${p.qb_doc ? ' · การ์ดคำถาม ' + h(p.qb_doc) : ''} · รายงานต่อ ${h(p.reports_to || '—')}` : ''; };
+    const rqn = $('#hf-rqn', d); if (rqn && !readonly) rqn.addEventListener('change', () => { const v = rqn.value.trim(), st = (S.hrStaff || []).find(x => x.full_name === v || x.employee_code === v); if (st) { rqn.value = st.full_name; $('#hf-rqp', d).value = st.position || ''; if (st.project_id && $('#hf-p', d)) $('#hf-p', d).value = st.project_id; } });
     const fillJD = async () => { if (readonly || form !== 'FM-HR-01-01') return; const p = POS.find(x => x.code === pcs.value), ta = $('#hf-desc', d); if (!ta) return;
       if (!p) { ta.readOnly = false; delete ta.dataset.ref; $('#hf-jdref', d).textContent = ''; return; }
       const C = await hrContent(), md = C?.jd?.[p.code]; if (!md) { ta.readOnly = false; delete ta.dataset.ref; $('#hf-jdref', d).textContent = '· ตำแหน่งนี้ยังไม่มี JD — พิมพ์เอง'; return; }
@@ -3752,8 +3756,9 @@ async function printRQ(doc){
   const D = doc.data || {}, staff = S.hrStaff || await hrStaff(), docs = S.hrDocs || [];
   const pj = (S.hrProj || S.projects || []).find(p => p.id === doc.project_id);
   const names = Object.fromEntries((S.members || []).map(m => [m.user_id, m.full_name || '']));
-  const req = staff.find(s => s.user_id === doc.requested_by);
-  const reqName = req?.full_name || names[doc.requested_by] || '';
+  const rec = staff.find(s => s.user_id === doc.requested_by);   /* ผู้บันทึก = เจ้าหน้าที่บุคคล */
+  const recName = D.hr_name || rec?.full_name || names[doc.requested_by] || '';
+  const reqName = D.req_name || recName, reqPos = D.req_position || (D.req_name ? '' : rec?.position || '');
   const { data: ap } = await sb.from('approvals').select('*').eq('doc_type', 'hr').eq('doc_id', doc.id).order('decided_at');
   const fin = (ap || []).filter(a => ['approve','reject'].includes(a.action)).pop();
   const apS = fin && staff.find(s => s.user_id === fin.decided_by);
@@ -3808,7 +3813,7 @@ async function printRQ(doc){
     <div class="r">ความสามารถอื่น ๆ ${f(D.skills, 520)}</div>
     <div class="r">ต้องการภายในวันที่ ${f(thL(D.need_by), 260)}</div>
     <div class="sg"><div style="padding-left:30px">เสร็จสิ้นกระบวนการสรรหา ลงนามรับทราบ<br>(${f('', 200)})<br>วันที่ ${f('', 160)}</div>
-      <div style="text-align:left">ลงชื่อผู้ที่ขอ ${f('', 170)} ผู้ขอ<br><span style="padding-left:70px">(${f(reqName, 170)})</span><br>ตำแหน่ง ${f(req?.position || '', 200)}<br>วันที่ ${f(thL(doc.submitted_at || doc.created_at), 200)}</div></div>
+      <div style="text-align:left">ลงชื่อผู้ที่ขอ ${f('', 170)} ผู้ขอ<br><span style="padding-left:70px">(${f(reqName, 170)})</span><br>ตำแหน่ง ${f(reqPos, 200)}<br>วันที่ ${f(thL(doc.submitted_at || doc.created_at), 200)}</div></div>
   </div>
   <div class="bt"><div><b>คำสั่งผู้มีอำนาจอนุมัติ</b>
       <div class="r">${bx(fin?.action === 'approve')} อนุมัติ</div>
@@ -3819,7 +3824,7 @@ async function printRQ(doc){
       <div class="r">ตำแหน่ง ${f(apS?.position || '', 180)}</div>
       <div class="r">วันที่ ${f(fin ? thL(fin.decided_at) : '', 190)}</div></div>
     <div><b>บันทึกฝ่ายบุคคล</b>${hr}
-      <div class="sg" style="margin:10px 0 0"><div>(${f('', 170)})<br>ลงชื่อ</div><div>(${f('', 120)})<br>วันที่</div></div></div></div>
+      <div class="sg" style="margin:10px 0 0"><div>(${f(recName, 170)})<br>ลงชื่อ</div><div>(${f('', 120)})<br>วันที่</div></div></div></div>
   <div class="ft">Copyright© SMART Terminal Corporation Co., Ltd All Right Reserved.<br>เอกสารฉบับนี้จะอยู่ในรูปแบบอิเล็กทรอนิกส์ หากปรากฏส่วนหนึ่งส่วนใดอยู่ในรูปแบบสื่อกระดาษให้ตรวจสอบความทันสมัยกับศูนย์ควบคุมเอกสารก่อนนำมาใช้อ้างอิง · พิมพ์จาก SMART ERP</div>
   </div><style id="fit"></style><script>document.fonts.ready.then(()=>{const pg=document.querySelector('.pg'),mm=pg.offsetWidth/190,hmax=277*mm,hh=pg.scrollHeight;if(hh>hmax)document.getElementById('fit').textContent='@media print{.pg{zoom:'+(hmax/hh*0.98).toFixed(3)+'}}';if(!/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent))setTimeout(()=>print(),300)})<\/script></body></html>`);
   w.document.close();
