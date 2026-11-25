@@ -3750,7 +3750,7 @@ async function dlgHRF(form, doc, pre = {}, readonly = false){
     const v = d0.variant || pbVariantFor(curS), P = PB[v], sc = D.scores || {};
     const row = (ci, ii, txt, scale, labels) => { const k = `${ci}.${ii}`, val = sc[k];
       return `<tr><td class="small">${ii + 1}. ${h(txt)}</td><td class="nw">${Array.from({ length:scale }, (_, j) => scale - j).map(n => `<label class="pb-r" title="${labels ? labels[scale - n] : n + ' คะแนน'}"><input type="radio" name="pb-${k}" value="${n}" ${val == n ? 'checked' : ''} ${dis}><span>${labels ? labels[scale - n] : n}</span></label>`).join('')}</td></tr>`; };
-    body = `<div class="row"><div class="field" style="max-width:220px"><label for="hf-v">แบบประเมิน</label><select id="hf-v" class="inp" ${doc || readonly ? 'disabled' : ''}>${Object.entries(PB).map(([k, p]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${p.days} วัน${k === 'probation45' ? ' (วิศวกร/หัวหน้างาน)' : ' (ช่าง)'}</option>`).join('')}</select></div>
+    body = `<div class="row"><div class="field" style="max-width:220px"><label for="hf-v">แบบประเมิน</label><select id="hf-v" class="inp" ${readonly || (doc && !['draft','returned'].includes(doc.status)) || pre.trial ? 'disabled' : ''}>${Object.entries(PB).map(([k, p]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${p.days} วัน${k === 'probation45' ? ' (วิศวกร/หัวหน้างาน)' : ' (ช่าง)'}</option>`).join('')}</select></div>
         ${staffField('ผู้รับการประเมิน')}</div>
       <div class="row"><div class="field"><label for="hf-ed">ประเมินถึงวันที่</label><input id="hf-ed" class="inp" type="date" ${dis} value="${h(d0.effective_date || '')}"></div><div class="field"><label for="hf-p">โครงการ</label>${projSel('hf-p', d0.project_id)}</div></div>
       <div class="field"><label>${h(P.branchLabel)}</label><div class="gates">${P.branches.map(b => `<label class="chip"><input type="checkbox" data-br="${h(b)}" ${(D.branches || []).includes(b) ? 'checked' : ''} ${dis}> ${h(b)}</label>`).join('')}</div></div>
@@ -3797,18 +3797,29 @@ async function dlgHRF(form, doc, pre = {}, readonly = false){
     pcs.onchange = () => { const p = POS.find(x => x.code === pcs.value); if (p) $('#hf-pos', d).value = p.title; info(); fillJD(); }; info();
     if (form === 'FM-HR-01-01' && !readonly && pcs.value && (!D.desc || D.jd_ref)) fillJD(); }
   /* live staff info + resignation asset list + probation totals */
-  const onStaff = async () => { const s = pickStaff(d, true); $('#hf-si', d) && ($('#hf-si', d).textContent = s ? `${s.position || ''} · ${s.site || ''} · เริ่มงาน ${thDate(s.start_date)}` : '');
+  /* FM-HR-01-05: เปลี่ยนแบบประเมิน (45/80 วัน) → เปิดฟอร์มใหม่ตามแบบนั้น คะแนนเดิมใช้ข้ามแบบไม่ได้ */
+  const pbCanSwitch = form === 'FM-HR-01-05' && !readonly && !pre.trial && (!doc || ['draft','returned'].includes(doc.status));
+  const pbReopen = (variant, s) => { const keep = { comment:$('#hf-cm', d)?.value.trim() || '', improve:$('#hf-imp', d)?.value.trim() || '' }; d.close();
+    if (doc) return dlgHRF(form, { ...doc, variant, staff_id:s?.id || doc.staff_id, project_id:s?.project_id || doc.project_id, effective_date:null, data:{ ...(doc.data || {}), ...keep, scores:{}, branches:[] } });
+    return dlgHRF(form, null, { staff_id:s?.id, variant, project_id:s?.project_id || null, data:keep }); };
+  const onStaff = async (byUser) => { const s = pickStaff(d, true);
+    if (byUser === true && pbCanSwitch && s) { const want = pbVariantFor(s);
+      if (want !== $('#hf-v', d).value) { toast(`${s.position || 'ตำแหน่งนี้'} ใช้${PB[want].title} — เปลี่ยนแบบประเมินให้แล้ว`); return pbReopen(want, s); }
+      if (s.start_date) $('#hf-ed', d).value = addD(s.start_date, PB[want].days);
+      if (s.project_id) $('#hf-p', d).value = s.project_id; } $('#hf-si', d) && ($('#hf-si', d).textContent = s ? `${s.position || ''} · ${s.site || ''} · เริ่มงาน ${thDate(s.start_date)}` : '');
     if (form === 'FM-HR-01-09' && $('#hf-ret', d)) { if (!s) return $('#hf-ret', d).innerHTML = ''; const { data } = await sb.rpc('staff_assets', { p_staff:s.id }); const prev = Object.fromEntries((D.returns_assets || []).map(a => [a.code, a.returned]));
       $('#hf-ret', d).innerHTML = (data || []).length ? (data || []).map(a => `<label style="display:block"><input type="checkbox" data-ret="${h(a.code)}" data-n="${h(a.name)}" ${prev[a.code] ? 'checked' : ''} ${dis}> ${h(a.code)} ${h(a.name)} (${cnt(a.qty)} ${h(a.unit || '')}) — ติ๊กเมื่อคืนแล้ว</label>`).join('') : '<span class="faint">ไม่มีทรัพย์สินในทะเบียนที่ถืออยู่</span>'; }
     if (form === 'FM-HR-01-05' && s && !$('#hf-ed', d).value && s.start_date) $('#hf-ed', d).value = addD(s.start_date, PB[$('#hf-v', d).value].days);
     if (form === 'FM-HR-01-05' && s && !$('#hf-p', d).value && s.project_id) $('#hf-p', d).value = s.project_id; };
-  const hs = $('#hf-s', d); if (hs) { hs.onchange = onStaff; onStaff(); }
+  const hs = $('#hf-s', d); if (hs) { hs.onchange = () => onStaff(true); onStaff(false); }
   if (form === 'FM-HR-01-05') {
     const v = $('#hf-v', d).value, sum = () => { const P = PB[$('#hf-v', d).value]; let t = 0;
       P.cats.forEach((c, ci) => { let st = 0; c.items.forEach((_, i) => { const r = d.querySelector(`[name="pb-${ci}.${i}"]:checked`); if (r) st += +r.value; }); const e = d.querySelector(`[data-sub="${ci}"]`); if (e) e.textContent = st; t += st; });
       const g = P.grade(t), max = P.cats.reduce((a, c) => a + c.max, 0); $('#pb-tot', d).innerHTML = `รวม <b>${t}</b> / ${max} คะแนน → <b>${g[1]}</b>`; $('#pb-tot', d).className = 'msg ' + (g[0] === 'pass' ? 'ok' : g[0] === 'retry' ? 'warn' : 'err'); };
     d.addEventListener('change', e => { if (e.target.type === 'radio') sum(); });
-    $('#hf-v', d).onchange = () => { const s = pickStaff(d, true); d.close(); dlgHRF(form, null, { staff_id:s?.id, variant:$('#hf-v', d).value }); };
+    $('#hf-v', d).onchange = () => { const nv = $('#hf-v', d).value, s = pickStaff(d, true);
+      if (d.querySelector('[name^="pb-"]:checked') && !confirm(`เปลี่ยนเป็น${PB[nv].title}? คะแนนที่ให้ไว้จะถูกล้าง (หัวข้อของสองแบบไม่เหมือนกัน)`)) { $('#hf-v', d).value = d0.variant || pbVariantFor(curS); return; }
+      pbReopen(nv, s); };
     sum(); void v;
   }
 }
